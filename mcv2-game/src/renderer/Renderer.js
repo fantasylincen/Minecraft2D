@@ -396,11 +396,12 @@ export class Renderer {
       return;
     }
     
-    // 每秒更新一次FPS，添加稳定性检查
+    // 每2秒更新一次FPS，显示2秒内的平均值 (TODO #32)
     const timeDiff = currentTime - this.stats.lastFrameTime;
-    if (timeDiff >= 1000) {
+    if (timeDiff >= 2000) { // 修改为2秒间隔
       // 防止除零错误和负值，确保合理的FPS范围
       if (timeDiff > 0 && this.stats.frameCount > 0) {
+        // 计算2秒内的平均FPS (TODO #32)
         const calculatedFPS = Math.round((this.stats.frameCount * 1000) / timeDiff);
         // 限制FPS在合理范围内 (1-1000)
         this.stats.fps = Math.max(1, Math.min(1000, calculatedFPS));
