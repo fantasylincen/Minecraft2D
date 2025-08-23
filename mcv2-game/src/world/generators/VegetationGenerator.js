@@ -124,6 +124,7 @@ export class VegetationGenerator {
     const airId = blockConfig.getBlock('air').id;
     const grassId = blockConfig.getBlock('grass').id;
     const dirtId = blockConfig.getBlock('dirt').id;
+    const stoneId = blockConfig.getBlock('stone').id;
     
     for (let x = 0; x < chunkWidth; x++) {
       surfaceMap[x] = -1;
@@ -133,9 +134,11 @@ export class VegetationGenerator {
         const currentBlock = chunk[y][x];
         const aboveBlock = y + 1 < chunkHeight ? chunk[y + 1][x] : airId;
         
-        // 地表条件：当前是固体，上面是空气，且是草地或土地
+        // 地表条件：当前是固体，上面是空气，且是适合植被生长的方块
         if (currentBlock !== airId && aboveBlock === airId) {
-          if (currentBlock === grassId || currentBlock === dirtId) {
+          // 扩大适合植被生长的方块类型
+          if (currentBlock === grassId || currentBlock === dirtId || 
+              currentBlock === stoneId || this.isSuitableForVegetation(currentBlock)) {
             surfaceMap[x] = y;
             break;
           }
@@ -144,6 +147,25 @@ export class VegetationGenerator {
     }
     
     return surfaceMap;
+  }
+  
+  /**
+   * 检查方块是否适合植被生长
+   * Author: MCv2 Development Team
+   * @param {number} blockId - 方块ID
+   * @returns {boolean} 是否适合
+   */
+  isSuitableForVegetation(blockId) {
+    // 获取所有适合植被生长的方块ID
+    const suitableBlocks = [
+      blockConfig.getBlock('grass')?.id,
+      blockConfig.getBlock('dirt')?.id,
+      blockConfig.getBlock('stone')?.id,
+      blockConfig.getBlock('sand')?.id,
+      blockConfig.getBlock('gravel')?.id
+    ].filter(id => id !== undefined);
+    
+    return suitableBlocks.includes(blockId);
   }
   
   /**

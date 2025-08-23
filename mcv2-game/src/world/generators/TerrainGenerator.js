@@ -30,22 +30,22 @@ export class TerrainGenerator {
         lacunarity: 2.0
       },
       regional: {
-        scale: 0.001,         // 区域尺度
-        amplitude: 80,        // 区域振幅
+        scale: 0.0008,         // 增加区域尺度 (从0.001改为0.0008)
+        amplitude: 60,         // 区域振幅 (从80改为60)
         octaves: 4,
         persistence: 0.5,
         lacunarity: 2.0
       },
       local: {
-        scale: 0.01,          // 局部尺度
-        amplitude: 20,        // 局部振幅
+        scale: 0.008,          // 大幅增加局部尺度 (从0.01改为0.008)
+        amplitude: 35,         // 增加局部振幅 (从20改为35)
         octaves: 3,
         persistence: 0.4,
         lacunarity: 2.0
       },
       roughness: {
         scale: 0.05,          // 粗糙度尺度
-        amplitude: 5,         // 粗糙度振幅
+        amplitude: 8,         // 增加粗糙度振幅 (从5改为8)
         octaves: 2,
         persistence: 0.3,
         lacunarity: 2.0
@@ -155,8 +155,13 @@ export class TerrainGenerator {
         break;
         
       case BIOME_TYPES.PLAINS:
-        // 平原：温和起伏
-        height *= 0.8;
+        // 平原：温和起伏，但不过度平均化
+        height *= 0.9; // 从0.8改为0.9，减少平均化程度
+        // 添加小丘陵效果
+        const hillNoise = this.detailNoise.sample(absoluteX * 0.003, 50);
+        if (hillNoise > 0.4) {
+          height += (hillNoise - 0.4) * 25; // 添加小幅度高度变化
+        }
         break;
     }
     
@@ -249,18 +254,18 @@ export class TerrainGenerator {
     const grassNoise = this.detailNoise.sample(absoluteX * 0.2, 50);
     const flowerNoise = this.detailNoise.sample(absoluteX * 0.15, 100);
     
-    // 树木
-    if (vegetationNoise > 0.7 && Math.random() < biomeConfig.vegetation.trees) {
+    // 树木 - 降低阈值增加生成概率
+    if (vegetationNoise > 0.6 && Math.random() < biomeConfig.vegetation.trees) {
       features.hasTree = true;
     }
     
-    // 草
-    if (grassNoise > 0.3 && Math.random() < biomeConfig.vegetation.grass) {
+    // 草 - 降低阈值增加生成概率
+    if (grassNoise > 0.2 && Math.random() < biomeConfig.vegetation.grass) {
       features.hasGrass = true;
     }
     
-    // 花朵
-    if (flowerNoise > 0.6 && Math.random() < biomeConfig.vegetation.flowers) {
+    // 花朵 - 降低阈值增加生成概率
+    if (flowerNoise > 0.4 && Math.random() < biomeConfig.vegetation.flowers) {
       features.hasFlower = true;
     }
     

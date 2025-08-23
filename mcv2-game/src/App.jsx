@@ -10,6 +10,7 @@ import { Camera } from './camera/Camera.js';
 import { Renderer } from './renderer/Renderer.js';
 import { StorageManager } from './storage/StorageManager.js';
 import { ConfigPanel } from './ui/ConfigPanel.js';
+import DebugConsole from './ui/DebugConsole.jsx';
 import { gameConfig } from './config/GameConfig.js';
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
   const configPanelRef = useRef(null);
   const [gameStatus, setGameStatus] = useState('loading');
   const [debugInfo, setDebugInfo] = useState(false);
+  const [showDebugConsole, setShowDebugConsole] = useState(false);
   const [gameStats, setGameStats] = useState({
     fps: 0,
     blocksRendered: 0,
@@ -315,14 +317,20 @@ function App() {
   };
   
   /**
-   * 切换调试信息
+   * 切换调试信息和调试控制台
+   * Author: MCv2 Development Team
    */
   const toggleDebugInfo = () => {
     if (gameEngineRef.current) {
       const renderer = gameEngineRef.current.systems.renderer;
       if (renderer) {
+        // 切换调试信息显示
         renderer.toggleDebugInfo();
         setDebugInfo(!debugInfo);
+        
+        // 同时切换调试控制台显示
+        renderer.setDebugConsoleVisible(!debugInfo);
+        setShowDebugConsole(!debugInfo);
       }
     }
   };
@@ -379,13 +387,18 @@ function App() {
     setShowControlsHelp(!showControlsHelp);
   };
   
-  // 键盘事件监听，处理H键切换控制说明
+  // 键盘事件监听，处理H键切换控制说明和F3键切换调试信息
   useEffect(() => {
     const handleKeyPress = (event) => {
       // H键切换控制说明
       if (event.key === 'h' || event.key === 'H') {
         event.preventDefault();
         toggleControlsHelp();
+      }
+      // F3键切换调试信息和调试控制台
+      else if (event.key === 'F3') {
+        event.preventDefault();
+        toggleDebugInfo();
       }
     };
     
@@ -394,7 +407,7 @@ function App() {
     return () => {
       document.removeEventListener('keydown', handleKeyPress);
     };
-  }, [showControlsHelp]);
+  }, [showControlsHelp, debugInfo]);
 
   // 渲染加载状态
   if (gameStatus === 'loading' || gameStatus === 'initializing') {
@@ -616,6 +629,14 @@ function App() {
             🎮 控制说明
           </button>
         )}
+        
+        {/* 调试控制台 */}
+        <DebugConsole 
+          gameEngine={gameEngineRef.current}
+          isVisible={showDebugConsole}
+          onToggleVisible={toggleDebugInfo}
+          onSaveGame={saveGame}
+        />
       </div>
     </div>
   );

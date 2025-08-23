@@ -29,7 +29,7 @@ export class GameConfig {
       settings: {
         // 核心控制参数
         coveragePercentage: {
-          value: 15,
+          value: 12, // 从15降低到12
           min: 5,
           max: 50,
           step: 1,
@@ -38,7 +38,7 @@ export class GameConfig {
           displayName: '掏空比例'
         },
         initialCaveChance: {
-          value: 0.15, // 从0.45降低到0.15
+          value: 0.05, // 进一步降低到0.05
           min: 0.05,
           max: 0.6,
           step: 0.01,

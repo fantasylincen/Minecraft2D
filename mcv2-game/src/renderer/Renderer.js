@@ -18,6 +18,7 @@ export class Renderer {
       enableParticles: true,
       enableLighting: false,
       renderDistance: 5, // 区块渲染距离
+      showDebugConsole: false // 调试控制台显示状态
     };
     
     // 环境设置
@@ -430,6 +431,62 @@ export class Renderer {
    */
   toggleGrid() {
     this.settings.showGrid = !this.settings.showGrid;
+  }
+  
+  /**
+   * Toggle debug console visibility
+   * Author: MCv2 Development Team
+   */
+  toggleDebugConsole() {
+    this.settings.showDebugConsole = !this.settings.showDebugConsole;
+  }
+  
+  /**
+   * Set debug console visibility
+   * Author: MCv2 Development Team
+   * @param {boolean} visible - Whether the console should be visible
+   */
+  setDebugConsoleVisible(visible) {
+    this.settings.showDebugConsole = visible;
+  }
+  
+  /**
+   * Get debug console visibility state
+   * Author: MCv2 Development Team
+   * @returns {boolean} Whether the debug console is visible
+   */
+  isDebugConsoleVisible() {
+    return this.settings.showDebugConsole;
+  }
+  
+  /**
+   * Get extended renderer statistics
+   * Author: MCv2 Development Team
+   * @returns {Object} Extended statistics object
+   */
+  getExtendedStats() {
+    return {
+      ...this.stats,
+      settings: { ...this.settings },
+      memory: {
+        estimated: this.estimateMemoryUsage(),
+        canvasSize: `${this.canvas.width}x${this.canvas.height}`
+      }
+    };
+  }
+  
+  /**
+   * Estimate memory usage (rough calculation)
+   * Author: MCv2 Development Team
+   * @returns {string} Estimated memory usage in MB
+   */
+  estimateMemoryUsage() {
+    try {
+      const canvasMemory = (this.canvas.width * this.canvas.height * 4) / (1024 * 1024); // 4 bytes per pixel
+      return `~${canvasMemory.toFixed(2)}MB`;
+    } catch (error) {
+      return 'Unknown';
+    }
   }
   
   /**

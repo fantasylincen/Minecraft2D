@@ -486,7 +486,7 @@ export class CaveGenerator {
    * @returns {number[][]} 调整后的洞穴地图
    */
   increaseCaveCoverage(caveMap, width, height, minDepth, maxDepth, currentCoverage, targetCoverage) {
-    const expansionRatio = (targetCoverage / currentCoverage) - 1;
+    const expansionRatio = Math.min((targetCoverage / currentCoverage) - 1, 0.5); // 限制扩展比例
     const newMap = JSON.parse(JSON.stringify(caveMap)); // 深拷贝
     
     // 优先扩展现有洞穴的边缘
@@ -494,10 +494,11 @@ export class CaveGenerator {
       for (let x = 0; x < width; x++) {
         if (newMap[y][x] === 0) {
           // 计算这个实体块周围的洞穴密度
-          const caveNeighbors = 8 - this.countCaveNeighbors(caveMap, x, y, width, height);
+          const solidNeighbors = this.countCaveNeighbors(caveMap, x, y, width, height);
+          const caveNeighbors = 8 - solidNeighbors; // 修复：计算洞穴邻居数量
           
           if (caveNeighbors > 0) {
-            const expandProbability = (caveNeighbors / 8) * expansionRatio * 0.8;
+            const expandProbability = Math.min((caveNeighbors / 8) * expansionRatio * 1.2, 0.3);
             
             if (Math.random() < expandProbability) {
               newMap[y][x] = 1;

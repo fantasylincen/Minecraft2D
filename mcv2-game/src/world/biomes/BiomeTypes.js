@@ -50,9 +50,9 @@ export const BIOME_CONFIG = {
       deep: 'stone'
     },
     heightModifiers: {
-      continental: 0.5,
-      regional: 0.3,
-      local: 0.2
+      continental: 0.8,  // 从0.5增加到0.8
+      regional: 0.6,     // 从0.3增加到0.6
+      local: 0.4         // 从0.2增加到0.4
     },
     vegetation: {
       trees: 0.05,
