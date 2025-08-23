@@ -107,7 +107,7 @@ export class Renderer {
   }
   
   /**
-   * 渲染天空背景
+   * 渲染天空背景 (TODO #17: 添加日出日落、太阳和月亮移动、星星显示)
    */
   renderSky() {
     // 基础天空颜色
@@ -137,6 +137,21 @@ export class Renderer {
     this.ctx.fillStyle = gradient;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     this.stats.drawCalls++;
+    
+    // 渲染星星 (只在夜晚显示) (TODO #17)
+    if (timeOfDay < 0.25 || timeOfDay > 0.75) {
+      this.renderStars();
+    }
+    
+    // 渲染太阳 (白天和黄昏时显示) (TODO #17)
+    if (timeOfDay >= 0.2 && timeOfDay <= 0.8) {
+      this.renderSun();
+    }
+    
+    // 渲染月亮 (夜晚和黄昏时显示) (TODO #17)
+    if (timeOfDay < 0.3 || timeOfDay > 0.7) {
+      this.renderMoon();
+    }
   }
   
   /**
@@ -264,7 +279,7 @@ export class Renderer {
   }
   
   /**
-   * 渲染单个方块
+   * 渲染单个方块 (TODO #17: 添加环境光照变化)
    */
   renderBlock(worldX, worldY, blockId) {
     const blockSize = this.worldConfig.BLOCK_SIZE;
@@ -286,8 +301,14 @@ export class Renderer {
     const block = blockConfig.getBlock(blockId);
     if (!block) return;
     
+    // 计算光照级别 (TODO #17)
+    const lightLevel = this.calculateLightLevel(worldY);
+    
+    // 应用光照效果到方块颜色
+    const litColor = this.applyLighting(block.color, lightLevel);
+    
     // 设置方块颜色
-    this.ctx.fillStyle = block.color;
+    this.ctx.fillStyle = litColor;
     
     // 渲染方块
     this.ctx.fillRect(
@@ -299,7 +320,7 @@ export class Renderer {
     
     // 添加方块边框（提高可视性）
     if (screenSize > 4) {
-      this.ctx.strokeStyle = this.darkenColor(block.color, 0.3);
+      this.ctx.strokeStyle = this.darkenColor(litColor, 0.3);
       this.ctx.lineWidth = Math.max(1, screenSize * 0.05);
       this.ctx.strokeRect(
         screenPos.x - screenSize / 2,
@@ -526,5 +547,242 @@ export class Renderer {
     this.stats.fps = 0;
     this.stats.drawCalls = 0;
     this.stats.blocksRendered = 0;
+  }
+  
+  /**
+   * 渲染太阳 (TODO #17)
+   * Author: MCv2 Development Team
+   */
+  renderSun() {
+    const timeOfDay = this.environment.timeOfDay;
+    
+    // 计算太阳位置 (从东南到西南的弧线运动)
+    const sunAngle = (timeOfDay - 0.25) * Math.PI; // -PI/4 到 3PI/4
+    const sunRadius = Math.min(this.canvas.width, this.canvas.height) * 0.4;
+    const centerX = this.canvas.width / 2;
+    const centerY = this.canvas.height * 0.8; // 地平线位置
+    
+    const sunX = centerX + Math.cos(sunAngle) * sunRadius;
+    const sunY = centerY - Math.sin(sunAngle) * sunRadius;
+    
+    // 只在太阳在地平线上方时渲染
+    if (sunY < centerY) {
+      const sunSize = 30;
+      
+      // 渲染太阳光晕
+      const sunGlow = this.ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, sunSize * 2);
+      sunGlow.addColorStop(0, 'rgba(255, 255, 0, 0.3)');
+      sunGlow.addColorStop(0.5, 'rgba(255, 255, 0, 0.1)');
+      sunGlow.addColorStop(1, 'rgba(255, 255, 0, 0)');
+      
+      this.ctx.fillStyle = sunGlow;
+      this.ctx.fillRect(sunX - sunSize * 2, sunY - sunSize * 2, sunSize * 4, sunSize * 4);
+      
+      // 渲染太阳本体
+      this.ctx.fillStyle = '#FFD700'; // 金色
+      this.ctx.beginPath();
+      this.ctx.arc(sunX, sunY, sunSize, 0, Math.PI * 2);
+      this.ctx.fill();
+      
+      // 渲染太阳光芒
+      this.ctx.strokeStyle = 'rgba(255, 215, 0, 0.6)';
+      this.ctx.lineWidth = 2;
+      for (let i = 0; i < 8; i++) {
+        const rayAngle = (i / 8) * Math.PI * 2;
+        const rayStartX = sunX + Math.cos(rayAngle) * (sunSize + 5);
+        const rayStartY = sunY + Math.sin(rayAngle) * (sunSize + 5);
+        const rayEndX = sunX + Math.cos(rayAngle) * (sunSize + 15);
+        const rayEndY = sunY + Math.sin(rayAngle) * (sunSize + 15);
+        
+        this.ctx.beginPath();
+        this.ctx.moveTo(rayStartX, rayStartY);
+        this.ctx.lineTo(rayEndX, rayEndY);
+        this.ctx.stroke();
+      }
+      
+      this.stats.drawCalls += 3; // 光晕、太阳、光芒
+    }
+  }
+  
+  /**
+   * 渲染月亮 (TODO #17)
+   * Author: MCv2 Development Team
+   */
+  renderMoon() {
+    const timeOfDay = this.environment.timeOfDay;
+    
+    // 计算月亮位置 (与太阳相反的运动轨迹)
+    const moonAngle = (timeOfDay + 0.5) * Math.PI; // 与太阳相对
+    const moonRadius = Math.min(this.canvas.width, this.canvas.height) * 0.35;
+    const centerX = this.canvas.width / 2;
+    const centerY = this.canvas.height * 0.8;
+    
+    const moonX = centerX + Math.cos(moonAngle) * moonRadius;
+    const moonY = centerY - Math.sin(moonAngle) * moonRadius;
+    
+    // 只在月亮在地平线上方时渲染
+    if (moonY < centerY) {
+      const moonSize = 20;
+      
+      // 渲染月亮光晕 (较微弱)
+      const moonGlow = this.ctx.createRadialGradient(moonX, moonY, 0, moonX, moonY, moonSize * 1.5);
+      moonGlow.addColorStop(0, 'rgba(220, 220, 255, 0.2)');
+      moonGlow.addColorStop(1, 'rgba(220, 220, 255, 0)');
+      
+      this.ctx.fillStyle = moonGlow;
+      this.ctx.fillRect(moonX - moonSize * 1.5, moonY - moonSize * 1.5, moonSize * 3, moonSize * 3);
+      
+      // 渲染月亮本体
+      this.ctx.fillStyle = '#F0F8FF'; // 淡蓝白色
+      this.ctx.beginPath();
+      this.ctx.arc(moonX, moonY, moonSize, 0, Math.PI * 2);
+      this.ctx.fill();
+      
+      // 渲染月亮表面的暗影 (模拟月相)
+      this.ctx.fillStyle = 'rgba(180, 180, 180, 0.3)';
+      this.ctx.beginPath();
+      this.ctx.arc(moonX - moonSize * 0.3, moonY - moonSize * 0.2, moonSize * 0.3, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.beginPath();
+      this.ctx.arc(moonX + moonSize * 0.2, moonY + moonSize * 0.3, moonSize * 0.2, 0, Math.PI * 2);
+      this.ctx.fill();
+      
+      this.stats.drawCalls += 3; // 光晕、月亮、阴影
+    }
+  }
+  
+  /**
+   * 渲染星星 (TODO #17)
+   * Author: MCv2 Development Team
+   */
+  renderStars() {
+    const timeOfDay = this.environment.timeOfDay;
+    
+    // 计算星星亮度 (夜晚更亮)
+    let starAlpha = 0;
+    if (timeOfDay < 0.1 || timeOfDay > 0.9) {
+      starAlpha = 0.8; // 深夜
+    } else if (timeOfDay < 0.25 || timeOfDay > 0.75) {
+      starAlpha = Math.min(0.8, Math.max(0, (0.25 - Math.abs(timeOfDay - 0.5)) * 4)); // 渐变
+    }
+    
+    if (starAlpha > 0) {
+      // 生成固定的星星位置 (使用伪随机数生成器)
+      const starCount = 50;
+      const stars = [];
+      
+      for (let i = 0; i < starCount; i++) {
+        const seed = i * 12345; // 使用固定种子
+        const x = (this.simpleHash(seed) % this.canvas.width);
+        const y = (this.simpleHash(seed + 1) % (this.canvas.height * 0.6)); // 只在上半部显示
+        const size = 1 + (this.simpleHash(seed + 2) % 3); // 1-3像素大小
+        const brightness = 0.5 + ((this.simpleHash(seed + 3) % 500) / 1000); // 0.5-1.0亮度
+        
+        stars.push({ x, y, size, brightness });
+      }
+      
+      // 渲染星星
+      stars.forEach(star => {
+        const alpha = starAlpha * star.brightness;
+        this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        this.ctx.fillRect(star.x, star.y, star.size, star.size);
+        
+        // 为一些星星添加闪烁效果
+        if (star.brightness > 0.8 && Math.random() > 0.7) {
+          this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.5})`;
+          this.ctx.fillRect(star.x - 1, star.y, 3, 1); // 水平十字
+          this.ctx.fillRect(star.x, star.y - 1, 1, 3); // 垂直十字
+        }
+      });
+      
+      this.stats.drawCalls += starCount;
+    }
+  }
+  
+  /**
+   * 计算光照级别 (TODO #17)
+   * Author: MCv2 Development Team
+   * @param {number} worldY - 世界 Y 坐标
+   * @returns {number} 光照级别 (0-1)
+   */
+  calculateLightLevel(worldY) {
+    const timeOfDay = this.environment.timeOfDay;
+    
+    // 基础环境光照 (根据时间计算)
+    let ambientLight = 1.0; // 默认亮度
+    
+    if (timeOfDay < 0.2 || timeOfDay > 0.8) {
+      // 夜晚：非常暗
+      ambientLight = 0.3;
+    } else if (timeOfDay < 0.3 || timeOfDay > 0.7) {
+      // 黄昏/黎明：较暗
+      if (timeOfDay < 0.3) {
+        // 黎明渐亮
+        ambientLight = 0.3 + (timeOfDay - 0.2) / 0.1 * 0.4; // 0.3 到 0.7
+      } else {
+        // 黄昏渐暗
+        ambientLight = 0.7 - (timeOfDay - 0.7) / 0.1 * 0.4; // 0.7 到 0.3
+      }
+    } else {
+      // 白天：明亮
+      ambientLight = 0.7 + (1.0 - Math.abs(timeOfDay - 0.5) * 2) * 0.3; // 0.7 到 1.0
+    }
+    
+    // 深度光照衰减 (地下更暗)
+    const surfaceLevel = this.worldConfig.WORLD_HEIGHT * 0.7; // 假设地表附近
+    const depthFactor = Math.max(0.1, Math.min(1.0, worldY / surfaceLevel));
+    
+    // 综合光照计算
+    const finalLight = ambientLight * depthFactor;
+    
+    return Math.max(0.1, Math.min(1.0, finalLight)); // 限制在 0.1-1.0 范围
+  }
+  
+  /**
+   * 应用光照效果到颜色 (TODO #17)
+   * Author: MCv2 Development Team
+   * @param {string} color - 原始颜色
+   * @param {number} lightLevel - 光照级别 (0-1)
+   * @returns {string} 应用光照后的颜色
+   */
+  applyLighting(color, lightLevel) {
+    // 解析颜色
+    let r, g, b;
+    
+    if (color.startsWith('#')) {
+      // 十六进制颜色
+      r = parseInt(color.substr(1, 2), 16);
+      g = parseInt(color.substr(3, 2), 16);
+      b = parseInt(color.substr(5, 2), 16);
+    } else if (color.startsWith('rgb(')) {
+      // RGB 颜色
+      const values = color.match(/\d+/g);
+      r = parseInt(values[0]);
+      g = parseInt(values[1]);
+      b = parseInt(values[2]);
+    } else {
+      // 默认颜色（灰色）
+      r = g = b = 128;
+    }
+    
+    // 应用光照系数
+    r = Math.floor(r * lightLevel);
+    g = Math.floor(g * lightLevel);
+    b = Math.floor(b * lightLevel);
+    
+    // 在夜晚添加轻微的蓝色色调
+    if (lightLevel < 0.5) {
+      const nightTint = (0.5 - lightLevel) * 0.3; // 最多 30% 的夜晚色调
+      r = Math.floor(r * (1 - nightTint * 0.3));
+      g = Math.floor(g * (1 - nightTint * 0.2));
+      b = Math.floor(b * (1 + nightTint * 0.1)); // 轻微增加蓝色
+    }
+    
+    // 确保颜色值在有效范围内
+    r = Math.max(0, Math.min(255, r));
+    g = Math.max(0, Math.min(255, g));
+    b = Math.max(0, Math.min(255, b));
+    
+    return `rgb(${r}, ${g}, ${b})`;
   }
 }

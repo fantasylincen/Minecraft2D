@@ -310,7 +310,7 @@ function App() {
   };
   
   /**
-   * 更新游戏统计信息
+   * 更新游戏统计信息 (TODO #17: 添加时间信息)
    */
   const updateGameStats = (gameEngine, renderer, player) => {
     if (gameEngine && renderer && player) {
@@ -322,6 +322,9 @@ function App() {
       const worldConfig = gameEngine.getWorldConfig();
       const blockSize = worldConfig.BLOCK_SIZE;
       
+      // 获取时间信息 (TODO #17)
+      const timeInfo = gameEngine.getTimeInfo();
+      
       setGameStats({
         fps: stats.fps,
         blocksRendered: stats.blocksRendered,
@@ -332,7 +335,11 @@ function App() {
         isFlying: playerStatus.isFlying,
         flySpeed: playerStatus.flySpeed || 100,
         health: playerStatus.health || 100,      // 生命值 (TODO #18)
-        maxHealth: playerStatus.maxHealth || 100 // 最大生命值
+        maxHealth: playerStatus.maxHealth || 100, // 最大生命值
+        // 时间信息 (TODO #17)
+        timeString: timeInfo.timeString,
+        timePhase: timeInfo.phase,
+        timeOfDay: timeInfo.timeOfDay
       });
     }
   };
@@ -428,6 +435,42 @@ function App() {
     }
   };
   
+  /**
+   * 调节时间 (TODO #17)
+   * Author: MCv2 Development Team
+   */
+  const adjustTime = (delta) => {
+    if (gameEngineRef.current) {
+      const currentTime = gameEngineRef.current.timeSystem.timeOfDay;
+      const newTime = Math.max(0, Math.min(1, currentTime + delta));
+      
+      gameEngineRef.current.setTimeOfDay(newTime);
+    }
+  };
+  
+  /**
+   * 调节时间速度 (TODO #17)
+   * Author: MCv2 Development Team
+   */
+  const adjustTimeSpeed = (delta) => {
+    if (gameEngineRef.current) {
+      const currentSpeed = gameEngineRef.current.timeSystem.timeSpeed;
+      const newSpeed = Math.max(0.1, Math.min(5, currentSpeed + delta));
+      
+      gameEngineRef.current.setTimeSpeed(newSpeed);
+    }
+  };
+  
+  /**
+   * 切换时间系统状态 (TODO #17)
+   * Author: MCv2 Development Team
+   */
+  const toggleTimeSystem = () => {
+    if (gameEngineRef.current) {
+      gameEngineRef.current.toggleTimeSystem();
+    }
+  };
+  
   // 键盘事件监听，处理H键切换控制说明、F3键切换调试信息和帧率调节键
   useEffect(() => {
     const handleKeyPress = (event) => {
@@ -450,6 +493,31 @@ function App() {
       else if (event.key === ']') {
         event.preventDefault();
         adjustFPS(5); // 每次提高5帧
+      }
+      // T 键切换时间系统 (TODO #17)
+      else if (event.key === 't' || event.key === 'T') {
+        event.preventDefault();
+        toggleTimeSystem();
+      }
+      // , 键降低时间速度 (TODO #17)
+      else if (event.key === ',') {
+        event.preventDefault();
+        adjustTimeSpeed(-0.2);
+      }
+      // . 键提高时间速度 (TODO #17)
+      else if (event.key === '.') {
+        event.preventDefault();
+        adjustTimeSpeed(0.2);
+      }
+      // < 键向前调节时间 (TODO #17)
+      else if (event.key === '<') {
+        event.preventDefault();
+        adjustTime(-0.05); // 向前1.2小时
+      }
+      // > 键向后调节时间 (TODO #17)
+      else if (event.key === '>') {
+        event.preventDefault();
+        adjustTime(0.05); // 向后1.2小时
       }
     };
     
@@ -615,6 +683,10 @@ function App() {
                 ✈️ 飞行: {gameStats.flySpeed}%
               </span>
             )}
+            {/* 时间信息 (TODO #17) */}
+            <span style={{ color: '#FFD700', fontWeight: 'bold' }}>
+              🕰️ {gameStats.timeString} {gameStats.timePhase}
+            </span>
           </div>
         </div>
         
@@ -675,6 +747,10 @@ function App() {
               <li><strong>F3:</strong> 切换调试信息</li>
               <li><strong>F2:</strong> 打开/关闭配置面板</li>
               <li><strong>H键:</strong> 显示/隐藏控制说明</li>
+              <li><strong>T键:</strong> 切换时间系统开关</li>
+              <li><strong>,/.键:</strong> 减慢/加快时间流逝速度</li>
+              <li><strong>&lt;/&gt;键:</strong> 向前/向后调节时间</li>
+              <li><strong>[/]:</strong> 降低/提高帧率</li>
             </ul>
             <div style={{ marginTop: '10px', padding: '8px', background: 'rgba(135, 206, 235, 0.2)', borderRadius: '4px', border: '1px solid #87CEEB' }}>
               <strong style={{ color: '#87CEEB' }}>飞行模式:</strong>

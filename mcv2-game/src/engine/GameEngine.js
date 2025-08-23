@@ -20,6 +20,15 @@ export class GameEngine {
       lastRender: 0            // 上次渲染时间
     };
     
+    // 时间系统 (TODO #17)
+    this.timeSystem = {
+      timeOfDay: 0.5,          // 当前时间 (0-1，0.5为正午)
+      timeSpeed: 1.0,          // 时间流逝速度 (1.0为正常速度)
+      dayDuration: 120,        // 一天的持续时间（秒）
+      realTimeElapsed: 0,      // 真实时间经过（秒）
+      enabled: true            // 时间系统是否启用
+    };
+    
     // 子系统
     this.systems = {
       terrainGenerator: null,
@@ -269,6 +278,9 @@ export class GameEngine {
    * 更新游戏逻辑
    */
   update(deltaTime) {
+    // 更新时间系统 (TODO #17)
+    this.updateTimeSystem(deltaTime);
+    
     // 更新各个子系统
     if (this.systems.player) {
       this.systems.player.update(deltaTime, this.keys);
@@ -280,6 +292,11 @@ export class GameEngine {
     
     if (this.systems.terrainGenerator) {
       this.systems.terrainGenerator.update(deltaTime);
+    }
+    
+    // 同步时间到渲染器 (TODO #17)
+    if (this.systems.renderer) {
+      this.systems.renderer.setTimeOfDay(this.timeSystem.timeOfDay);
     }
   }
   
@@ -362,5 +379,102 @@ export class GameEngine {
         system.destroy();
       }
     });
+  }
+  
+  /**
+   * 更新时间系统 (TODO #17)
+   * Author: MCv2 Development Team
+   */
+  updateTimeSystem(deltaTime) {
+    if (!this.timeSystem.enabled) return;
+    
+    // 累计真实时间
+    this.timeSystem.realTimeElapsed += deltaTime;
+    
+    // 计算时间增量 (根据时间速度和一天的持续时间)
+    const timeIncrement = (deltaTime * this.timeSystem.timeSpeed) / this.timeSystem.dayDuration;
+    
+    // 更新当前时间
+    this.timeSystem.timeOfDay += timeIncrement;
+    
+    // 循环时间 (0-1 范围)
+    if (this.timeSystem.timeOfDay >= 1.0) {
+      this.timeSystem.timeOfDay -= 1.0;
+    } else if (this.timeSystem.timeOfDay < 0) {
+      this.timeSystem.timeOfDay += 1.0;
+    }
+  }
+  
+  /**
+   * 设置时间 (TODO #17)
+   * @param {number} time - 时间值 (0-1)
+   */
+  setTimeOfDay(time) {
+    this.timeSystem.timeOfDay = Math.max(0, Math.min(1, time));
+    console.log(`🕰️ 时间设置为: ${(this.timeSystem.timeOfDay * 24).toFixed(1)}时`);
+  }
+  
+  /**
+   * 设置时间速度 (TODO #17)
+   * @param {number} speed - 时间速度倍数
+   */
+  setTimeSpeed(speed) {
+    this.timeSystem.timeSpeed = Math.max(0, Math.min(10, speed));
+    console.log(`⏱️ 时间速度设置为: ${this.timeSystem.timeSpeed}x`);
+  }
+  
+  /**
+   * 设置一天的持续时间 (TODO #17)
+   * @param {number} duration - 持续时间（秒）
+   */
+  setDayDuration(duration) {
+    this.timeSystem.dayDuration = Math.max(10, Math.min(3600, duration));
+    console.log(`🌅 一天持续时间设置为: ${this.timeSystem.dayDuration}秒`);
+  }
+  
+  /**
+   * 切换时间系统状态 (TODO #17)
+   */
+  toggleTimeSystem() {
+    this.timeSystem.enabled = !this.timeSystem.enabled;
+    console.log(`🕰️ 时间系统: ${this.timeSystem.enabled ? '启用' : '禁用'}`);
+  }
+  
+  /**
+   * 获取时间系统信息 (TODO #17)
+   */
+  getTimeInfo() {
+    const hours = Math.floor(this.timeSystem.timeOfDay * 24);
+    const minutes = Math.floor((this.timeSystem.timeOfDay * 24 * 60) % 60);
+    
+    return {
+      timeOfDay: this.timeSystem.timeOfDay,
+      hours,
+      minutes,
+      timeString: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`,
+      timeSpeed: this.timeSystem.timeSpeed,
+      dayDuration: this.timeSystem.dayDuration,
+      enabled: this.timeSystem.enabled,
+      phase: this.getTimePhase()
+    };
+  }
+  
+  /**
+   * 获取时间阶段 (TODO #17)
+   */
+  getTimePhase() {
+    const time = this.timeSystem.timeOfDay;
+    
+    if (time < 0.25) {
+      return '夜晚';
+    } else if (time < 0.3) {
+      return '黎明';
+    } else if (time < 0.7) {
+      return '白天';
+    } else if (time < 0.8) {
+      return '黄昏';
+    } else {
+      return '夜晚';
+    }
   }
 }
