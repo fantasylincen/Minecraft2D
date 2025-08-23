@@ -27,7 +27,7 @@ function App() {
     isFlying: false,
     flySpeed: 100
   });
-  const [showControlsHelp, setShowControlsHelp] = useState(true); // 控制说明显示状态
+  const [showControlsHelp, setShowControlsHelp] = useState(false); // 控制说明默认隐藏 (TODO #21)
 
   useEffect(() => {
     let mounted = true;
@@ -303,12 +303,16 @@ function App() {
       const playerPos = player.getPosition();
       const playerStatus = player.getStatus();
       
+      // 将像素坐标转换为世界方块坐标系 (TODO #22)
+      const worldConfig = gameEngine.getWorldConfig();
+      const blockSize = worldConfig.BLOCK_SIZE;
+      
       setGameStats({
         fps: stats.fps,
         blocksRendered: stats.blocksRendered,
         playerPos: {
-          x: Math.round(playerPos.x),
-          y: Math.round(playerPos.y)
+          x: Math.round(playerPos.x / blockSize * 10) / 10, // 保留一位小数
+          y: Math.round(playerPos.y / blockSize * 10) / 10  // 保留一位小数
         },
         isFlying: playerStatus.isFlying,
         flySpeed: playerStatus.flySpeed || 100
@@ -550,41 +554,44 @@ function App() {
             <h2>MCv2 - 2D Minecraft</h2>
             <span className="version">v1.0.0</span>
           </div>
-          
-          <div className="game-stats">
-            <span>FPS: {gameStats.fps}</span>
-            <span>方块: {gameStats.blocksRendered}</span>
-            <span>位置: ({gameStats.playerPos.x}, {gameStats.playerPos.y})</span>
-            {gameStats.isFlying && (
-              <span style={{ color: '#87CEEB', fontWeight: 'bold' }}>
-                ✈️ 飞行: {gameStats.flySpeed}%
-              </span>
-            )}
-          </div>
         </div>
         
-        {/* 控制面板 */}
-        <div className="control-panel">
-          <button onClick={toggleDebugInfo}>
-            {debugInfo ? '隐藏调试信息' : '显示调试信息'}
-          </button>
-          <button onClick={saveGame}>保存游戏</button>
-          <button onClick={regenerateWorld}>重新生成世界</button>
-          <button 
-            onClick={toggleConfigPanel}
-            style={{
-              background: 'linear-gradient(45deg, #4a90e2, #357abd)',
-              color: 'white',
-              border: 'none',
-              padding: '8px 16px',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-            }}
-          >
-            ⚙️ 游戏配置
-          </button>
+        {/* 左下角控制区域 */}
+        <div className="left-control-area">
+          {/* 控制面板 - 移动到左下角 */}
+          <div className="control-panel">
+            <button onClick={toggleDebugInfo}>
+              {debugInfo ? '隐藏调试信息' : '显示调试信息'}
+            </button>
+            <button onClick={saveGame}>保存游戏</button>
+            <button onClick={regenerateWorld}>重新生成世界</button>
+            <button 
+              onClick={toggleConfigPanel}
+              style={{
+                background: 'linear-gradient(45deg, #4a90e2, #357abd)',
+                color: 'white',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+              }}
+            >
+              ⚙️ 游戏配置
+            </button>
+          </div>
+          
+          {/* 显示控制说明按钮（当隐藏时） */}
+          {!showControlsHelp && (
+            <button 
+              className="show-controls-btn"
+              onClick={toggleControlsHelp}
+              title="显示控制说明 (H键)"
+            >
+              🎮 控制说明
+            </button>
+          )}
         </div>
         
         {/* 控制说明 */}
@@ -618,18 +625,22 @@ function App() {
             </div>
           </div>
         )}
+
         
-        {/* 显示控制说明按钮（当隐藏时） */}
-        {!showControlsHelp && (
-          <button 
-            className="show-controls-btn"
-            onClick={toggleControlsHelp}
-            title="显示控制说明 (H键)"
-          >
-            🎮 控制说明
-          </button>
-        )}
-        
+        {/* 游戏状态显示框 - 右下角 (TODO #20) */}
+        <div className="game-stats-panel">
+          <div className="game-stats">
+            <span>FPS: {gameStats.fps}</span>
+            <span>方块: {gameStats.blocksRendered}</span>
+            <span>位置: ({gameStats.playerPos.x}, {gameStats.playerPos.y})</span>
+            {gameStats.isFlying && (
+              <span style={{ color: '#87CEEB', fontWeight: 'bold' }}>
+                ✈️ 飞行: {gameStats.flySpeed}%
+              </span>
+            )}
+          </div>
+        </div>
+
         {/* 调试控制台 */}
         <DebugConsole 
           gameEngine={gameEngineRef.current}
