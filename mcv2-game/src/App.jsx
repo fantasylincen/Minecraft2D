@@ -584,16 +584,7 @@ function App() {
             <button onClick={regenerateWorld}>重新生成世界</button>
             <button 
               onClick={toggleConfigPanel}
-              style={{
-                background: 'linear-gradient(45deg, #4a90e2, #357abd)',
-                color: 'white',
-                border: 'none',
-                padding: '8px 16px',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-              }}
+              className="config-panel-btn"
             >
               ⚙️ 游戏配置
             </button>

@@ -119,13 +119,15 @@ body {
   background: rgba(76, 175, 80, 0.8);
   color: white;
   border: none;
-  padding: 10px 15px;
+  padding: 6px 12px; /* 缩小尺寸 */
   border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 12px; /* 缩小字体 */
   font-weight: 500;
   transition: all 0.2s ease;
   border: 1px solid #4CAF50;
+  backdrop-filter: blur(5px); /* 添加统一的模糊效果 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* 添加统一的阴影 */
 }
 
 .control-panel button:hover {
@@ -213,7 +215,56 @@ body {
   font-weight: 600;
 }
 
+/* 显示控制说明按钮样式 - 与其他按钮保持统一风格 (TODO #26) */
+.show-controls-btn {
+  background: rgba(255, 193, 7, 0.8) !important; /* 黄色主题，区别于其他按钮 */
+  color: white !important;
+  border: 1px solid #FFC107 !important;
+  padding: 6px 12px !important; /* 与其他按钮相同的尺寸 */
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-size: 12px !important; /* 与其他按钮相同的字体大小 */
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+  backdrop-filter: blur(5px) !important; /* 统一的模糊效果 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important; /* 统一的阴影 */
+  margin-top: 8px; /* 与控制面板的间距 */
+}
 
+.show-controls-btn:hover {
+  background: rgba(255, 193, 7, 1) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3) !important;
+}
+
+.show-controls-btn:active {
+  transform: translateY(0) !important;
+}
+
+/* 游戏配置按钮特殊样式 - 蓝色主题 (TODO #26) */
+.config-panel-btn {
+  background: rgba(74, 144, 226, 0.8) !important; /* 蓝色主题 */
+  color: white !important;
+  border: 1px solid #4a90e2 !important;
+  padding: 6px 12px !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+  backdrop-filter: blur(5px) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+.config-panel-btn:hover {
+  background: rgba(74, 144, 226, 1) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(74, 144, 226, 0.3) !important;
+}
+
+.config-panel-btn:active {
+  transform: translateY(0) !important;
+}
 
 /* 加载屏幕 */
 .loading-screen {
