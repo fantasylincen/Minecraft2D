@@ -75,15 +75,15 @@ export class Player {
     // 更新控制输入
     this.updateControls(keys);
     
-    // 应用物理模拟
+    // 应用物理模拟（但不移动位置）
     this.updatePhysics(deltaTime);
     
-    // 处理碰撞检测
-    this.handleCollisions();
+    // 分别处理X和Y方向的移动和碰撞
+    this.moveHorizontal(deltaTime);
+    this.moveVertical(deltaTime);
     
-    // 更新位置
-    this.position.x += this.physics.velocity.x * deltaTime;
-    this.position.y += this.physics.velocity.y * deltaTime;
+    // 最终安全检查，确保玩家不嵌入方块
+    this.ensureNotEmbedded();
     
     // 边界限制（防止掉出世界）
     this.constrainToWorld();
@@ -93,14 +93,12 @@ export class Player {
    * 更新控制输入
    */
   updateControls(keys) {
-    // WASD 控制
+    // WASD 控制 - 只用于水平移动
     this.controls.left = keys['KeyA'] || keys['ArrowLeft'];
     this.controls.right = keys['KeyD'] || keys['ArrowRight'];
-    this.controls.up = keys['KeyW'] || keys['ArrowUp'];
-    this.controls.down = keys['KeyS'] || keys['ArrowDown'];
     
-    // 跳跃控制（检测按键按下瞬间）
-    const jumpPressed = keys['Space'] || keys['KeyW'] || keys['ArrowUp'];
+    // 跳跃控制 - 只使用空格键，避免冲突
+    const jumpPressed = keys['Space'];
     this.controls.jump = jumpPressed && !this.controls.prevJump;
     this.controls.prevJump = jumpPressed;
   }
@@ -109,7 +107,7 @@ export class Player {
    * 更新物理模拟
    */
   updatePhysics(deltaTime) {
-    // 水平移动
+    // 水平移动 - 简化逗辑
     if (this.controls.left) {
       this.physics.velocity.x = -this.physics.speed;
     } else if (this.controls.right) {
@@ -122,8 +120,8 @@ export class Player {
       }
     }
     
-    // 跳跃
-    if (this.controls.jump && this.physics.canJump && this.physics.onGround) {
+    // 跳跃 - 简化条件
+    if (this.controls.jump && this.physics.onGround) {
       this.physics.velocity.y = this.physics.jumpForce;
       this.physics.onGround = false;
       this.physics.canJump = false;
@@ -141,18 +139,23 @@ export class Player {
   }
   
   /**
-   * 处理碰撞检测
+   * 水平移动和碰撞检测
    */
-  handleCollisions() {
-    if (!this.terrainGenerator) return;
+  moveHorizontal(deltaTime) {
+    if (Math.abs(this.physics.velocity.x) < 0.1) return;
     
     const blockSize = this.worldConfig.BLOCK_SIZE;
+    const moveDistance = this.physics.velocity.x * deltaTime;
     
-    // 计算玩家边界
-    const left = this.position.x - this.size.width / 2;
-    const right = this.position.x + this.size.width / 2;
-    const top = this.position.y + this.size.height / 2;
-    const bottom = this.position.y - this.size.height / 2;
+    // 尝试移动
+    this.position.x += moveDistance;
+    
+    // 计算玩家边界（添加小偶置避免精度问题）
+    const epsilon = 0.01;
+    const left = this.position.x - this.size.width / 2 + epsilon;
+    const right = this.position.x + this.size.width / 2 - epsilon;
+    const top = this.position.y + this.size.height / 2 - epsilon;
+    const bottom = this.position.y - this.size.height / 2 + epsilon;
     
     // 转换为方块坐标
     const leftBlock = Math.floor(left / blockSize);
@@ -160,55 +163,168 @@ export class Player {
     const topBlock = Math.floor(top / blockSize);
     const bottomBlock = Math.floor(bottom / blockSize);
     
-    // 重置地面状态
-    this.physics.onGround = false;
-    
-    // 检查垂直碰撞（地面和天花板）
-    if (this.physics.velocity.y <= 0) { // 下落或静止
-      for (let x = leftBlock; x <= rightBlock; x++) {
-        const blockId = this.terrainGenerator.getBlock(x, bottomBlock);
-        if (blockConfig.isSolid(blockId)) {
-          const blockTop = (bottomBlock + 1) * blockSize;
-          this.position.y = blockTop + this.size.height / 2;
-          this.physics.velocity.y = 0;
-          this.physics.onGround = true;
-          this.physics.canJump = true;
-          break;
-        }
-      }
-    } else if (this.physics.velocity.y > 0) { // 上升
-      for (let x = leftBlock; x <= rightBlock; x++) {
-        const blockId = this.terrainGenerator.getBlock(x, topBlock);
-        if (blockConfig.isSolid(blockId)) {
-          const blockBottom = topBlock * blockSize;
-          this.position.y = blockBottom - this.size.height / 2;
-          this.physics.velocity.y = 0;
-          break;
-        }
-      }
-    }
-    
-    // 检查水平碰撞（左右墙壁）
+    // 检查左右碰撞
     if (this.physics.velocity.x < 0) { // 向左移动
       for (let y = bottomBlock; y <= topBlock; y++) {
         const blockId = this.terrainGenerator.getBlock(leftBlock, y);
         if (blockConfig.isSolid(blockId)) {
+          // 撤销移动并贴墙（精确位置）
           const blockRight = (leftBlock + 1) * blockSize;
-          this.position.x = blockRight + this.size.width / 2;
+          this.position.x = blockRight + this.size.width / 2 + epsilon;
           this.physics.velocity.x = 0;
-          break;
+          return;
         }
       }
-    } else if (this.physics.velocity.x > 0) { // 向右移动
+    } else { // 向右移动
       for (let y = bottomBlock; y <= topBlock; y++) {
         const blockId = this.terrainGenerator.getBlock(rightBlock, y);
         if (blockConfig.isSolid(blockId)) {
+          // 撤销移动并贴墙（精确位置）
           const blockLeft = rightBlock * blockSize;
-          this.position.x = blockLeft - this.size.width / 2;
+          this.position.x = blockLeft - this.size.width / 2 - epsilon;
           this.physics.velocity.x = 0;
-          break;
+          return;
         }
       }
+    }
+  }
+  
+  /**
+   * 垂直移动和碰撞检测
+   */
+  moveVertical(deltaTime) {
+    if (Math.abs(this.physics.velocity.y) < 0.1) return;
+    
+    const blockSize = this.worldConfig.BLOCK_SIZE;
+    const moveDistance = this.physics.velocity.y * deltaTime;
+    
+    // 尝试移动
+    this.position.y += moveDistance;
+    
+    // 重置地面状态
+    this.physics.onGround = false;
+    
+    // 计算玩家边界（添加小偶置避免精度问题）
+    const epsilon = 0.01;
+    const left = this.position.x - this.size.width / 2 + epsilon;
+    const right = this.position.x + this.size.width / 2 - epsilon;
+    const top = this.position.y + this.size.height / 2 - epsilon;
+    const bottom = this.position.y - this.size.height / 2 + epsilon;
+    
+    // 转换为方块坐标
+    const leftBlock = Math.floor(left / blockSize);
+    const rightBlock = Math.floor(right / blockSize);
+    const topBlock = Math.floor(top / blockSize);
+    const bottomBlock = Math.floor(bottom / blockSize);
+    
+    if (this.physics.velocity.y <= 0) { // 下落或静止
+      // 检查地面碰撞
+      for (let x = leftBlock; x <= rightBlock; x++) {
+        const blockId = this.terrainGenerator.getBlock(x, bottomBlock);
+        if (blockConfig.isSolid(blockId)) {
+          // 着陆（精确位置）
+          const blockTop = (bottomBlock + 1) * blockSize;
+          this.position.y = blockTop + this.size.height / 2 + epsilon;
+          this.physics.velocity.y = 0;
+          this.physics.onGround = true;
+          this.physics.canJump = true;
+          return;
+        }
+      }
+    } else { // 上升
+      // 检查天花板碰撞
+      for (let x = leftBlock; x <= rightBlock; x++) {
+        const blockId = this.terrainGenerator.getBlock(x, topBlock);
+        if (blockConfig.isSolid(blockId)) {
+          // 撞头（精确位置）
+          const blockBottom = topBlock * blockSize;
+          this.position.y = blockBottom - this.size.height / 2 - epsilon;
+          this.physics.velocity.y = 0;
+          return;
+        }
+      }
+    }
+  }
+  
+
+  /**
+   * 确保玩家不嵌入任何方块（最终安全检查）
+   */
+  ensureNotEmbedded() {
+    if (!this.terrainGenerator) return;
+    
+    const blockSize = this.worldConfig.BLOCK_SIZE;
+    const epsilon = 0.1; // 略大一些的安全边距
+    
+    // 计算玩家边界
+    const left = this.position.x - this.size.width / 2 + epsilon;
+    const right = this.position.x + this.size.width / 2 - epsilon;
+    const top = this.position.y + this.size.height / 2 - epsilon;
+    const bottom = this.position.y - this.size.height / 2 + epsilon;
+    
+    const leftBlock = Math.floor(left / blockSize);
+    const rightBlock = Math.floor(right / blockSize);
+    const topBlock = Math.floor(top / blockSize);
+    const bottomBlock = Math.floor(bottom / blockSize);
+    
+    // 检查是否嵌入任何固体方块
+    for (let x = leftBlock; x <= rightBlock; x++) {
+      for (let y = bottomBlock; y <= topBlock; y++) {
+        const blockId = this.terrainGenerator.getBlock(x, y);
+        if (blockConfig.isSolid(blockId)) {
+          // 发现嵌入，将玩家推出最近的安全位置
+          this.pushOutOfBlock(x, y, blockSize);
+          return; // 找到一个就立即处理
+        }
+      }
+    }
+  }
+  
+  /**
+   * 将玩家推出指定方块
+   */
+  pushOutOfBlock(blockX, blockY, blockSize) {
+    const blockLeft = blockX * blockSize;
+    const blockRight = (blockX + 1) * blockSize;
+    const blockBottom = blockY * blockSize;
+    const blockTop = (blockY + 1) * blockSize;
+    
+    const playerLeft = this.position.x - this.size.width / 2;
+    const playerRight = this.position.x + this.size.width / 2;
+    const playerBottom = this.position.y - this.size.height / 2;
+    const playerTop = this.position.y + this.size.height / 2;
+    
+    // 计算各个方向的推出距离
+    const pushLeft = blockLeft - playerRight; // 向左推
+    const pushRight = blockRight - playerLeft; // 向右推
+    const pushDown = blockBottom - playerTop; // 向下推
+    const pushUp = blockTop - playerBottom; // 向上推
+    
+    // 找到最小的推出距离
+    const minPush = Math.min(
+      Math.abs(pushLeft),
+      Math.abs(pushRight),
+      Math.abs(pushDown),
+      Math.abs(pushUp)
+    );
+    
+    const epsilon = 0.1;
+    
+    // 按照最小距离推出
+    if (Math.abs(pushLeft) === minPush) {
+      this.position.x = blockLeft - this.size.width / 2 - epsilon;
+      this.physics.velocity.x = Math.min(0, this.physics.velocity.x);
+    } else if (Math.abs(pushRight) === minPush) {
+      this.position.x = blockRight + this.size.width / 2 + epsilon;
+      this.physics.velocity.x = Math.max(0, this.physics.velocity.x);
+    } else if (Math.abs(pushDown) === minPush) {
+      this.position.y = blockBottom - this.size.height / 2 - epsilon;
+      this.physics.velocity.y = Math.min(0, this.physics.velocity.y);
+    } else {
+      this.position.y = blockTop + this.size.height / 2 + epsilon;
+      this.physics.velocity.y = Math.max(0, this.physics.velocity.y);
+      this.physics.onGround = true;
+      this.physics.canJump = true;
     }
   }
   
