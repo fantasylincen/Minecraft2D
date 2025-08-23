@@ -49,11 +49,29 @@ export class GameEngine {
     try {
       console.log('🚀 开始初始化游戏引擎...');
       
+      // 检查Canvas元素
+      if (!this.canvas) {
+        throw new Error('没有提供Canvas元素');
+      }
+      
+      // 检查浏览器支持
+      if (typeof window === 'undefined') {
+        throw new Error('需要浏览器环境');
+      }
+      
+      if (typeof requestAnimationFrame === 'undefined') {
+        throw new Error('浏览器不支持requestAnimationFrame');
+      }
+      
+      console.log('✅ 浏览器环境检查通过');
+      
       // 设置画布
       this.setupCanvas();
+      console.log('✅ 画布设置完成');
       
       // 初始化输入处理
       this.initializeInput();
+      console.log('✅ 输入系统初始化完成');
       
       console.log('✅ 游戏引擎初始化完成');
       return true;
@@ -71,10 +89,34 @@ export class GameEngine {
       throw new Error('Canvas element is required');
     }
     
+    // 检查Canvas支持
+    if (!this.canvas.getContext) {
+      throw new Error('浏览器不支持Canvas');
+    }
+    
+    // 检查2D上下文
+    const testCtx = this.canvas.getContext('2d');
+    if (!testCtx) {
+      throw new Error('无法获取Canvas 2D上下文');
+    }
+    
+    console.log('Canvas信息:', {
+      tagName: this.canvas.tagName,
+      width: this.canvas.width,
+      height: this.canvas.height,
+      offsetWidth: this.canvas.offsetWidth,
+      offsetHeight: this.canvas.offsetHeight
+    });
+    
     // 设置画布大小
     const resizeCanvas = () => {
-      this.canvas.width = window.innerWidth;
-      this.canvas.height = window.innerHeight;
+      try {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+        console.log('画布大小设置为:', this.canvas.width, 'x', this.canvas.height);
+      } catch (error) {
+        console.error('设置画布大小失败:', error);
+      }
     };
     
     resizeCanvas();
@@ -82,6 +124,8 @@ export class GameEngine {
     
     // 设置渲染上下文属性
     this.ctx.imageSmoothingEnabled = false; // 像素风格，不使用抗锯齿
+    
+    console.log('✅ 画布设置完成');
   }
   
   /**

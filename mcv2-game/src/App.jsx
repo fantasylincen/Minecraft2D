@@ -22,9 +22,63 @@ function App() {
   });
 
   useEffect(() => {
-    initializeGame();
+    let mounted = true;
+    
+    // 确保Canvas元素已经准备好后再初始化游戏
+    const initGame = async () => {
+      // 等待DOM完全渲染
+      await new Promise(resolve => setTimeout(resolve, 150));
+      
+      if (!mounted) return;
+      
+      // 检查Canvas是否准备好
+      let retryCount = 0;
+      const maxRetries = 15;
+      
+      const checkCanvasAndInit = async () => {
+        if (!mounted) return;
+        
+        const canvas = canvasRef.current;
+        console.log(`🔍 检查Canvas状态 (尝试 ${retryCount + 1}/${maxRetries + 1}):`, {
+          canvasExists: !!canvas,
+          canvasParent: canvas?.parentElement?.tagName,
+          canvasSize: canvas ? `${canvas.offsetWidth}x${canvas.offsetHeight}` : 'N/A',
+          hasGetContext: canvas ? !!canvas.getContext : false
+        });
+        
+        if (canvas && canvas.getContext && canvas.offsetWidth > 0 && canvas.offsetHeight > 0) {
+          try {
+            // 测试Canvas是否真正可用
+            const testCtx = canvas.getContext('2d');
+            if (testCtx) {
+              console.log('✅ Canvas元素已就绪，开始初始化游戏');
+              await initializeGame();
+              return;
+            }
+          } catch (error) {
+            console.warn('⚠️ Canvas getContext测试失败:', error);
+          }
+        }
+        
+        if (retryCount < maxRetries) {
+          retryCount++;
+          console.log(`⏳ Canvas未准备好，${300}ms后重试...`);
+          setTimeout(checkCanvasAndInit, 300);
+        } else {
+          console.error('❌ Canvas元素未能在预期时间内准备好');
+          if (mounted) {
+            setGameStatus('error');
+          }
+        }
+      };
+      
+      checkCanvasAndInit();
+    };
+    
+    initGame();
     
     return () => {
+      mounted = false;
       if (gameEngineRef.current) {
         gameEngineRef.current.destroy();
       }
@@ -40,50 +94,85 @@ function App() {
       const canvas = canvasRef.current;
       
       if (!canvas) {
-        throw new Error('Canvas element not found');
+        throw new Error('Canvas element not found - DOM may not be ready');
+      }
+      
+      // 检查Canvas的基本属性
+      if (!canvas.getContext) {
+        throw new Error('Canvas does not support getContext method');
+      }
+      
+      // 确保Canvas有正确的尺寸
+      if (canvas.offsetWidth === 0 || canvas.offsetHeight === 0) {
+        throw new Error(`Canvas has invalid size: ${canvas.offsetWidth}x${canvas.offsetHeight}`);
+      }
+      
+      // 测试2D上下文是否可用
+      const testCtx = canvas.getContext('2d');
+      if (!testCtx) {
+        throw new Error('Failed to get 2D rendering context');
       }
 
       console.log('🎮 开始初始化MCv2游戏...');
+      console.log('Canvas element:', canvas);
+      console.log('Canvas size:', canvas.offsetWidth, 'x', canvas.offsetHeight);
       
       // 创建游戏引擎
+      console.log('创建游戏引擎...');
       const gameEngine = new GameEngine(canvas);
       gameEngineRef.current = gameEngine;
       
       // 初始化游戏引擎
+      console.log('初始化游戏引擎...');
       const success = await gameEngine.initialize();
       if (!success) {
         throw new Error('游戏引擎初始化失败');
       }
+      console.log('✅ 游戏引擎初始化成功');
       
       // 创建存储管理器
+      console.log('创建存储管理器...');
       const storageManager = new StorageManager();
       
       // 创建地形生成器
+      console.log('创建地形生成器...');
       const terrainGenerator = new TerrainGenerator(gameEngine.getWorldConfig());
       
       // 创建玩家
+      console.log('创建玩家...');
       const player = new Player(gameEngine.getWorldConfig());
       player.setTerrainGenerator(terrainGenerator);
       
       // 创建摄像机
+      console.log('创建摄像机...');
       const camera = new Camera(canvas, gameEngine.getWorldConfig());
       camera.setTarget(player);
       
       // 创建渲染器
+      console.log('创建渲染器...');
       const renderer = new Renderer(canvas, gameEngine.getWorldConfig());
       renderer.setReferences(camera, terrainGenerator, player);
       
       // 注册所有子系统到游戏引擎
+      console.log('注册子系统...');
       gameEngine.registerSystem('terrainGenerator', terrainGenerator);
       gameEngine.registerSystem('player', player);
       gameEngine.registerSystem('camera', camera);
       gameEngine.registerSystem('renderer', renderer);
       gameEngine.registerSystem('storageManager', storageManager);
       
+      console.log('✅ 所有子系统注册完成');
+      
       // 尝试加载保存的游戏数据
-      loadGameData(storageManager, player, terrainGenerator, camera);
+      console.log('加载游戏数据...');
+      try {
+        loadGameData(storageManager, player, terrainGenerator, camera);
+      } catch (loadError) {
+        console.warn('⚠️ 加载游戏数据失败，使用默认设置:', loadError);
+      }
       
       // 启动游戏循环
+      console.log('启动游戏循环...');
       gameEngine.start();
       
       // 设置状态更新定时器
@@ -92,6 +181,7 @@ function App() {
       }, 1000);
       
       // 启动自动保存
+      console.log('启动自动保存...');
       storageManager.startAutoSave(() => {
         saveGameData(storageManager, player, terrainGenerator, camera, renderer);
       }, 30000); // 30秒自动保存
@@ -107,7 +197,19 @@ function App() {
       
     } catch (error) {
       console.error('❌ 游戏初始化失败:', error);
+      console.error('错误堆栈:', error.stack);
       setGameStatus('error');
+      
+      // 显示更详细的错误信息
+      const errorDetails = {
+        message: error.message,
+        stack: error.stack,
+        canvas: canvasRef.current ? 'Available' : 'Not found',
+        canvasReady: canvasRef.current && canvasRef.current.getContext ? 'Ready' : 'Not ready',
+        localStorage: typeof localStorage !== 'undefined' ? 'Available' : 'Not available',
+        timestamp: new Date().toISOString()
+      };
+      console.error('错误详情:', errorDetails);
     }
   };
   
@@ -230,11 +332,45 @@ function App() {
   // 渲染加载状态
   if (gameStatus === 'loading' || gameStatus === 'initializing') {
     return (
-      <div className="loading-screen">
-        <div className="loading-content">
-          <h1>MCv2 - 2D Minecraft</h1>
-          <div className="loading-spinner"></div>
-          <p>{gameStatus === 'loading' ? '正在加载...' : '正在初始化游戏引擎...'}</p>
+      <div className="game-container">
+        {/* 游戏画布 - 在加载时也要渲染 */}
+        <canvas
+          ref={canvasRef}
+          className="game-canvas"
+          width={800}
+          height={600}
+          tabIndex={0}
+          style={{
+            display: 'block',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            zIndex: 1,
+            background: '#222' // 加载时显示深色背景
+          }}
+        />
+        
+        {/* 加载覆盖层 */}
+        <div className="loading-screen" style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 10,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(0, 0, 0, 0.8)',
+          color: 'white'
+        }}>
+          <div className="loading-content">
+            <h1>MCv2 - 2D Minecraft</h1>
+            <div className="loading-spinner"></div>
+            <p>{gameStatus === 'loading' ? '正在加载...' : '正在初始化游戏引擎...'}</p>
+          </div>
         </div>
       </div>
     );
@@ -243,11 +379,64 @@ function App() {
   // 渲染错误状态
   if (gameStatus === 'error') {
     return (
-      <div className="error-screen">
-        <div className="error-content">
-          <h1>游戏启动失败</h1>
-          <p>抱歉，游戏无法正常启动。请刷新页面重试。</p>
-          <button onClick={() => window.location.reload()}>重新加载</button>
+      <div className="game-container">
+        {/* 游戏画布 - 错误时也保留 */}
+        <canvas
+          ref={canvasRef}
+          className="game-canvas"
+          width={800}
+          height={600}
+          tabIndex={0}
+          style={{
+            display: 'block',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            zIndex: 1,
+            background: '#333'
+          }}
+        />
+        
+        {/* 错误覆盖层 */}
+        <div className="error-screen" style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 10,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(0, 0, 0, 0.9)',
+          color: 'white'
+        }}>
+          <div className="error-content">
+            <h1>游戏启动失败</h1>
+            <p>抱歉，游戏无法正常启动。请检查浏览器控制台获取详细错误信息。</p>
+            <div style={{ margin: '20px 0', padding: '10px', background: 'rgba(255,255,255,0.1)', borderRadius: '8px' }}>
+              <h3>可能的解决方案：</h3>
+              <ul style={{ textAlign: 'left', marginTop: '10px' }}>
+                <li>确保使用现代浏览器（支持ES6模块）</li>
+                <li>检查浏览器控制台的错误信息</li>
+                <li>尝试刷新页面重新加载</li>
+                <li>确保JavaScript已启用</li>
+                <li>检查网络连接</li>
+              </ul>
+            </div>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button onClick={() => window.location.reload()}>重新加载</button>
+              <button onClick={() => {
+                localStorage.clear();
+                window.location.reload();
+              }}>清除数据并重新加载</button>
+            </div>
+            <p style={{ marginTop: '20px', fontSize: '14px', opacity: '0.8' }}>
+              如果问题持续存在，请打开浏览器开发者工具查看控制台错误信息。
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -259,7 +448,18 @@ function App() {
       <canvas
         ref={canvasRef}
         className="game-canvas"
+        width={800}
+        height={600}
         tabIndex={0}
+        style={{
+          display: 'block',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 1
+        }}
       />
       
       {/* 游戏UI */}

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang=\"zh-CN\">
+<head>
+    <meta charset=\"UTF-8\">
+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+    <title>MCv2 游戏测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .test-controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid #4CAF50;
+        }
+        
+        .btn:hover {
+            background: #45a049;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+        }
+        
+        .btn:disabled {
+            background: #666;
+            border-color: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-secondary {
+            background: #2196F3;
+            border-color: #2196F3;
+        }
+        
+        .btn-secondary:hover {
+            background: #1976D2;
+        }
+        
+        .test-status {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+        
+        .loading {
+            color: #FFC107;
+        }
+        
+        .success {
+            color: #4CAF50;
+        }
+        
+        .error {
+            color: #f44336;
+        }
+        
+        .test-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .summary-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .summary-card h3 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .summary-card p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .test-results {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .test-results h3 {
+            margin-bottom: 15px;
+            color: #4CAF50;
+        }
+        
+        .test-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .test-item:last-child {
+            border-bottom: none;
+        }
+        
+        .test-name {
+            font-weight: 500;
+        }
+        
+        .test-status-icon {
+            font-size: 1.2rem;
+        }
+        
+        .passed {
+            color: #4CAF50;
+        }
+        
+        .failed {
+            color: #f44336;
+        }
+        
+        .test-error {
+            font-size: 0.9rem;
+            color: #ff6b6b;
+            margin-top: 5px;
+            font-style: italic;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .test-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class=\"container\">
+        <div class=\"header\">
+            <h1>🧪 MCv2 游戏测试</h1>
+            <p>全面测试游戏的所有核心功能模块</p>
+        </div>
+        
+        <div class=\"test-controls\">
+            <button id=\"runTestsBtn\" class=\"btn\">🚀 运行所有测试</button>
+            <button id=\"viewGameBtn\" class=\"btn btn-secondary\">🎮 查看游戏</button>
+            <button id=\"clearResultsBtn\" class=\"btn btn-secondary\">🗑️ 清空结果</button>
+        </div>
+        
+        <div id=\"testStatus\" class=\"test-status\"></div>
+        
+        <div id=\"progressContainer\" style=\"display: none;\">
+            <div class=\"progress-bar\">
+                <div id=\"progressFill\" class=\"progress-fill\" style=\"width: 0%;\"></div>
+            </div>
+        </div>
+        
+        <div id=\"testSummary\" class=\"test-summary\" style=\"display: none;\"></div>
+        
+        <div id=\"testResults\" class=\"test-results\" style=\"display: none;\">
+            <h3>📋 详细测试结果</h3>
+            <div id=\"testList\"></div>
+        </div>
+    </div>
+    
+    <script type=\"module\">
+        import GameTest from './src/tests/GameTest.js';
+        
+        let testRunner = null;
+        
+        // 获取DOM元素
+        const runTestsBtn = document.getElementById('runTestsBtn');
+        const viewGameBtn = document.getElementById('viewGameBtn');
+        const clearResultsBtn = document.getElementById('clearResultsBtn');
+        const testStatus = document.getElementById('testStatus');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const testSummary = document.getElementById('testSummary');
+        const testResults = document.getElementById('testResults');
+        const testList = document.getElementById('testList');
+        
+        // 运行测试按钮点击事件
+        runTestsBtn.addEventListener('click', async () => {
+            await runTests();
+        });
+        
+        // 查看游戏按钮点击事件
+        viewGameBtn.addEventListener('click', () => {
+            window.open('/', '_blank');
+        });
+        
+        // 清空结果按钮点击事件
+        clearResultsBtn.addEventListener('click', () => {
+            clearResults();
+        });
+        
+        // 运行测试函数
+        async function runTests() {
+            try {
+                // 禁用按钮
+                runTestsBtn.disabled = true;
+                runTestsBtn.textContent = '🔄 测试运行中...';
+                
+                // 显示状态
+                testStatus.textContent = '正在初始化测试环境...';
+                testStatus.className = 'test-status loading';
+                
+                // 显示进度条
+                progressContainer.style.display = 'block';
+                progressFill.style.width = '0%';
+                
+                // 隐藏之前的结果
+                testSummary.style.display = 'none';
+                testResults.style.display = 'none';
+                
+                // 创建测试运行器
+                testRunner = new GameTest();
+                
+                // 模拟进度更新
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += Math.random() * 10;
+                    if (progress > 90) progress = 90;
+                    progressFill.style.width = progress + '%';
+                }, 100);
+                
+                // 运行测试
+                testStatus.textContent = '正在运行测试...';
+                const summary = await testRunner.runAllTests();
+                
+                // 清除进度定时器
+                clearInterval(progressInterval);
+                progressFill.style.width = '100%';
+                
+                // 显示结果
+                setTimeout(() => {
+                    displayResults(summary);
+                    progressContainer.style.display = 'none';
+                    
+                    // 恢复按钮
+                    runTestsBtn.disabled = false;
+                    runTestsBtn.textContent = '🚀 运行所有测试';
+                }, 500);
+                
+            } catch (error) {
+                console.error('测试执行失败:', error);
+                testStatus.textContent = `测试执行失败: ${error.message}`;
+                testStatus.className = 'test-status error';
+                
+                // 恢复按钮
+                runTestsBtn.disabled = false;
+                runTestsBtn.textContent = '🚀 运行所有测试';
+                progressContainer.style.display = 'none';
+            }
+        }
+        
+        // 显示测试结果
+        function displayResults(summary) {
+            // 更新状态
+            if (summary.failed === 0) {
+                testStatus.textContent = `🎉 所有测试通过！(${summary.passed}/${summary.total})`;
+                testStatus.className = 'test-status success';
+            } else {
+                testStatus.textContent = `⚠️ 部分测试失败 (${summary.passed}/${summary.total})`;
+                testStatus.className = 'test-status error';
+            }
+            
+            // 显示摘要
+            testSummary.innerHTML = `
+                <div class=\"summary-card\">
+                    <h3 class=\"success\">${summary.passed}</h3>
+                    <p>通过测试</p>
+                </div>
+                <div class=\"summary-card\">
+                    <h3 class=\"failed\">${summary.failed}</h3>
+                    <p>失败测试</p>
+                </div>
+                <div class=\"summary-card\">
+                    <h3>${summary.total}</h3>
+                    <p>总测试数</p>
+                </div>
+                <div class=\"summary-card\">
+                    <h3>${summary.successRate.toFixed(1)}%</h3>
+                    <p>成功率</p>
+                </div>
+            `;
+            testSummary.style.display = 'grid';
+            
+            // 显示详细结果
+            testList.innerHTML = '';
+            summary.results.forEach(result => {
+                const testItem = document.createElement('div');
+                testItem.className = 'test-item';
+                
+                testItem.innerHTML = `
+                    <div>
+                        <div class=\"test-name\">${result.name}</div>
+                        ${result.error ? `<div class=\"test-error\">${result.error}</div>` : ''}
+                    </div>
+                    <div class=\"test-status-icon ${result.passed ? 'passed' : 'failed'}\">
+                        ${result.passed ? '✅' : '❌'}
+                    </div>
+                `;
+                
+                testList.appendChild(testItem);
+            });
+            
+            testResults.style.display = 'block';
+        }
+        
+        // 清空结果
+        function clearResults() {
+            testStatus.textContent = '';
+            testStatus.className = 'test-status';
+            testSummary.style.display = 'none';
+            testResults.style.display = 'none';
+            progressContainer.style.display = 'none';
+        }
+        
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            testStatus.textContent = '点击上方按钮开始测试 MCv2 游戏功能';
+        });
+    </script>
+</body>
+</html>
