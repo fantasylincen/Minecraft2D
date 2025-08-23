@@ -320,7 +320,27 @@ export class ConfigPanel {
         return '<div class="error-message">❌ 无法生成设置项</div>';
       }
       
-      return finalHTML;
+      // 为地形算法相关的配置类别添加重新生成地图按钮 (TODO #15)
+      let regenerateButton = '';
+      if (category === 'terrain' || category === 'cave') {
+        regenerateButton = `
+          <div class="config-terrain-actions">
+            <button 
+              id="config-regenerate-${category}" 
+              class="config-regenerate-btn"
+              data-category="${category}"
+              type="button"
+            >
+              🌍 重新生成地图
+            </button>
+            <div class="config-regenerate-note">
+              💡 修改地形参数后，点击此按钮应用新设置
+            </div>
+          </div>
+        `;
+      }
+      
+      return finalHTML + regenerateButton;
       
     } catch (error) {
       console.error(`❌ 生成设置项HTML失败 (${category}):`, error);
@@ -412,6 +432,9 @@ export class ConfigPanel {
       this.importConfig();
     } else if (target.id === 'config-reset-btn') {
       this.resetConfig();
+    } else if (target.classList.contains('config-regenerate-btn')) {
+      // 处理重新生成地图按钮 (TODO #15)
+      this.handleRegenerateWorld(target.dataset.category);
     }
   }
   
@@ -587,6 +610,54 @@ export class ConfigPanel {
       gameConfig.resetToDefault();
       this.refreshPanel();
       this.showNotification('🔄 配置已重置', 'success');
+    }
+  }
+  
+  /**
+   * 处理重新生成世界 (TODO #15)
+   */
+  handleRegenerateWorld(category) {
+    try {
+      // 获取游戏引擎实例
+      const gameEngine = window.gameEngine || this.gameEngine;
+      
+      if (!gameEngine) {
+        console.error('❌ 游戏引擎不可用');
+        this.showNotification('❌ 游戏引擎不可用', 'error');
+        return;
+      }
+      
+      const { terrainGenerator, player } = gameEngine.systems || {};
+      
+      if (!terrainGenerator) {
+        console.error('❌ 地形生成器不可用');
+        this.showNotification('❌ 地形生成器不可用', 'error');
+        return;
+      }
+      
+      // 显示确认对话框
+      const categoryName = category === 'terrain' ? '地形' : '洞穴';
+      if (!confirm(`确定要重新生成地图吗？\n\n这将应用新的${categoryName}配置并重新创建世界。`)) {
+        return;
+      }
+      
+      console.log(`🌍 开始重新生成世界 (类别: ${category})`);
+      
+      // 重新生成世界
+      terrainGenerator.regenerate();
+      
+      // 重置玩家位置
+      if (player) {
+        player.respawn();
+        console.log('🚀 玩家位置已重置');
+      }
+      
+      console.log('✅ 世界重新生成完成');
+      this.showNotification(`🌍 ${categoryName}配置已应用，世界已重新生成`, 'success');
+      
+    } catch (error) {
+      console.error('❌ 重新生成世界失败:', error);
+      this.showNotification(`❌ 重新生成失败: ${error.message}`, 'error');
     }
   }
   
@@ -957,6 +1028,53 @@ export class ConfigPanel {
         font-family: monospace;
         max-width: 300px;
         z-index: 10002;
+      }
+      
+      /* 重新生成地图按钮样式 (TODO #15) */
+      .config-terrain-actions {
+        margin-top: 24px;
+        padding: 16px;
+        background: rgba(76, 144, 226, 0.1);
+        border: 1px solid rgba(76, 144, 226, 0.3);
+        border-radius: 8px;
+      }
+      
+      .config-regenerate-btn {
+        background: linear-gradient(45deg, #4a90e2, #357abd);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        width: 100%;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 2px 8px rgba(76, 144, 226, 0.3);
+      }
+      
+      .config-regenerate-btn:hover {
+        background: linear-gradient(45deg, #357abd, #2a5a99);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(76, 144, 226, 0.4);
+      }
+      
+      .config-regenerate-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 6px rgba(76, 144, 226, 0.3);
+      }
+      
+      .config-regenerate-note {
+        font-size: 12px;
+        color: #888;
+        text-align: center;
+        line-height: 1.4;
+        margin-top: 4px;
       }
       
       @keyframes slideIn {

@@ -181,6 +181,11 @@ function App() {
       
       // 启动游戏循环
       console.log('启动游戏循环...');
+      
+      // 从配置中设置目标帧率 (TODO #23)
+      const targetFPS = gameConfig.get('performance', 'targetFPS') || 60;
+      gameEngine.setTargetFPS(targetFPS);
+      
       gameEngine.start();
       
       // 设置状态更新定时器
@@ -198,6 +203,16 @@ function App() {
       console.log('初始化配置面板...');
       const configPanel = new ConfigPanel();
       configPanelRef.current = configPanel;
+      
+      // 为配置面板提供游戏引擎访问权限 (TODO #15)
+      configPanel.gameEngine = gameEngine;
+      window.gameEngine = gameEngine; // 全局访问
+      
+      // 设置配置变更回调 (TODO #23)
+      configPanel.onUpdate('performance', 'targetFPS', (value) => {
+        gameEngine.setTargetFPS(value);
+        console.log(`🎮 目标帧率更新为: ${value} FPS`);
+      });
       
       // 设置配置变更回调
       configPanel.onUpdate('cave', 'coveragePercentage', (value) => {
@@ -315,7 +330,9 @@ function App() {
           y: Math.round(playerPos.y / blockSize * 10) / 10  // 保留一位小数
         },
         isFlying: playerStatus.isFlying,
-        flySpeed: playerStatus.flySpeed || 100
+        flySpeed: playerStatus.flySpeed || 100,
+        health: playerStatus.health || 100,      // 生命值 (TODO #18)
+        maxHealth: playerStatus.maxHealth || 100 // 最大生命值
       });
     }
   };
@@ -633,6 +650,9 @@ function App() {
             <span>FPS: {gameStats.fps}</span>
             <span>方块: {gameStats.blocksRendered}</span>
             <span>位置: ({gameStats.playerPos.x}, {gameStats.playerPos.y})</span>
+            <span style={{ color: gameStats.health <= 25 ? '#ff4757' : gameStats.health <= 50 ? '#ffa502' : '#2ed573' }}>
+              ❤️ {Math.round(gameStats.health)}/{gameStats.maxHealth}
+            </span>
             {gameStats.isFlying && (
               <span style={{ color: '#87CEEB', fontWeight: 'bold' }}>
                 ✈️ 飞行: {gameStats.flySpeed}%

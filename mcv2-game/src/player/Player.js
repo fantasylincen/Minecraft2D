@@ -52,6 +52,26 @@ export class Player {
       eyeColor: '#FFFFFF'
     };
     
+    // 生命值系统 (TODO #18)
+    this.health = {
+      current: 100,        // 当前生命值
+      max: 100,           // 最大生命值
+      lastDamageTime: 0,  // 上次受伤时间
+      invulnerabilityTime: 1000, // 无敌时间(毫秒)
+      regenRate: 1,       // 回血速率 (每秒)
+      regenDelay: 5000    // 受伤后多久开始回血 (毫秒)
+    };
+    
+    // 摔伤系统 (TODO #18)
+    this.fallDamage = {
+      enabled: true,      // 是否启用摔伤
+      minFallSpeed: 300,  // 最小摔伤速度
+      maxFallSpeed: 500,  // 最大摔伤速度 (即终极速度)
+      minDamage: 5,       // 最小伤害
+      maxDamage: 75,      // 最大伤害 (3/4生命值)
+      lastFallSpeed: 0    // 上次落地时的速度
+    };
+    
     // 控制状态
     this.controls = {
       left: false,
@@ -116,6 +136,9 @@ export class Player {
     
     // 边界限制（防止掉出世界）
     this.constrainToWorld();
+    
+    // 更新健康系统 (TODO #18)
+    this.updateHealth(deltaTime);
   }
   
   /**
@@ -384,6 +407,10 @@ export class Player {
           // 着陆（精确位置）
           const blockTop = (bottomBlock + 1) * blockSize;
           this.position.y = blockTop + this.size.height / 2 + epsilon;
+          
+          // 摔伤检测 (TODO #18)
+          this.checkFallDamage();
+          
           this.physics.velocity.y = 0;
           this.physics.onGround = true;
           this.physics.canJump = true;
@@ -749,8 +776,109 @@ export class Player {
       onGround: this.physics.onGround,
       canJump: this.physics.canJump,
       isFlying: this.flyMode.enabled,
-      flySpeed: this.getFlySpeedPercentage()
+      flySpeed: this.getFlySpeedPercentage(),
+      health: this.health.current,
+      maxHealth: this.health.max
     };
+  }
+  
+  /**
+   * 更新健康系统 (TODO #18)
+   */
+  updateHealth(deltaTime) {
+    const currentTime = performance.now();
+    
+    // 自然回血（在没有受伤一段时间后）
+    if (this.health.current < this.health.max && 
+        currentTime - this.health.lastDamageTime > this.health.regenDelay) {
+      
+      const regenAmount = this.health.regenRate * deltaTime;
+      this.health.current = Math.min(this.health.max, this.health.current + regenAmount);
+    }
+    
+    // 检查是否死亡
+    if (this.health.current <= 0) {
+      this.handleDeath();
+    }
+  }
+  
+  /**
+   * 摔伤检测 (TODO #18)
+   */
+  checkFallDamage() {
+    if (!this.fallDamage.enabled || this.flyMode.enabled) {
+      return; // 飞行模式下不受摔伤
+    }
+    
+    // 获取落地时的下落速度 (取绝对值)
+    const fallSpeed = Math.abs(this.physics.velocity.y);
+    this.fallDamage.lastFallSpeed = fallSpeed;
+    
+    // 只有超过最小摔伤速度才会受伤
+    if (fallSpeed < this.fallDamage.minFallSpeed) {
+      return;
+    }
+    
+    // 计算伤害值（线性插值）
+    const speedRange = this.fallDamage.maxFallSpeed - this.fallDamage.minFallSpeed;
+    const damageRange = this.fallDamage.maxDamage - this.fallDamage.minDamage;
+    const speedRatio = Math.min(1, (fallSpeed - this.fallDamage.minFallSpeed) / speedRange);
+    const damage = this.fallDamage.minDamage + (damageRange * speedRatio);
+    
+    // 应用伤害
+    this.takeDamage(Math.round(damage), 'fall');
+    
+    console.log(`😵 摔伤! 落地速度: ${fallSpeed.toFixed(1)}, 伤害: ${Math.round(damage)}, 剩余生命: ${this.health.current}`);
+  }
+  
+  /**
+   * 受伤处理
+   */
+  takeDamage(amount, type = 'unknown') {
+    const currentTime = performance.now();
+    
+    // 检查无敌时间
+    if (currentTime - this.health.lastDamageTime < this.health.invulnerabilityTime) {
+      return false; // 在无敌时间内，不受伤害
+    }
+    
+    // 应用伤害
+    const actualDamage = Math.min(amount, this.health.current);
+    this.health.current -= actualDamage;
+    this.health.lastDamageTime = currentTime;
+    
+    console.log(`💔 玩家受伤: ${actualDamage} (类型: ${type}), 剩余生命: ${this.health.current}/${this.health.max}`);
+    
+    return true;
+  }
+  
+  /**
+   * 治疗处理
+   */
+  heal(amount) {
+    const oldHealth = this.health.current;
+    this.health.current = Math.min(this.health.max, this.health.current + amount);
+    const actualHeal = this.health.current - oldHealth;
+    
+    if (actualHeal > 0) {
+      console.log(`❤️ 玩家治疗: +${actualHeal}, 当前生命: ${this.health.current}/${this.health.max}`);
+    }
+    
+    return actualHeal;
+  }
+  
+  /**
+   * 死亡处理
+   */
+  handleDeath() {
+    console.log('💀 玩家死亡!');
+    
+    // 重置生命值
+    this.health.current = this.health.max;
+    this.health.lastDamageTime = 0;
+    
+    // 重生
+    this.respawn();
   }
   
   /**

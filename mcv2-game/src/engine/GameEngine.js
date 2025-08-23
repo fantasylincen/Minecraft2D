@@ -14,7 +14,10 @@ export class GameEngine {
       isPaused: false,
       deltaTime: 0,
       lastFrameTime: 0,
-      fps: 60
+      fps: 60,
+      targetFPS: 60,           // 目标帧率 (TODO #23)
+      frameInterval: 1000 / 60, // 帧间隔 (ms)
+      lastRender: 0            // 上次渲染时间
     };
     
     // 子系统
@@ -232,6 +235,15 @@ export class GameEngine {
   gameLoop(currentTime) {
     if (!this.gameState.isRunning) return;
     
+    // 帧率限制 (TODO #23)
+    const timeSinceLastRender = currentTime - this.gameState.lastRender;
+    if (timeSinceLastRender < this.gameState.frameInterval) {
+      requestAnimationFrame(this.gameLoop);
+      return;
+    }
+    
+    this.gameState.lastRender = currentTime;
+    
     // 计算时间差
     this.gameState.deltaTime = (currentTime - this.gameState.lastFrameTime) / 1000;
     this.gameState.lastFrameTime = currentTime;
@@ -322,6 +334,15 @@ export class GameEngine {
    */
   getWorldConfig() {
     return { ...this.worldConfig };
+  }
+  
+  /**
+   * 设置目标帧率 (TODO #23)
+   */
+  setTargetFPS(fps) {
+    this.gameState.targetFPS = Math.max(30, Math.min(120, fps));
+    this.gameState.frameInterval = 1000 / this.gameState.targetFPS;
+    console.log(`🎮 目标帧率设置为: ${this.gameState.targetFPS} FPS`);
   }
   
   /**
