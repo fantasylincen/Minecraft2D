@@ -32,8 +32,12 @@ export class Player {
     // 飞行模式
     this.flyMode = {
       enabled: false,       // 是否启用飞行模式
-      speed: 250,          // 飞行速度 (比正常移动更快)
-      friction: 0.9        // 飞行摩擦力
+      speed: 250,          // 基础飞行速度 (比正常移动更快)
+      friction: 0.9,       // 飞行摩擦力
+      speedMultiplier: 1.0, // 速度倍率 (1.0 = 100%, 最大10.0 = 1000%)
+      minSpeedMultiplier: 1.0, // 最小速度倍率 (100%)
+      maxSpeedMultiplier: 10.0, // 最大速度倍率 (1000%)
+      speedStep: 0.5       // 每次调节的步长 (50%)
     };
     
     // 玩家尺寸
@@ -57,7 +61,11 @@ export class Player {
       jump: false,
       prevJump: false,
       fly: false,           // 飞行模式切换按键
-      prevFly: false        // 上一帧飞行按键状态
+      prevFly: false,       // 上一帧飞行按键状态
+      speedUp: false,       // 提升飞行速度按键
+      prevSpeedUp: false,   // 上一帧提升速度按键状态
+      speedDown: false,     // 降低飞行速度按键
+      prevSpeedDown: false  // 上一帧降低速度按键状态
     };
     
     // 游戏引用
@@ -125,9 +133,26 @@ export class Player {
     this.controls.fly = flyPressed && !this.controls.prevFly;
     this.controls.prevFly = flyPressed;
     
+    // 飞行速度调节 - 使用+/-键或Shift+速度键
+    const speedUpPressed = keys['Equal'] || keys['NumpadAdd']; // +键
+    this.controls.speedUp = speedUpPressed && !this.controls.prevSpeedUp;
+    this.controls.prevSpeedUp = speedUpPressed;
+    
+    const speedDownPressed = keys['Minus'] || keys['NumpadSubtract']; // -键
+    this.controls.speedDown = speedDownPressed && !this.controls.prevSpeedDown;
+    this.controls.prevSpeedDown = speedDownPressed;
+    
     // 处理飞行模式切换
     if (this.controls.fly) {
       this.toggleFlyMode();
+    }
+    
+    // 处理飞行速度调节
+    if (this.controls.speedUp) {
+      this.increaseFlySpeed();
+    }
+    if (this.controls.speedDown) {
+      this.decreaseFlySpeed();
     }
   }
   
@@ -184,7 +209,7 @@ export class Player {
    */
   updateFlyingPhysics(deltaTime) {
     // 飞行模式下的全方向移动
-    const speed = this.flyMode.speed;
+    const speed = this.flyMode.speed * this.flyMode.speedMultiplier;
     
     // 水平移动
     if (this.controls.left) {
@@ -425,6 +450,65 @@ export class Player {
   }
   
   /**
+   * 提升飞行速度
+   */
+  increaseFlySpeed() {
+    if (this.flyMode.speedMultiplier < this.flyMode.maxSpeedMultiplier) {
+      this.flyMode.speedMultiplier = Math.min(
+        this.flyMode.speedMultiplier + this.flyMode.speedStep,
+        this.flyMode.maxSpeedMultiplier
+      );
+      console.log(`✈️ 飞行速度提升至: ${Math.round(this.flyMode.speedMultiplier * 100)}%`);
+    }
+  }
+  
+  /**
+   * 降低飞行速度
+   */
+  decreaseFlySpeed() {
+    if (this.flyMode.speedMultiplier > this.flyMode.minSpeedMultiplier) {
+      this.flyMode.speedMultiplier = Math.max(
+        this.flyMode.speedMultiplier - this.flyMode.speedStep,
+        this.flyMode.minSpeedMultiplier
+      );
+      console.log(`✈️ 飞行速度降低至: ${Math.round(this.flyMode.speedMultiplier * 100)}%`);
+    }
+  }
+  
+  /**
+   * 设置飞行速度倍率
+   */
+  setFlySpeedMultiplier(multiplier) {
+    this.flyMode.speedMultiplier = Math.max(
+      this.flyMode.minSpeedMultiplier,
+      Math.min(multiplier, this.flyMode.maxSpeedMultiplier)
+    );
+    console.log(`✈️ 飞行速度设置为: ${Math.round(this.flyMode.speedMultiplier * 100)}%`);
+  }
+  
+  /**
+   * 获取飞行速度倍率
+   */
+  getFlySpeedMultiplier() {
+    return this.flyMode.speedMultiplier;
+  }
+  
+  /**
+   * 获取飞行速度百分比
+   */
+  getFlySpeedPercentage() {
+    return Math.round(this.flyMode.speedMultiplier * 100);
+  }
+  
+  /**
+   * 重置飞行速度为默认值
+   */
+  resetFlySpeed() {
+    this.flyMode.speedMultiplier = 1.0;
+    console.log(`✈️ 飞行速度重置为: 100%`);
+  }
+  
+  /**
    * 切换飞行模式
    */
   toggleFlyMode() {
@@ -515,14 +599,24 @@ export class Player {
     
     // 飞行模式特效
     if (this.flyMode.enabled) {
-      // 绘制飞行光晕
-      ctx.fillStyle = 'rgba(135, 206, 235, 0.3)';
+      // 绘制飞行光晕，大小根据速度调节
+      const glowSize = 2 + (this.flyMode.speedMultiplier - 1) * 0.5; // 速度越快光晕越大
+      const alpha = Math.min(0.3 + (this.flyMode.speedMultiplier - 1) * 0.05, 0.6); // 速度越快光晕越亮
+      
+      ctx.fillStyle = `rgba(135, 206, 235, ${alpha})`;
       ctx.fillRect(
-        screenPos.x - this.size.width / 2 - 2,
-        screenPos.y - this.size.height / 2 - 2,
-        this.size.width + 4,
-        this.size.height + 4
+        screenPos.x - this.size.width / 2 - glowSize,
+        screenPos.y - this.size.height / 2 - glowSize,
+        this.size.width + glowSize * 2,
+        this.size.height + glowSize * 2
       );
+      
+      // 显示速度百分比
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '12px Arial';
+      ctx.textAlign = 'center';
+      const speedText = `${this.getFlySpeedPercentage()}%`;
+      ctx.fillText(speedText, screenPos.x, screenPos.y - this.size.height / 2 - 15);
     }
     
     // 玩家眼睛
@@ -564,8 +658,9 @@ export class Player {
       `Vel: (${Math.round(this.physics.velocity.x)}, ${Math.round(this.physics.velocity.y)})`,
       `Ground: ${this.physics.onGround}`,
       `Jump: ${this.physics.canJump}`,
-      `Flying: ${this.flyMode.enabled}`
-    ];
+      `Flying: ${this.flyMode.enabled}`,
+      this.flyMode.enabled ? `Speed: ${this.getFlySpeedPercentage()}%` : ''
+    ].filter(text => text !== ''); // 过滤空字符串
     
     debugText.forEach((text, index) => {
       ctx.fillText(text, screenPos.x + 20, screenPos.y - 30 + index * 14);
@@ -598,7 +693,8 @@ export class Player {
       velocity: { ...this.physics.velocity },
       onGround: this.physics.onGround,
       canJump: this.physics.canJump,
-      isFlying: this.flyMode.enabled
+      isFlying: this.flyMode.enabled,
+      flySpeed: this.getFlySpeedPercentage()
     };
   }
   

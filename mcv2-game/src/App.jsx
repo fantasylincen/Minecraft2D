@@ -18,7 +18,9 @@ function App() {
   const [gameStats, setGameStats] = useState({
     fps: 0,
     blocksRendered: 0,
-    playerPos: { x: 0, y: 0 }
+    playerPos: { x: 0, y: 0 },
+    isFlying: false,
+    flySpeed: 100
   });
 
   useEffect(() => {
@@ -277,6 +279,7 @@ function App() {
     if (gameEngine && renderer && player) {
       const stats = renderer.getStats();
       const playerPos = player.getPosition();
+      const playerStatus = player.getStatus();
       
       setGameStats({
         fps: stats.fps,
@@ -284,7 +287,9 @@ function App() {
         playerPos: {
           x: Math.round(playerPos.x),
           y: Math.round(playerPos.y)
-        }
+        },
+        isFlying: playerStatus.isFlying,
+        flySpeed: playerStatus.flySpeed || 100
       });
     }
   };
@@ -475,6 +480,11 @@ function App() {
             <span>FPS: {gameStats.fps}</span>
             <span>方块: {gameStats.blocksRendered}</span>
             <span>位置: ({gameStats.playerPos.x}, {gameStats.playerPos.y})</span>
+            {gameStats.isFlying && (
+              <span style={{ color: '#87CEEB', fontWeight: 'bold' }}>
+                ✈️ 飞行: {gameStats.flySpeed}%
+              </span>
+            )}
           </div>
         </div>
         
@@ -495,12 +505,14 @@ function App() {
             <li><strong>空格键:</strong> 跳跃 (正常模式)</li>
             <li><strong>F键:</strong> 切换飞行模式</li>
             <li><strong>W/S:</strong> 上下飞行 (飞行模式)</li>
+            <li><strong>+/-键:</strong> 调节飞行速度</li>
             <li><strong>ESC:</strong> 暂停/继续</li>
             <li><strong>F3:</strong> 切换调试信息</li>
           </ul>
           <div style={{ marginTop: '10px', padding: '8px', background: 'rgba(135, 206, 235, 0.2)', borderRadius: '4px', border: '1px solid #87CEEB' }}>
             <strong style={{ color: '#87CEEB' }}>飞行模式:</strong>
             <br />在飞行模式下，玩家变为天空蓝色，可以全方向快速飞行，不受重力和地形碰撞影响。
+            <br /><strong>速度调节:</strong> 使用+/-键可在100%-1000%之间调节飞行速度。
           </div>
         </div>
       </div>

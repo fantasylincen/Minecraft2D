@@ -153,7 +153,7 @@ export class GameEngine {
    */
   handleKeyDown(event) {
     // 阻止默认行为
-    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'KeyF'].includes(event.code)) {
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'KeyF', 'Equal', 'Minus', 'NumpadAdd', 'NumpadSubtract'].includes(event.code)) {
       event.preventDefault();
     }
     
@@ -164,6 +164,14 @@ export class GameEngine {
         break;
       case 'KeyF':
         // F键用于切换飞行模式，在Player类中处理
+        break;
+      case 'Equal':
+      case 'NumpadAdd':
+        // +键用于提升飞行速度，在Player类中处理
+        break;
+      case 'Minus':
+      case 'NumpadSubtract':
+        // -键用于降低飞行速度，在Player类中处理
         break;
     }
   }
