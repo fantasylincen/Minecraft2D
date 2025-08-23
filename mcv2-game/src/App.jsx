@@ -575,31 +575,36 @@ function App() {
         
         {/* 左下角控制区域 */}
         <div className="left-control-area">
-          {/* 控制面板 - 移动到左下角 */}
+          {/* 控制面板 - 移动到左下角，2排布局 */}
           <div className="control-panel">
-            <button onClick={toggleDebugInfo}>
-              {debugInfo ? '隐藏调试信息' : '显示调试信息'}
-            </button>
-            <button onClick={saveGame}>保存游戏</button>
-            <button onClick={regenerateWorld}>重新生成世界</button>
-            <button 
-              onClick={toggleConfigPanel}
-              className="config-panel-btn"
-            >
-              ⚙️ 游戏配置
-            </button>
+            {/* 第一排: 3个主要功能按钮 */}
+            <div className="control-panel-row1">
+              <button onClick={toggleDebugInfo}>
+                {debugInfo ? '隐藏调试信息' : '显示调试信息'}
+              </button>
+              <button onClick={saveGame}>保存游戏</button>
+              <button onClick={regenerateWorld}>重新生成世界</button>
+            </div>
+            
+            {/* 第二排: 配置和控制说明按钮 */}
+            <div className="control-panel-row2">
+              <button 
+                onClick={toggleConfigPanel}
+                className="config-panel-btn"
+              >
+                ⚙️ 游戏配置
+              </button>
+              
+              {/* 控制说明按钮（始终显示，但改为切换按钮） */}
+              <button 
+                className="show-controls-btn"
+                onClick={toggleControlsHelp}
+                title={showControlsHelp ? '隐藏控制说明 (H键)' : '显示控制说明 (H键)'}
+              >
+                🎮 {showControlsHelp ? '隐藏控制' : '控制说明'}
+              </button>
+            </div>
           </div>
-          
-          {/* 显示控制说明按钮（当隐藏时） */}
-          {!showControlsHelp && (
-            <button 
-              className="show-controls-btn"
-              onClick={toggleControlsHelp}
-              title="显示控制说明 (H键)"
-            >
-              🎮 控制说明
-            </button>
-          )}
         </div>
         
         {/* 控制说明 */}

@@ -106,13 +106,29 @@ body {
   z-index: 140;
 }
 
-/* 控制面板 - 移动到左下角 */
+/* 控制面板 - 移动到左下角，改为2排布局 (TODO #25) */
 .control-panel {
   display: flex;
-  flex-direction: row; /* 水平排列 */
+  flex-direction: column; /* 垂直布局，分成两排 */
   gap: 8px;
-  flex-wrap: wrap; /* 允许换行 */
-  max-width: 350px; /* 限制最大宽度 */
+  width: fit-content; /* 宽度跟随内容 */
+  max-width: 350px; /* 保持最大宽度限制 */
+}
+
+/* 第一排按钮容器 */
+.control-panel-row1 {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  flex-wrap: nowrap; /* 不允许换行 */
+}
+
+/* 第二排按钮容器 */
+.control-panel-row2 {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  flex-wrap: nowrap; /* 不允许换行 */
 }
 
 .control-panel button {
@@ -128,6 +144,8 @@ body {
   border: 1px solid #4CAF50;
   backdrop-filter: blur(5px); /* 添加统一的模糊效果 */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* 添加统一的阴影 */
+  white-space: nowrap; /* 防止文字换行 */
+  min-width: fit-content; /* 宽度跟随内容 */
 }
 
 .control-panel button:hover {
@@ -228,7 +246,7 @@ body {
   transition: all 0.2s ease !important;
   backdrop-filter: blur(5px) !important; /* 统一的模糊效果 */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important; /* 统一的阴影 */
-  margin-top: 8px; /* 与控制面板的间距 */
+  white-space: nowrap; /* 防止文字换行 */
 }
 
 .show-controls-btn:hover {

@@ -69,7 +69,13 @@ export class Player {
       maxFallSpeed: 500,  // 最大摔伤速度 (即终极速度)
       minDamage: 5,       // 最小伤害
       maxDamage: 75,      // 最大伤害 (3/4生命值)
-      lastFallSpeed: 0    // 上次落地时的速度
+      lastFallSpeed: 0,   // 上次落地时的速度
+      
+      // 新增：下落高度跟踪 (TODO #26)
+      minFallHeight: 0,   // 最小摔伤高度（将在初始化时设置为3倍跳跃高度）
+      fallStartY: 0,      // 开始下落时的Y坐标
+      isFalling: false,   // 是否正在下落
+      hasLeftGround: false // 是否已经离开地面
     };
     
     // 控制状态
@@ -91,7 +97,13 @@ export class Player {
     // 游戏引用
     this.terrainGenerator = null;
     
+    // 初始化摔伤高度为3倍跳跃高度 (TODO #26)
+    // 跳跃高度大约为 jumpForce^2 / (2 * gravity) 像素
+    const jumpHeight = (this.physics.jumpForce * this.physics.jumpForce) / (2 * this.physics.gravity);
+    this.fallDamage.minFallHeight = jumpHeight * 3;
+    
     console.log('👤 Player 初始化完成');
+    console.log(`🟢 跳跃高度: ${jumpHeight.toFixed(1)}像素, 最小摔伤高度: ${this.fallDamage.minFallHeight.toFixed(1)}像素`);
   }
   
   /**
@@ -221,6 +233,9 @@ export class Player {
       this.physics.canJump = false;
     }
     
+    // 更新下落高度跟踪 (TODO #26)
+    this.updateFallTracking();
+    
     // 应用重力
     if (!this.physics.onGround) {
       this.physics.velocity.y -= this.physics.gravity * deltaTime;
@@ -229,6 +244,37 @@ export class Player {
       if (this.physics.velocity.y < -this.physics.terminalVelocity) {
         this.physics.velocity.y = -this.physics.terminalVelocity;
       }
+    }
+  }
+  
+  /**
+   * 更新下落高度跟踪 (TODO #26)
+   * Author: MCv2 Development Team
+   */
+  updateFallTracking() {
+    const wasOnGround = this.physics.onGround;
+    const isNowFalling = this.physics.velocity.y < 0; // 下落速度
+    
+    // 检测是否刚刚离开地面
+    if (wasOnGround && !this.physics.onGround && !this.fallDamage.hasLeftGround) {
+      this.fallDamage.hasLeftGround = true;
+      this.fallDamage.fallStartY = this.position.y;
+      this.fallDamage.isFalling = false; // 先不记为下落，可能是跳跃
+    }
+    
+    // 检测是否开始真正的下落（不是跳跃）
+    if (this.fallDamage.hasLeftGround && isNowFalling && !this.fallDamage.isFalling) {
+      this.fallDamage.isFalling = true;
+      // 如果在跳跃过程中开始下落，更新起始高度为最高点
+      if (this.position.y > this.fallDamage.fallStartY) {
+        this.fallDamage.fallStartY = this.position.y;
+      }
+    }
+    
+    // 重置下落状态（当在地面时）
+    if (this.physics.onGround) {
+      this.fallDamage.hasLeftGround = false;
+      this.fallDamage.isFalling = false;
     }
   }
   
@@ -803,11 +849,21 @@ export class Player {
   }
   
   /**
-   * 摔伤检测 (TODO #18)
+   * 摔伤检测 (TODO #18 & #26)
+   * Author: MCv2 Development Team
    */
   checkFallDamage() {
     if (!this.fallDamage.enabled || this.flyMode.enabled) {
       return; // 飞行模式下不受摔伤
+    }
+    
+    // 计算下落高度 (TODO #26)
+    const fallHeight = this.fallDamage.fallStartY - this.position.y;
+    
+    // 检查是否达到最小摔伤高度（3倍跳跃高度）
+    if (fallHeight < this.fallDamage.minFallHeight) {
+      console.log(`🟢 下落高度不足: ${fallHeight.toFixed(1)}像素 < ${this.fallDamage.minFallHeight.toFixed(1)}像素，无摔伤`);
+      return;
     }
     
     // 获取落地时的下落速度 (取绝对值)
@@ -816,6 +872,7 @@ export class Player {
     
     // 只有超过最小摔伤速度才会受伤
     if (fallSpeed < this.fallDamage.minFallSpeed) {
+      console.log(`🟢 落地速度不足: ${fallSpeed.toFixed(1)} < ${this.fallDamage.minFallSpeed}，无摔伤`);
       return;
     }
     
@@ -828,7 +885,7 @@ export class Player {
     // 应用伤害
     this.takeDamage(Math.round(damage), 'fall');
     
-    console.log(`😵 摔伤! 落地速度: ${fallSpeed.toFixed(1)}, 伤害: ${Math.round(damage)}, 剩余生命: ${this.health.current}`);
+    console.log(`😵 摔伤! 下落高度: ${fallHeight.toFixed(1)}像素, 落地速度: ${fallSpeed.toFixed(1)}, 伤害: ${Math.round(damage)}, 剩余生命: ${this.health.current}`);
   }
   
   /**
