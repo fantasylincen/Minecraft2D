@@ -5,18 +5,32 @@
 
 import { BiomeGenerator } from './generators/BiomeGenerator.js';
 import { TerrainGenerator } from './generators/TerrainGenerator.js';
+import { CaveGenerator } from './generators/CaveGenerator.js';
+import { OreGenerator } from './generators/OreGenerator.js';
+import { VegetationGenerator } from './generators/VegetationGenerator.js';
 import { blockConfig } from '../config/BlockConfig.js';
 
 export class WorldGenerator {
   constructor(seed = Math.random() * 1000000) {
     this.seed = seed;
     
-    // 初始化生成器
+    // 初始化所有生成器
     this.biomeGenerator = new BiomeGenerator(seed);
     this.terrainGenerator = new TerrainGenerator(seed);
+    this.caveGenerator = new CaveGenerator(seed);
+    this.oreGenerator = new OreGenerator(seed);
+    this.vegetationGenerator = new VegetationGenerator(seed);
     
     // 世界配置
     this.worldConfig = null;
+    
+    // 生成管线配置
+    this.generationPipeline = {
+      terrain: true,       // 地形生成
+      caves: true,         // 洞穴生成
+      ores: true,          // 矿物生成
+      vegetation: true     // 植被生成
+    };
     
     // 生成缓存
     this.cache = {
@@ -29,10 +43,17 @@ export class WorldGenerator {
     this.stats = {
       chunksGenerated: 0,
       totalGenerationTime: 0,
-      averageGenerationTime: 0
+      averageGenerationTime: 0,
+      pipelineStats: {
+        terrain: { count: 0, totalTime: 0 },
+        caves: { count: 0, totalTime: 0 },
+        ores: { count: 0, totalTime: 0 },
+        vegetation: { count: 0, totalTime: 0 }
+      }
     };
     
     console.log('🌎 WorldGenerator 初始化完成，种子:', this.seed);
+    console.log('🔧 生成管线:', Object.keys(this.generationPipeline).filter(k => this.generationPipeline[k]));
   }
   
   /**
@@ -69,21 +90,55 @@ export class WorldGenerator {
     // 生成生物群系映射
     const biomeMap = this.generateChunkBiomes(chunkX, chunkSize);
     
-    // 生成地形
-    this.generateChunkTerrain(chunk, chunkX, biomeMap, chunkSize, worldHeight);
+    // 按顺序执行生成管线
+    const pipelineSteps = [
+      { name: 'terrain', enabled: this.generationPipeline.terrain, fn: () => this.generateChunkTerrain(chunk, chunkX, biomeMap, chunkSize, worldHeight) },
+      { name: 'caves', enabled: this.generationPipeline.caves, fn: () => this.caveGenerator.generateCaves(chunk, chunkX, biomeMap, this.worldConfig) },
+      { name: 'ores', enabled: this.generationPipeline.ores, fn: () => this.oreGenerator.generateOres(chunk, chunkX, biomeMap, this.worldConfig) },
+      { name: 'vegetation', enabled: this.generationPipeline.vegetation, fn: () => this.vegetationGenerator.generateVegetation(chunk, chunkX, biomeMap, this.worldConfig) }
+    ];
+    
+    // 执行生成管线
+    const pipelineStats = {};
+    for (const step of pipelineSteps) {
+      if (step.enabled) {
+        const stepStartTime = performance.now();
+        try {
+          step.fn();
+          const stepTime = performance.now() - stepStartTime;
+          pipelineStats[step.name] = stepTime;
+          
+          // 更新管线统计
+          this.stats.pipelineStats[step.name].count++;
+          this.stats.pipelineStats[step.name].totalTime += stepTime;
+          
+        } catch (error) {
+          console.error(`生成管线 ${step.name} 失败:`, error);
+          pipelineStats[step.name] = -1; // 标记为失败
+        }
+      }
+    }
     
     // 后处理
     this.postProcessChunk(chunk, chunkX, biomeMap);
     
     // 创建区块数据
+    const totalTime = performance.now() - startTime;
     const chunkData = {
       x: chunkX,
       chunk: chunk,
       biomeMap: biomeMap,
       metadata: {
         generated: true,
-        generationTime: performance.now() - startTime,
-        seed: this.seed
+        generationTime: totalTime,
+        pipelineStats: pipelineStats,
+        seed: this.seed,
+        generators: {
+          terrain: this.generationPipeline.terrain,
+          caves: this.generationPipeline.caves,
+          ores: this.generationPipeline.ores,
+          vegetation: this.generationPipeline.vegetation
+        }
       }
     };
     
@@ -91,9 +146,12 @@ export class WorldGenerator {
     this.cache.chunks.set(chunkX, chunkData);
     
     // 更新统计
-    this.updateStats(chunkData.metadata.generationTime);
+    this.updateStats(totalTime);
     
-    console.log(`🌱 生成区块 ${chunkX}，耗时 ${chunkData.metadata.generationTime.toFixed(2)}ms`);
+    // 输出详细的生成统计
+    const enabledSteps = Object.keys(pipelineStats).filter(k => pipelineStats[k] > 0);
+    console.log(`🌱 生成区块 ${chunkX}，总耗时 ${totalTime.toFixed(2)}ms`);
+    console.log(`  管线: ${enabledSteps.map(k => `${k}(${pipelineStats[k].toFixed(1)}ms)`).join(', ')}`);
     
     return chunkData;
   }
@@ -455,6 +513,9 @@ export class WorldGenerator {
       this.seed = newSeed;
       this.biomeGenerator = new BiomeGenerator(newSeed);
       this.terrainGenerator = new TerrainGenerator(newSeed);
+      this.caveGenerator = new CaveGenerator(newSeed);
+      this.oreGenerator = new OreGenerator(newSeed);
+      this.vegetationGenerator = new VegetationGenerator(newSeed);
     }
     
     // 清除所有缓存
@@ -466,9 +527,56 @@ export class WorldGenerator {
     this.stats = {
       chunksGenerated: 0,
       totalGenerationTime: 0,
-      averageGenerationTime: 0
+      averageGenerationTime: 0,
+      pipelineStats: {
+        terrain: { count: 0, totalTime: 0 },
+        caves: { count: 0, totalTime: 0 },
+        ores: { count: 0, totalTime: 0 },
+        vegetation: { count: 0, totalTime: 0 }
+      }
     };
     
     console.log('🔄 世界已重新生成，新种子:', this.seed);
+  }
+  
+  /**
+   * 设置生成管线配置
+   * @param {Object} pipelineConfig - 管线配置
+   */
+  setPipelineConfig(pipelineConfig) {
+    this.generationPipeline = { ...this.generationPipeline, ...pipelineConfig };
+    console.log('🔧 更新生成管线:', this.generationPipeline);
+  }
+  
+  /**
+   * 获取生成器统计
+   * @returns {Object} 详细统计信息
+   */
+  getDetailedStats() {
+    const pipelineAverages = {};
+    for (const [name, stats] of Object.entries(this.stats.pipelineStats)) {
+      pipelineAverages[name] = {
+        count: stats.count,
+        totalTime: stats.totalTime,
+        averageTime: stats.count > 0 ? stats.totalTime / stats.count : 0
+      };
+    }
+    
+    return {
+      ...this.stats,
+      pipelineAverages,
+      cacheSize: {
+        chunks: this.cache.chunks.size,
+        biomes: this.cache.biomes.size,
+        terrain: this.cache.terrain.size
+      },
+      seed: this.seed,
+      generationPipeline: this.generationPipeline,
+      generatorStats: {
+        cave: this.caveGenerator.getStats(),
+        ore: this.oreGenerator.getStats(),
+        vegetation: this.vegetationGenerator.getStats()
+      }
+    };
   }
 }

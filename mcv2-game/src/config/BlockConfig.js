@@ -131,6 +131,89 @@ export class BlockConfig {
         breakable: true,
         hardness: 1.5,
         drops: ['wood_item']
+      },
+      {
+        id: 11,
+        name: 'leaves',
+        displayName: '树叶',
+        solid: true,
+        transparent: true,
+        color: '#228B22',
+        breakable: true,
+        hardness: 0.3
+      },
+      {
+        id: 12,
+        name: 'tallgrass',
+        displayName: '高草',
+        solid: false,
+        transparent: true,
+        color: '#90EE90',
+        breakable: true,
+        hardness: 0.1
+      },
+      {
+        id: 13,
+        name: 'flower',
+        displayName: '花朵',
+        solid: false,
+        transparent: true,
+        color: '#FF69B4',
+        breakable: true,
+        hardness: 0.1
+      },
+      {
+        id: 14,
+        name: 'gravel',
+        displayName: '砾石',
+        solid: true,
+        transparent: false,
+        color: '#696969',
+        breakable: true,
+        hardness: 0.8,
+        gravity: true
+      },
+      {
+        id: 15,
+        name: 'mushroom',
+        displayName: '蘑菇',
+        solid: false,
+        transparent: true,
+        color: '#8B4513',
+        breakable: true,
+        hardness: 0.1
+      },
+      {
+        id: 16,
+        name: 'cactus',
+        displayName: '仙人掌',
+        solid: true,
+        transparent: false,
+        color: '#228B22',
+        breakable: true,
+        hardness: 0.5,
+        damage: 1  // 接触伤害
+      },
+      {
+        id: 17,
+        name: 'vine',
+        displayName: '藤蔓',
+        solid: false,
+        transparent: true,
+        color: '#2E8B57',
+        breakable: true,
+        hardness: 0.2
+      },
+      {
+        id: 18,
+        name: 'ice',
+        displayName: '冰块',
+        solid: true,
+        transparent: true,
+        color: '#B0E0E6',
+        breakable: true,
+        hardness: 0.5,
+        slippery: true
       }
     ];
     
