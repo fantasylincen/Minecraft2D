@@ -5,6 +5,7 @@
 
 import { SimplexNoise } from '../noise/SimplexNoise.js';
 import { blockConfig } from '../../config/BlockConfig.js';
+import { gameConfig } from '../../config/GameConfig.js';
 
 export class CaveGenerator {
   constructor(seed) {
@@ -13,26 +14,29 @@ export class CaveGenerator {
     this.tunnelNoise = new SimplexNoise(seed + 5000);
     this.chamberNoise = new SimplexNoise(seed + 6000);
     
-    // 洞穴生成参数
-    this.params = {
+    // 洞穴生成参数 - 从GameConfig获取
+    this.getParams = () => ({
       // Cellular Automata参数
-      initialCaveChance: 0.45,     // 初始洞穴概率
-      iterations: 5,               // CA迭代次数
-      birthLimit: 4,               // 生成洞穴的邻居阈值
-      deathLimit: 3,               // 移除洞穴的邻居阈值
+      initialCaveChance: gameConfig.get('cave', 'initialCaveChance'),
+      iterations: gameConfig.get('cave', 'iterations'),
+      birthLimit: gameConfig.get('cave', 'birthLimit'),
+      deathLimit: gameConfig.get('cave', 'deathLimit'),
       
       // 洞穴分布参数
-      minDepth: 20,                // 最小生成深度
-      maxDepth: 0.8,               // 最大生成深度比例
-      caveScale: 0.02,             // 洞穴噪音尺度
-      tunnelScale: 0.015,          // 隧道噪音尺度
-      chamberScale: 0.008,         // 洞室噪音尺度
+      minDepth: gameConfig.get('cave', 'minDepth'),
+      maxDepthRatio: gameConfig.get('cave', 'maxDepthRatio'),
+      coveragePercentage: gameConfig.get('cave', 'coveragePercentage'),
       
       // 洞穴特征参数
-      tunnelThreshold: 0.3,        // 隧道生成阈值
-      chamberThreshold: 0.6,       // 洞室生成阈值
-      connectionThreshold: 0.4,    // 连接通道阈值
-    };
+      tunnelThreshold: gameConfig.get('cave', 'tunnelThreshold'),
+      chamberThreshold: gameConfig.get('cave', 'chamberThreshold'),
+      
+      // 噪音尺度（固定值）
+      caveScale: 0.02,
+      tunnelScale: 0.015,
+      chamberScale: 0.008,
+      connectionThreshold: 0.4
+    });
     
     console.log('🕳️ CaveGenerator 初始化完成');
   }
@@ -45,32 +49,39 @@ export class CaveGenerator {
    * @param {Object} worldConfig - 世界配置
    */
   generateCaves(chunk, chunkX, biomeMap, worldConfig) {
+    const params = this.getParams();
     const chunkWidth = chunk[0].length;
     const chunkHeight = chunk.length;
-    const minDepth = this.params.minDepth;
-    const maxDepth = Math.floor(chunkHeight * this.params.maxDepth);
+    const minDepth = params.minDepth;
+    const maxDepth = Math.floor(chunkHeight * params.maxDepthRatio);
     
     // 只在地下生成洞穴
     if (maxDepth <= minDepth) return;
     
     // 第一步：生成初始洞穴种子
-    let caveMap = this.generateInitialCaveSeeds(chunkWidth, chunkHeight, chunkX, minDepth, maxDepth);
+    let caveMap = this.generateInitialCaveSeeds(chunkWidth, chunkHeight, chunkX, minDepth, maxDepth, params);
     
     // 第二步：应用Cellular Automata
-    for (let i = 0; i < this.params.iterations; i++) {
-      caveMap = this.applyCellularAutomata(caveMap, chunkWidth, chunkHeight);
+    for (let i = 0; i < params.iterations; i++) {
+      caveMap = this.applyCellularAutomata(caveMap, chunkWidth, chunkHeight, params);
     }
     
-    // 第三步：生成隧道连接
-    this.generateTunnels(caveMap, chunkWidth, chunkHeight, chunkX, minDepth, maxDepth);
+    // 第三步：检查覆盖率并调整
+    caveMap = this.adjustCaveCoverage(caveMap, chunkWidth, chunkHeight, minDepth, maxDepth, params);
     
-    // 第四步：生成大型洞室
-    this.generateChambers(caveMap, chunkWidth, chunkHeight, chunkX, minDepth, maxDepth);
+    // 第四步：生成隧道连接
+    this.generateTunnels(caveMap, chunkWidth, chunkHeight, chunkX, minDepth, maxDepth, params);
     
-    // 第五步：应用洞穴到区块
+    // 第五步：生成大型洞室
+    this.generateChambers(caveMap, chunkWidth, chunkHeight, chunkX, minDepth, maxDepth, params);
+    
+    // 第六步：最终覆盖率检查
+    caveMap = this.finalCoverageCheck(caveMap, chunkWidth, chunkHeight, minDepth, maxDepth, params);
+    
+    // 第七步：应用洞穴到区块
     this.applyCavesToChunk(chunk, caveMap, minDepth);
     
-    // 第六步：后处理（移除浮空方块等）
+    // 第八步：后处理（移除浮空方块等）
     this.postProcessCaves(chunk, caveMap, minDepth);
   }
   
@@ -83,7 +94,7 @@ export class CaveGenerator {
    * @param {number} maxDepth - 最大深度
    * @returns {number[][]} 洞穴地图 (1=洞穴, 0=实体)
    */
-  generateInitialCaveSeeds(width, height, chunkX, minDepth, maxDepth) {
+  generateInitialCaveSeeds(width, height, chunkX, minDepth, maxDepth, params) {
     const caveMap = [];
     
     for (let y = 0; y < height; y++) {
@@ -101,11 +112,11 @@ export class CaveGenerator {
           
           // 基于噪音的洞穴分布
           const caveNoise = this.caveNoise.sample(
-            absoluteX * this.params.caveScale, 
-            y * this.params.caveScale
+            absoluteX * params.caveScale, 
+            y * params.caveScale
           );
           
-          const adjustedChance = this.params.initialCaveChance * depthModifier;
+          const adjustedChance = params.initialCaveChance * depthModifier;
           caveMap[y][x] = caveNoise > (1 - adjustedChance) ? 1 : 0;
         }
       }
@@ -121,7 +132,7 @@ export class CaveGenerator {
    * @param {number} height - 高度
    * @returns {number[][]} 新的洞穴地图
    */
-  applyCellularAutomata(caveMap, width, height) {
+  applyCellularAutomata(caveMap, width, height, params) {
     const newMap = [];
     
     for (let y = 0; y < height; y++) {
@@ -131,10 +142,10 @@ export class CaveGenerator {
         
         if (caveMap[y][x] === 1) {
           // 当前是洞穴
-          newMap[y][x] = neighbors >= this.params.deathLimit ? 1 : 0;
+          newMap[y][x] = neighbors >= params.deathLimit ? 1 : 0;
         } else {
           // 当前是实体
-          newMap[y][x] = neighbors > this.params.birthLimit ? 1 : 0;
+          newMap[y][x] = neighbors > params.birthLimit ? 1 : 0;
         }
       }
     }
@@ -182,18 +193,18 @@ export class CaveGenerator {
    * @param {number} minDepth - 最小深度
    * @param {number} maxDepth - 最大深度
    */
-  generateTunnels(caveMap, width, height, chunkX, minDepth, maxDepth) {
+  generateTunnels(caveMap, width, height, chunkX, minDepth, maxDepth, params) {
     for (let y = minDepth; y < maxDepth; y++) {
       for (let x = 0; x < width; x++) {
         const absoluteX = chunkX * width + x;
         
         const tunnelNoise = this.tunnelNoise.sample(
-          absoluteX * this.params.tunnelScale,
-          y * this.params.tunnelScale
+          absoluteX * params.tunnelScale,
+          y * params.tunnelScale
         );
         
         // 生成水平隧道
-        if (tunnelNoise > this.params.tunnelThreshold) {
+        if (tunnelNoise > params.tunnelThreshold) {
           caveMap[y][x] = 1;
           
           // 扩展隧道宽度
@@ -203,11 +214,11 @@ export class CaveGenerator {
         
         // 生成垂直隧道
         const verticalTunnel = this.tunnelNoise.sample(
-          absoluteX * this.params.tunnelScale * 1.3,
-          y * this.params.tunnelScale * 0.7
+          absoluteX * params.tunnelScale * 1.3,
+          y * params.tunnelScale * 0.7
         );
         
-        if (verticalTunnel > this.params.tunnelThreshold + 0.1) {
+        if (verticalTunnel > params.tunnelThreshold + 0.1) {
           caveMap[y][x] = 1;
           
           // 扩展隧道宽度
@@ -227,17 +238,17 @@ export class CaveGenerator {
    * @param {number} minDepth - 最小深度
    * @param {number} maxDepth - 最大深度
    */
-  generateChambers(caveMap, width, height, chunkX, minDepth, maxDepth) {
+  generateChambers(caveMap, width, height, chunkX, minDepth, maxDepth, params) {
     for (let y = minDepth + 2; y < maxDepth - 2; y++) {
       for (let x = 2; x < width - 2; x++) {
         const absoluteX = chunkX * width + x;
         
         const chamberNoise = this.chamberNoise.sample(
-          absoluteX * this.params.chamberScale,
-          y * this.params.chamberScale
+          absoluteX * params.chamberScale,
+          y * params.chamberScale
         );
         
-        if (chamberNoise > this.params.chamberThreshold) {
+        if (chamberNoise > params.chamberThreshold) {
           // 创建椭圆形洞室
           this.createChamber(caveMap, x, y, width, height, 3, 2);
         }
@@ -373,15 +384,174 @@ export class CaveGenerator {
   }
   
   /**
+   * 调整洞穴覆盖率
+   * @param {number[][]} caveMap - 洞穴地图
+   * @param {number} width - 宽度
+   * @param {number} height - 高度
+   * @param {number} minDepth - 最小深度
+   * @param {number} maxDepth - 最大深度
+   * @param {Object} params - 参数对象
+   * @returns {number[][]} 调整后的洞穴地图
+   */
+  adjustCaveCoverage(caveMap, width, height, minDepth, maxDepth, params) {
+    const targetCoverage = params.coveragePercentage / 100;
+    const currentCoverage = this.calculateCoverage(caveMap, width, height, minDepth, maxDepth);
+    
+    console.log(`🕳️ 当前洞穴覆盖率: ${(currentCoverage * 100).toFixed(1)}%, 目标: ${params.coveragePercentage}%`);
+    
+    if (Math.abs(currentCoverage - targetCoverage) < 0.02) {
+      // 覆盖率已经接近目标值
+      return caveMap;
+    }
+    
+    if (currentCoverage > targetCoverage) {
+      // 洞穴太多，需要填充一些
+      return this.reduceCaveCoverage(caveMap, width, height, minDepth, maxDepth, currentCoverage, targetCoverage);
+    } else {
+      // 洞穴太少，需要挖掘更多
+      return this.increaseCaveCoverage(caveMap, width, height, minDepth, maxDepth, currentCoverage, targetCoverage);
+    }
+  }
+  
+  /**
+   * 计算洞穴覆盖率
+   * @param {number[][]} caveMap - 洞穴地图
+   * @param {number} width - 宽度
+   * @param {number} height - 高度
+   * @param {number} minDepth - 最小深度
+   * @param {number} maxDepth - 最大深度
+   * @returns {number} 覆盖率 (0-1)
+   */
+  calculateCoverage(caveMap, width, height, minDepth, maxDepth) {
+    let caveBlocks = 0;
+    let totalBlocks = 0;
+    
+    for (let y = minDepth; y < maxDepth; y++) {
+      for (let x = 0; x < width; x++) {
+        totalBlocks++;
+        if (caveMap[y] && caveMap[y][x] === 1) {
+          caveBlocks++;
+        }
+      }
+    }
+    
+    return totalBlocks > 0 ? caveBlocks / totalBlocks : 0;
+  }
+  
+  /**
+   * 减少洞穴覆盖率
+   * @param {number[][]} caveMap - 洞穴地图
+   * @param {number} width - 宽度
+   * @param {number} height - 高度
+   * @param {number} minDepth - 最小深度
+   * @param {number} maxDepth - 最大深度
+   * @param {number} currentCoverage - 当前覆盖率
+   * @param {number} targetCoverage - 目标覆盖率
+   * @returns {number[][]} 调整后的洞穴地图
+   */
+  reduceCaveCoverage(caveMap, width, height, minDepth, maxDepth, currentCoverage, targetCoverage) {
+    const reductionRatio = 1 - (targetCoverage / currentCoverage);
+    const newMap = JSON.parse(JSON.stringify(caveMap)); // 深拷贝
+    
+    // 优先填充边缘和小洞穴
+    for (let y = minDepth; y < maxDepth; y++) {
+      for (let x = 0; x < width; x++) {
+        if (newMap[y][x] === 1) {
+          // 计算这个洞穴块的重要性（边缘块更容易被填充）
+          const neighbors = this.countCaveNeighbors(caveMap, x, y, width, height);
+          const edgeScore = 8 - neighbors; // 邻居越少（越靠近边缘），分数越高
+          
+          // 根据边缘分数和随机因子决定是否填充
+          const fillProbability = (edgeScore / 8) * reductionRatio * 1.5;
+          
+          if (Math.random() < fillProbability) {
+            newMap[y][x] = 0;
+          }
+        }
+      }
+    }
+    
+    return newMap;
+  }
+  
+  /**
+   * 增加洞穴覆盖率
+   * @param {number[][]} caveMap - 洞穴地图
+   * @param {number} width - 宽度
+   * @param {number} height - 高度
+   * @param {number} minDepth - 最小深度
+   * @param {number} maxDepth - 最大深度
+   * @param {number} currentCoverage - 当前覆盖率
+   * @param {number} targetCoverage - 目标覆盖率
+   * @returns {number[][]} 调整后的洞穴地图
+   */
+  increaseCaveCoverage(caveMap, width, height, minDepth, maxDepth, currentCoverage, targetCoverage) {
+    const expansionRatio = (targetCoverage / currentCoverage) - 1;
+    const newMap = JSON.parse(JSON.stringify(caveMap)); // 深拷贝
+    
+    // 优先扩展现有洞穴的边缘
+    for (let y = minDepth; y < maxDepth; y++) {
+      for (let x = 0; x < width; x++) {
+        if (newMap[y][x] === 0) {
+          // 计算这个实体块周围的洞穴密度
+          const caveNeighbors = 8 - this.countCaveNeighbors(caveMap, x, y, width, height);
+          
+          if (caveNeighbors > 0) {
+            const expandProbability = (caveNeighbors / 8) * expansionRatio * 0.8;
+            
+            if (Math.random() < expandProbability) {
+              newMap[y][x] = 1;
+            }
+          }
+        }
+      }
+    }
+    
+    return newMap;
+  }
+  
+  /**
+   * 最终覆盖率检查
+   * @param {number[][]} caveMap - 洞穴地图
+   * @param {number} width - 宽度
+   * @param {number} height - 高度
+   * @param {number} minDepth - 最小深度
+   * @param {number} maxDepth - 最大深度
+   * @param {Object} params - 参数对象
+   * @returns {number[][]} 最终调整后的洞穴地图
+   */
+  finalCoverageCheck(caveMap, width, height, minDepth, maxDepth, params) {
+    const finalCoverage = this.calculateCoverage(caveMap, width, height, minDepth, maxDepth);
+    const targetCoverage = params.coveragePercentage / 100;
+    const tolerance = 0.03; // 3%的容差
+    
+    console.log(`🎯 最终洞穴覆盖率: ${(finalCoverage * 100).toFixed(1)}%, 目标: ${params.coveragePercentage}%`);
+    
+    if (Math.abs(finalCoverage - targetCoverage) > tolerance) {
+      console.log(`⚠️ 覆盖率偏差较大，进行微调...`);
+      
+      if (finalCoverage > targetCoverage + tolerance) {
+        return this.reduceCaveCoverage(caveMap, width, height, minDepth, maxDepth, finalCoverage, targetCoverage);
+      } else if (finalCoverage < targetCoverage - tolerance) {
+        return this.increaseCaveCoverage(caveMap, width, height, minDepth, maxDepth, finalCoverage, targetCoverage);
+      }
+    }
+    
+    return caveMap;
+  }
+  
+  /**
    * 获取洞穴生成统计
    * @returns {Object} 统计信息
    */
   getStats() {
+    const params = this.getParams();
     return {
       seed: this.seed,
-      params: this.params,
+      params: params,
       algorithm: 'Cellular Automata',
-      features: ['tunnels', 'chambers', 'deposits']
+      features: ['tunnels', 'chambers', 'deposits', 'coverage-control'],
+      coverageTarget: `${params.coveragePercentage}%`
     };
   }
 }

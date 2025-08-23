@@ -214,6 +214,368 @@ export class BlockConfig {
         breakable: true,
         hardness: 0.5,
         slippery: true
+      },
+      // 新增的我的世界基础方块
+      {
+        id: 19,
+        name: 'cobblestone',
+        displayName: '圆石',
+        solid: true,
+        transparent: false,
+        color: '#808080',
+        breakable: true,
+        hardness: 2.5,
+        blastResistance: 6.0
+      },
+      {
+        id: 20,
+        name: 'bedrock',
+        displayName: '基岩',
+        solid: true,
+        transparent: false,
+        color: '#1A1A1A',
+        breakable: false,
+        hardness: -1,
+        blastResistance: 3600000.0
+      },
+      {
+        id: 21,
+        name: 'oak_planks',
+        displayName: '橡木木板',
+        solid: true,
+        transparent: false,
+        color: '#C4965A',
+        breakable: true,
+        hardness: 2.0,
+        flammable: true
+      },
+      {
+        id: 22,
+        name: 'oak_log',
+        displayName: '橡木原木',
+        solid: true,
+        transparent: false,
+        color: '#976F47',
+        breakable: true,
+        hardness: 2.0,
+        flammable: true,
+        drops: ['oak_log']
+      },
+      {
+        id: 23,
+        name: 'birch_log',
+        displayName: '白桦原木',
+        solid: true,
+        transparent: false,
+        color: '#D7D3C7',
+        breakable: true,
+        hardness: 2.0,
+        flammable: true
+      },
+      {
+        id: 24,
+        name: 'spruce_log',
+        displayName: '云杉原木',
+        solid: true,
+        transparent: false,
+        color: '#6B4423',
+        breakable: true,
+        hardness: 2.0,
+        flammable: true
+      },
+      {
+        id: 25,
+        name: 'oak_leaves',
+        displayName: '橡木树叶',
+        solid: true,
+        transparent: true,
+        color: '#2D5016',
+        breakable: true,
+        hardness: 0.2,
+        flammable: true,
+        decayable: true
+      },
+      {
+        id: 26,
+        name: 'birch_leaves',
+        displayName: '白桦树叶',
+        solid: true,
+        transparent: true,
+        color: '#518A3E',
+        breakable: true,
+        hardness: 0.2,
+        flammable: true,
+        decayable: true
+      },
+      {
+        id: 27,
+        name: 'spruce_leaves',
+        displayName: '云杉树叶',
+        solid: true,
+        transparent: true,
+        color: '#0F5B2F',
+        breakable: true,
+        hardness: 0.2,
+        flammable: true,
+        decayable: true
+      },
+      {
+        id: 28,
+        name: 'clay',
+        displayName: '粘土',
+        solid: true,
+        transparent: false,
+        color: '#A0A0A0',
+        breakable: true,
+        hardness: 0.6,
+        drops: ['clay_ball']
+      },
+      {
+        id: 29,
+        name: 'snow',
+        displayName: '雪块',
+        solid: true,
+        transparent: false,
+        color: '#FFFFFF',
+        breakable: true,
+        hardness: 0.1,
+        requiresTool: false
+      },
+      {
+        id: 30,
+        name: 'snow_layer',
+        displayName: '雪层',
+        solid: false,
+        transparent: true,
+        color: '#FFFFFF',
+        breakable: true,
+        hardness: 0.1,
+        partial: true
+      },
+      {
+        id: 31,
+        name: 'obsidian',
+        displayName: '黑曜石',
+        solid: true,
+        transparent: false,
+        color: '#0F0F23',
+        breakable: true,
+        hardness: 50.0,
+        blastResistance: 1200.0,
+        requiresTool: true
+      },
+      {
+        id: 32,
+        name: 'lava',
+        displayName: '岩浆',
+        solid: false,
+        transparent: true,
+        color: '#FF6600',
+        breakable: false,
+        fluid: true,
+        damage: 4,
+        lightLevel: 15
+      },
+      {
+        id: 33,
+        name: 'sandstone',
+        displayName: '砂岩',
+        solid: true,
+        transparent: false,
+        color: '#F4D796',
+        breakable: true,
+        hardness: 0.8,
+        blastResistance: 0.8
+      },
+      {
+        id: 34,
+        name: 'red_sand',
+        displayName: '红沙',
+        solid: true,
+        transparent: false,
+        color: '#CD853F',
+        breakable: true,
+        hardness: 0.5,
+        gravity: true
+      },
+      {
+        id: 35,
+        name: 'red_sandstone',
+        displayName: '红砂岩',
+        solid: true,
+        transparent: false,
+        color: '#B8860B',
+        breakable: true,
+        hardness: 0.8,
+        blastResistance: 0.8
+      },
+      {
+        id: 36,
+        name: 'granite',
+        displayName: '花岗岩',
+        solid: true,
+        transparent: false,
+        color: '#A0522D',
+        breakable: true,
+        hardness: 1.5,
+        blastResistance: 6.0
+      },
+      {
+        id: 37,
+        name: 'diorite',
+        displayName: '闪长岩',
+        solid: true,
+        transparent: false,
+        color: '#D3D3D3',
+        breakable: true,
+        hardness: 1.5,
+        blastResistance: 6.0
+      },
+      {
+        id: 38,
+        name: 'andesite',
+        displayName: '安山岩',
+        solid: true,
+        transparent: false,
+        color: '#808080',
+        breakable: true,
+        hardness: 1.5,
+        blastResistance: 6.0
+      },
+      {
+        id: 39,
+        name: 'mossy_cobblestone',
+        displayName: '苔石',
+        solid: true,
+        transparent: false,
+        color: '#6B8068',
+        breakable: true,
+        hardness: 2.0,
+        blastResistance: 6.0
+      },
+      {
+        id: 40,
+        name: 'emerald_ore',
+        displayName: '绿宝石矿石',
+        solid: true,
+        transparent: false,
+        color: '#00FF7F',
+        breakable: true,
+        hardness: 3.0,
+        drops: ['emerald'],
+        requiresTool: true
+      },
+      {
+        id: 41,
+        name: 'redstone_ore',
+        displayName: '红石矿石',
+        solid: true,
+        transparent: false,
+        color: '#8B0000',
+        breakable: true,
+        hardness: 3.0,
+        drops: ['redstone'],
+        lightLevel: 9
+      },
+      {
+        id: 42,
+        name: 'lapis_ore',
+        displayName: '青金石矿石',
+        solid: true,
+        transparent: false,
+        color: '#1E3A8A',
+        breakable: true,
+        hardness: 3.0,
+        drops: ['lapis_lazuli']
+      },
+      {
+        id: 43,
+        name: 'netherrack',
+        displayName: '下界岩',
+        solid: true,
+        transparent: false,
+        color: '#8B4513',
+        breakable: true,
+        hardness: 0.4,
+        dimension: 'nether'
+      },
+      {
+        id: 44,
+        name: 'soul_sand',
+        displayName: '灵魂沙',
+        solid: true,
+        transparent: false,
+        color: '#4A3728',
+        breakable: true,
+        hardness: 0.5,
+        dimension: 'nether',
+        slowing: true
+      },
+      {
+        id: 45,
+        name: 'end_stone',
+        displayName: '末地石',
+        solid: true,
+        transparent: false,
+        color: '#FFFACD',
+        breakable: true,
+        hardness: 3.0,
+        dimension: 'end'
+      },
+      {
+        id: 46,
+        name: 'mycelium',
+        displayName: '菌丝',
+        solid: true,
+        transparent: false,
+        color: '#674C47',
+        breakable: true,
+        hardness: 0.6,
+        special: 'mushroom_growth'
+      },
+      {
+        id: 47,
+        name: 'podzol',
+        displayName: '灰化土',
+        solid: true,
+        transparent: false,
+        color: '#8B4513',
+        breakable: true,
+        hardness: 0.5,
+        special: 'tree_growth'
+      },
+      {
+        id: 48,
+        name: 'coarse_dirt',
+        displayName: '砂土',
+        solid: true,
+        transparent: false,
+        color: '#A0522D',
+        breakable: true,
+        hardness: 0.5
+      },
+      {
+        id: 49,
+        name: 'prismarine',
+        displayName: '海晶石',
+        solid: true,
+        transparent: false,
+        color: '#40E0D0',
+        breakable: true,
+        hardness: 1.5,
+        underwater: true
+      },
+      {
+        id: 50,
+        name: 'sea_lantern',
+        displayName: '海晶灯',
+        solid: true,
+        transparent: false,
+        color: '#E0FFFF',
+        breakable: true,
+        hardness: 0.3,
+        lightLevel: 15,
+        underwater: true
       }
     ];
     
@@ -241,6 +603,21 @@ export class BlockConfig {
       gravity: blockDef.gravity ?? false,
       fluid: blockDef.fluid ?? false,
       drops: blockDef.drops ?? [],
+      
+      // 新增的我的世界属性
+      blastResistance: blockDef.blastResistance ?? 0,
+      flammable: blockDef.flammable ?? false,
+      decayable: blockDef.decayable ?? false,
+      requiresTool: blockDef.requiresTool ?? false,
+      partial: blockDef.partial ?? false,
+      damage: blockDef.damage ?? 0,
+      lightLevel: blockDef.lightLevel ?? 0,
+      slippery: blockDef.slippery ?? false,
+      slowing: blockDef.slowing ?? false,
+      dimension: blockDef.dimension ?? 'overworld',
+      underwater: blockDef.underwater ?? false,
+      special: blockDef.special ?? null,
+      
       // 添加创建时间戳
       createdAt: Date.now()
     };
@@ -338,6 +715,94 @@ export class BlockConfig {
   }
   
   /**
+   * 获取方块爆炸防性
+   */
+  getBlastResistance(blockId) {
+    const block = this.getBlock(blockId);
+    return block ? block.blastResistance : 0;
+  }
+  
+  /**
+   * 检查方块是否可燃
+   */
+  isFlammable(blockId) {
+    const block = this.getBlock(blockId);
+    return block ? block.flammable : false;
+  }
+  
+  /**
+   * 检查方块是否会腐烂（如树叶）
+   */
+  isDecayable(blockId) {
+    const block = this.getBlock(blockId);
+    return block ? block.decayable : false;
+  }
+  
+  /**
+   * 检查方块是否需要工具挖掘
+   */
+  requiresTool(blockId) {
+    const block = this.getBlock(blockId);
+    return block ? block.requiresTool : false;
+  }
+  
+  /**
+   * 获取方块伤害值（如仙人掌、岩浆）
+   */
+  getBlockDamage(blockId) {
+    const block = this.getBlock(blockId);
+    return block ? block.damage : 0;
+  }
+  
+  /**
+   * 获取方块光照等级
+   */
+  getLightLevel(blockId) {
+    const block = this.getBlock(blockId);
+    return block ? block.lightLevel : 0;
+  }
+  
+  /**
+   * 检查方块是否湿滑（如冰块）
+   */
+  isSlippery(blockId) {
+    const block = this.getBlock(blockId);
+    return block ? block.slippery : false;
+  }
+  
+  /**
+   * 检查方块是否会减速（如灵魂沙）
+   */
+  isSlowing(blockId) {
+    const block = this.getBlock(blockId);
+    return block ? block.slowing : false;
+  }
+  
+  /**
+   * 获取方块所属维度
+   */
+  getDimension(blockId) {
+    const block = this.getBlock(blockId);
+    return block ? block.dimension : 'overworld';
+  }
+  
+  /**
+   * 检查方块是否为水下方块
+   */
+  isUnderwater(blockId) {
+    const block = this.getBlock(blockId);
+    return block ? block.underwater : false;
+  }
+  
+  /**
+   * 获取方块特殊属性
+   */
+  getSpecialProperty(blockId) {
+    const block = this.getBlock(blockId);
+    return block ? block.special : null;
+  }
+  
+  /**
    * 按类型过滤方块
    */
   getBlocksByType(type) {
@@ -354,6 +819,37 @@ export class BlockConfig {
         return allBlocks.filter(block => block.gravity);
       case 'fluid':
         return allBlocks.filter(block => block.fluid);
+      case 'flammable':
+        return allBlocks.filter(block => block.flammable);
+      case 'decayable':
+        return allBlocks.filter(block => block.decayable);
+      case 'ores':
+        return allBlocks.filter(block => block.name.includes('ore') || block.drops.length > 0);
+      case 'logs':
+        return allBlocks.filter(block => block.name.includes('log'));
+      case 'leaves':
+        return allBlocks.filter(block => block.name.includes('leaves'));
+      case 'stones':
+        return allBlocks.filter(block => 
+          block.name.includes('stone') || 
+          block.name.includes('granite') || 
+          block.name.includes('diorite') || 
+          block.name.includes('andesite')
+        );
+      case 'planks':
+        return allBlocks.filter(block => block.name.includes('planks'));
+      case 'light_sources':
+        return allBlocks.filter(block => block.lightLevel > 0);
+      case 'damage_sources':
+        return allBlocks.filter(block => block.damage > 0);
+      case 'nether':
+        return allBlocks.filter(block => block.dimension === 'nether');
+      case 'end':
+        return allBlocks.filter(block => block.dimension === 'end');
+      case 'overworld':
+        return allBlocks.filter(block => block.dimension === 'overworld');
+      case 'underwater':
+        return allBlocks.filter(block => block.underwater);
       default:
         return allBlocks;
     }
@@ -441,7 +937,18 @@ export class BlockConfig {
       transparentBlocks: allBlocks.filter(b => b.transparent).length,
       breakableBlocks: allBlocks.filter(b => b.breakable).length,
       gravityBlocks: allBlocks.filter(b => b.gravity).length,
-      fluidBlocks: allBlocks.filter(b => b.fluid).length
+      fluidBlocks: allBlocks.filter(b => b.fluid).length,
+      flammableBlocks: allBlocks.filter(b => b.flammable).length,
+      oreBlocks: allBlocks.filter(b => b.name.includes('ore')).length,
+      logBlocks: allBlocks.filter(b => b.name.includes('log')).length,
+      leavesBlocks: allBlocks.filter(b => b.name.includes('leaves')).length,
+      lightSources: allBlocks.filter(b => b.lightLevel > 0).length,
+      damageSources: allBlocks.filter(b => b.damage > 0).length,
+      dimensionStats: {
+        overworld: allBlocks.filter(b => b.dimension === 'overworld').length,
+        nether: allBlocks.filter(b => b.dimension === 'nether').length,
+        end: allBlocks.filter(b => b.dimension === 'end').length
+      }
     };
   }
 }

@@ -9,10 +9,13 @@ import { Player } from './player/Player.js';
 import { Camera } from './camera/Camera.js';
 import { Renderer } from './renderer/Renderer.js';
 import { StorageManager } from './storage/StorageManager.js';
+import { ConfigPanel } from './ui/ConfigPanel.js';
+import { gameConfig } from './config/GameConfig.js';
 
 function App() {
   const canvasRef = useRef(null);
   const gameEngineRef = useRef(null);
+  const configPanelRef = useRef(null);
   const [gameStatus, setGameStatus] = useState('loading');
   const [debugInfo, setDebugInfo] = useState(false);
   const [gameStats, setGameStats] = useState({
@@ -188,6 +191,22 @@ function App() {
         saveGameData(storageManager, player, terrainGenerator, camera, renderer);
       }, 30000); // 30秒自动保存
       
+      // 初始化配置面板
+      console.log('初始化配置面板...');
+      const configPanel = new ConfigPanel();
+      configPanelRef.current = configPanel;
+      
+      // 设置配置变更回调
+      configPanel.onUpdate('cave', 'coveragePercentage', (value) => {
+        console.log(`🕳️ 洞穴覆盖率更新为: ${value}%`);
+      });
+      
+      configPanel.onUpdate('cave', 'initialCaveChance', (value) => {
+        console.log(`🕳️ 洞穴初始概率更新为: ${value}`);
+      });
+      
+      console.log('✅ 配置面板初始化完成');
+      
       setGameStatus('running');
       console.log('🎉 MCv2游戏启动成功！');
       
@@ -331,6 +350,24 @@ function App() {
         player.respawn();
         console.log('🌍 世界已重新生成');
       }
+    }
+  };
+  
+  /**
+   * 打开配置管理面板
+   */
+  const openConfigPanel = () => {
+    if (configPanelRef.current) {
+      configPanelRef.current.show();
+    }
+  };
+  
+  /**
+   * 切换配置管理面板
+   */
+  const toggleConfigPanel = () => {
+    if (configPanelRef.current) {
+      configPanelRef.current.toggle();
     }
   };
 
@@ -495,6 +532,21 @@ function App() {
           </button>
           <button onClick={saveGame}>保存游戏</button>
           <button onClick={regenerateWorld}>重新生成世界</button>
+          <button 
+            onClick={toggleConfigPanel}
+            style={{
+              background: 'linear-gradient(45deg, #4a90e2, #357abd)',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+            }}
+          >
+            ⚙️ 游戏配置
+          </button>
         </div>
         
         {/* 控制说明 */}
@@ -508,6 +560,7 @@ function App() {
             <li><strong>+/-键:</strong> 调节飞行速度</li>
             <li><strong>ESC:</strong> 暂停/继续</li>
             <li><strong>F3:</strong> 切换调试信息</li>
+            <li><strong>F2:</strong> 打开/关闭配置面板</li>
           </ul>
           <div style={{ marginTop: '10px', padding: '8px', background: 'rgba(135, 206, 235, 0.2)', borderRadius: '4px', border: '1px solid #87CEEB' }}>
             <strong style={{ color: '#87CEEB' }}>飞行模式:</strong>
