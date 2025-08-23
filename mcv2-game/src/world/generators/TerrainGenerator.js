@@ -57,7 +57,7 @@ export class TerrainGenerator {
   
   /**
    * 生成指定位置的地形高度
-   * @param {number} x - 世界X坐标
+   * @param {number} x - 世界X坐标 (绝对坐标)
    * @param {string} biome - 生物群系类型
    * @returns {number} 地形高度
    */
@@ -65,38 +65,41 @@ export class TerrainGenerator {
     const biomeConfig = getBiomeConfig(biome);
     const heightModifiers = biomeConfig.heightModifiers;
     
+    // 确保使用绝对世界坐标，保证连续性
+    const absoluteX = Math.floor(x);
+    
     let height = this.params.baseHeight;
     
-    // 大陆尺度地形
+    // 大陆尺度地形 - 使用绝对坐标确保连续性
     const continental = this.heightNoise.fractal(
-      x * this.params.continental.scale,
+      absoluteX * this.params.continental.scale,
       0,
       this.params.continental.octaves,
       this.params.continental.persistence,
       this.params.continental.lacunarity
     );
     
-    // 区域尺度地形
+    // 区域尺度地形 - 使用绝对坐标确保连续性
     const regional = this.heightNoise.fractal(
-      x * this.params.regional.scale,
+      absoluteX * this.params.regional.scale,
       0,
       this.params.regional.octaves,
       this.params.regional.persistence,
       this.params.regional.lacunarity
     );
     
-    // 局部尺度细节
+    // 局部尺度细节 - 使用绝对坐标确保连续性
     const local = this.detailNoise.fractal(
-      x * this.params.local.scale,
+      absoluteX * this.params.local.scale,
       0,
       this.params.local.octaves,
       this.params.local.persistence,
       this.params.local.lacunarity
     );
     
-    // 表面粗糙度
+    // 表面粗糙度 - 使用绝对坐标确保连续性
     const roughness = this.roughnessNoise.fractal(
-      x * this.params.roughness.scale,
+      absoluteX * this.params.roughness.scale,
       0,
       this.params.roughness.octaves,
       this.params.roughness.persistence,
@@ -110,7 +113,7 @@ export class TerrainGenerator {
     height += roughness * this.params.roughness.amplitude;
     
     // 应用生物群系特殊效果
-    height = this.applyBiomeSpecificEffects(height, biome, x);
+    height = this.applyBiomeSpecificEffects(height, biome, absoluteX);
     
     // 限制高度范围
     return Math.floor(Math.max(10, Math.min(400, height)));
@@ -120,10 +123,13 @@ export class TerrainGenerator {
    * 应用生物群系特定效果
    * @param {number} height - 基础高度
    * @param {string} biome - 生物群系
-   * @param {number} x - X坐标
+   * @param {number} x - X坐标 (绝对世界坐标)
    * @returns {number} 修正后的高度
    */
   applyBiomeSpecificEffects(height, biome, x) {
+    // 确保使用绝对坐标保证连续性
+    const absoluteX = Math.floor(x);
+    
     switch (biome) {
       case BIOME_TYPES.OCEAN:
         // 海洋：平滑的海底
@@ -131,7 +137,7 @@ export class TerrainGenerator {
         
       case BIOME_TYPES.MOUNTAINS:
         // 山地：增加尖峰效果
-        const peakNoise = this.heightNoise.sample(x * 0.002, 0);
+        const peakNoise = this.heightNoise.sample(absoluteX * 0.002, 0);
         if (peakNoise > 0.6) {
           height += (peakNoise - 0.6) * 100;
         }
@@ -139,7 +145,7 @@ export class TerrainGenerator {
         
       case BIOME_TYPES.DESERT:
         // 沙漠：添加沙丘效果
-        const duneNoise = this.detailNoise.sample(x * 0.008, 0);
+        const duneNoise = this.detailNoise.sample(absoluteX * 0.008, 0);
         height += duneNoise * 15;
         break;
         
@@ -219,7 +225,7 @@ export class TerrainGenerator {
   
   /**
    * 生成地形列的特征
-   * @param {number} x - X坐标
+   * @param {number} x - X坐标 (绝对世界坐标)
    * @param {number} surfaceHeight - 地表高度
    * @param {string} biome - 生物群系
    * @returns {Object} 特征对象
@@ -235,10 +241,13 @@ export class TerrainGenerator {
     const biomeConfig = getBiomeConfig(biome);
     if (!biomeConfig.vegetation) return features;
     
-    // 基于噪音决定植被
-    const vegetationNoise = this.detailNoise.sample(x * 0.1, 0);
-    const grassNoise = this.detailNoise.sample(x * 0.2, 50);
-    const flowerNoise = this.detailNoise.sample(x * 0.15, 100);
+    // 确保使用绝对坐标保证连续性
+    const absoluteX = Math.floor(x);
+    
+    // 基于噪音决定植被（使用绝对坐标）
+    const vegetationNoise = this.detailNoise.sample(absoluteX * 0.1, 0);
+    const grassNoise = this.detailNoise.sample(absoluteX * 0.2, 50);
+    const flowerNoise = this.detailNoise.sample(absoluteX * 0.15, 100);
     
     // 树木
     if (vegetationNoise > 0.7 && Math.random() < biomeConfig.vegetation.trees) {

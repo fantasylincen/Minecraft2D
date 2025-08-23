@@ -248,7 +248,7 @@ export class WorldGenerator {
    */
   postProcessChunk(chunk, chunkX, biomeMap) {
     // 平滑边界
-    this.smoothChunkBoundaries(chunk);
+    this.smoothChunkBoundaries(chunk, chunkX);
     
     // 添加细节
     this.addChunkDetails(chunk, chunkX, biomeMap);
@@ -258,9 +258,132 @@ export class WorldGenerator {
    * 平滑区块边界
    * @param {number[][]} chunk - 区块数组
    */
-  smoothChunkBoundaries(chunk) {
-    // 简单的边界平滑处理
-    // 这里可以添加更复杂的平滑算法
+  smoothChunkBoundaries(chunk, chunkX) {
+    const SMOOTH_RADIUS = 2; // 平滑半径
+    const chunkWidth = chunk[0].length;
+    
+    // 处理左边界
+    if (chunkX > 0 && this.cache.chunks.has(chunkX - 1)) {
+      this.smoothBoundaryWithNeighbor(chunk, chunkX - 1, 'left', SMOOTH_RADIUS);
+    }
+    
+    // 处理右边界
+    if (this.cache.chunks.has(chunkX + 1)) {
+      this.smoothBoundaryWithNeighbor(chunk, chunkX + 1, 'right', SMOOTH_RADIUS);
+    }
+  }
+  
+  /**
+   * 与邻居区块平滑边界
+   * @param {number[][]} chunk - 当前区块
+   * @param {number} neighborChunkX - 邻居区块X坐标
+   * @param {string} side - 边界方向 ('left' 或 'right')
+   * @param {number} radius - 平滑半径
+   */
+  smoothBoundaryWithNeighbor(chunk, neighborChunkX, side, radius) {
+    const neighborData = this.cache.chunks.get(neighborChunkX);
+    if (!neighborData) return;
+    
+    const neighborChunk = neighborData.chunk;
+    const chunkWidth = chunk[0].length;
+    
+    // 获取地表高度信息
+    const currentHeights = this.extractSurfaceHeights(chunk);
+    const neighborHeights = this.extractSurfaceHeights(neighborChunk);
+    
+    if (side === 'left') {
+      // 平滑左边界 (当前区块的第0列)
+      this.smoothBoundaryRegion(chunk, neighborChunk, 0, chunkWidth - 1, 
+                               currentHeights[0], neighborHeights[chunkWidth - 1], radius);
+    } else {
+      // 平滑右边界 (当前区块的最后一列)
+      this.smoothBoundaryRegion(chunk, neighborChunk, chunkWidth - 1, 0,
+                               currentHeights[chunkWidth - 1], neighborHeights[0], radius);
+    }
+  }
+  
+  /**
+   * 提取地表高度信息
+   * @param {number[][]} chunk - 区块数组
+   * @returns {number[]} 地表高度数组
+   */
+  extractSurfaceHeights(chunk) {
+    const chunkWidth = chunk[0].length;
+    const heights = [];
+    
+    for (let x = 0; x < chunkWidth; x++) {
+      // 从上往下找第一个非空气方块
+      for (let y = chunk.length - 1; y >= 0; y--) {
+        if (chunk[y][x] !== blockConfig.getBlock('air').id) {
+          heights[x] = y;
+          break;
+        }
+      }
+      if (heights[x] === undefined) {
+        heights[x] = 0; // 如果没找到固体方块，默认为0
+      }
+    }
+    
+    return heights;
+  }
+  
+  /**
+   * 平滑边界区域
+   * @param {number[][]} currentChunk - 当前区块
+   * @param {number[][]} neighborChunk - 邻居区块
+   * @param {number} currentX - 当前X坐标
+   * @param {number} neighborX - 邻居X坐标
+   * @param {number} currentHeight - 当前高度
+   * @param {number} neighborHeight - 邻居高度
+   * @param {number} radius - 平滑半径
+   */
+  smoothBoundaryRegion(currentChunk, neighborChunk, currentX, neighborX, 
+                       currentHeight, neighborHeight, radius) {
+    const heightDiff = Math.abs(currentHeight - neighborHeight);
+    
+    // 只在高度差异较大时才进行平滑
+    if (heightDiff <= 2) return;
+    
+    const targetHeight = Math.floor((currentHeight + neighborHeight) / 2);
+    const smoothingStrength = Math.min(0.7, heightDiff / 10); // 平滑强度
+    
+    // 应用渐进式高度调整
+    for (let r = 0; r < radius; r++) {
+      const factor = (radius - r) / radius * smoothingStrength;
+      const adjustedHeight = Math.floor(currentHeight + (targetHeight - currentHeight) * factor);
+      
+      this.adjustTerrainHeight(currentChunk, currentX, currentHeight, adjustedHeight);
+    }
+  }
+  
+  /**
+   * 调整地形高度
+   * @param {number[][]} chunk - 区块数组
+   * @param {number} x - X坐标
+   * @param {number} oldHeight - 旧高度
+   * @param {number} newHeight - 新高度
+   */
+  adjustTerrainHeight(chunk, x, oldHeight, newHeight) {
+    if (oldHeight === newHeight) return;
+    
+    const airId = blockConfig.getBlock('air').id;
+    const dirtId = blockConfig.getBlock('dirt').id;
+    
+    if (newHeight > oldHeight) {
+      // 增加高度 - 填充方块
+      for (let y = oldHeight + 1; y <= newHeight && y < chunk.length; y++) {
+        if (chunk[y][x] === airId) {
+          chunk[y][x] = dirtId;
+        }
+      }
+    } else {
+      // 降低高度 - 移除方块
+      for (let y = oldHeight; y > newHeight && y >= 0; y--) {
+        if (chunk[y][x] !== airId) {
+          chunk[y][x] = airId;
+        }
+      }
+    }
   }
   
   /**
