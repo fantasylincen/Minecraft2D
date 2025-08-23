@@ -492,10 +492,16 @@ function App() {
           <h3>控制说明:</h3>
           <ul>
             <li><strong>WASD / 方向键:</strong> 移动</li>
-            <li><strong>空格键:</strong> 跳跃</li>
+            <li><strong>空格键:</strong> 跳跃 (正常模式)</li>
+            <li><strong>F键:</strong> 切换飞行模式</li>
+            <li><strong>W/S:</strong> 上下飞行 (飞行模式)</li>
             <li><strong>ESC:</strong> 暂停/继续</li>
             <li><strong>F3:</strong> 切换调试信息</li>
           </ul>
+          <div style={{ marginTop: '10px', padding: '8px', background: 'rgba(135, 206, 235, 0.2)', borderRadius: '4px', border: '1px solid #87CEEB' }}>
+            <strong style={{ color: '#87CEEB' }}>飞行模式:</strong>
+            <br />在飞行模式下，玩家变为天空蓝色，可以全方向快速飞行，不受重力和地形碰撞影响。
+          </div>
         </div>
       </div>
     </div>

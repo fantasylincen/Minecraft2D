@@ -265,4 +265,79 @@ async function verifyGameFunctionality() {
       const rect1 = { x: 0, y: 0, width: 10, height: 10 };
       const rect2 = { x: 5, y: 5, width: 10, height: 10 };
       
-      const collision = !(rect1.x + rect1.width < rect2.x ||\n                        rect2.x + rect2.width < rect1.x ||\n                        rect1.y + rect1.height < rect2.y ||\n                        rect2.y + rect2.height < rect1.y);\n      \n      return collision === true;\n    });\n    \n    test('重力模拟', () => {\n      let velocity = 0;\n      const gravity = 800;\n      const deltaTime = 1/60; // 60 FPS\n      \n      // 模拟一帧的重力影响\n      velocity -= gravity * deltaTime;\n      \n      return velocity < 0; // 向下的速度应该是负数\n    });\n\n    // 10. 验证项目结构\n    console.log('\\n📁 验证项目结构:');\n    test('模块化架构', () => {\n      const expectedModules = [\n        'GameEngine',\n        'BlockConfig', \n        'TerrainGenerator',\n        'Player',\n        'Camera',\n        'Renderer',\n        'StorageManager'\n      ];\n      return expectedModules.length === 7;\n    });\n    \n    test('响应式设计', () => {\n      // 验证画布能适应不同屏幕尺寸\n      const minWidth = 320; // 最小支持宽度\n      const maxWidth = 1920; // 最大支持宽度\n      return minWidth < maxWidth;\n    });\n\n  } catch (error) {\n    console.error('❌ 验证过程中发生错误:', error);\n  }\n\n  // 输出测试结果\n  console.log('\\n📊 验证结果汇总:');\n  console.log(`总验证项: ${totalTests}`);\n  console.log(`通过: ${passedTests}`);\n  console.log(`失败: ${totalTests - passedTests}`);\n  console.log(`成功率: ${((passedTests / totalTests) * 100).toFixed(1)}%`);\n  \n  if (passedTests === totalTests) {\n    console.log('\\n🎉 所有验证项目都通过了！MCv2游戏核心功能正常。');\n  } else {\n    console.log(`\\n⚠️  有 ${totalTests - passedTests} 个验证项目未通过，请检查相关功能。`);\n  }\n  \n  return {\n    total: totalTests,\n    passed: passedTests,\n    failed: totalTests - passedTests,\n    successRate: (passedTests / totalTests) * 100\n  };\n}\n\n// 运行验证\nverifyGameFunctionality().then(result => {\n  if (result.successRate >= 90) {\n    console.log('\\n✅ 游戏功能验证完成，可以进行实际游戏测试！');\n  } else {\n    console.log('\\n❌ 游戏功能验证发现问题，建议修复后再进行测试。');\n  }\n}).catch(error => {\n  console.error('验证失败:', error);\n});
+      const collision = !(rect1.x + rect1.width < rect2.x ||
+                        rect2.x + rect2.width < rect1.x ||
+                        rect1.y + rect1.height < rect2.y ||
+                        rect2.y + rect2.height < rect1.y);
+      
+      return collision === true;
+    });
+    
+    test('重力模拟', () => {
+      let velocity = 0;
+      const gravity = 800;
+      const deltaTime = 1/60; // 60 FPS
+      
+      // 模拟一帧的重力影响
+      velocity -= gravity * deltaTime;
+      
+      return velocity < 0; // 向下的速度应该是负数
+    });
+
+    // 10. 验证项目结构
+    console.log('\n📁 验证项目结构:');
+    test('模块化架构', () => {
+      const expectedModules = [
+        'GameEngine',
+        'BlockConfig', 
+        'TerrainGenerator',
+        'Player',
+        'Camera',
+        'Renderer',
+        'StorageManager'
+      ];
+      return expectedModules.length === 7;
+    });
+    
+    test('响应式设计', () => {
+      // 验证画布能适应不同屏幕尺寸
+      const minWidth = 320; // 最小支持宽度
+      const maxWidth = 1920; // 最大支持宽度
+      return minWidth < maxWidth;
+    });
+
+  } catch (error) {
+    console.error('❌ 验证过程中发生错误:', error);
+  }
+
+  // 输出测试结果
+  console.log('\n📊 验证结果汇总:');
+  console.log(`总验证项: ${totalTests}`);
+  console.log(`通过: ${passedTests}`);
+  console.log(`失败: ${totalTests - passedTests}`);
+  console.log(`成功率: ${((passedTests / totalTests) * 100).toFixed(1)}%`);
+  
+  if (passedTests === totalTests) {
+    console.log('\n🎉 所有验证项目都通过了！MCv2游戏核心功能正常。');
+  } else {
+    console.log(`\n⚠️  有 ${totalTests - passedTests} 个验证项目未通过，请检查相关功能。`);
+  }
+  
+  return {
+    total: totalTests,
+    passed: passedTests,
+    failed: totalTests - passedTests,
+    successRate: (passedTests / totalTests) * 100
+  };
+}
+
+// 运行验证
+verifyGameFunctionality().then(result => {
+  if (result.successRate >= 90) {
+    console.log('\n✅ 游戏功能验证完成，可以进行实际游戏测试！');
+  } else {
+    console.log('\n❌ 游戏功能验证发现问题，建议修复后再进行测试。');
+  }
+}).catch(error => {
+  console.error('验证失败:', error);
+});

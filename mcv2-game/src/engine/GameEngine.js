@@ -153,7 +153,7 @@ export class GameEngine {
    */
   handleKeyDown(event) {
     // 阻止默认行为
-    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(event.code)) {
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'KeyF'].includes(event.code)) {
       event.preventDefault();
     }
     
@@ -161,6 +161,9 @@ export class GameEngine {
     switch (event.code) {
       case 'Escape':
         this.togglePause();
+        break;
+      case 'KeyF':
+        // F键用于切换飞行模式，在Player类中处理
         break;
     }
   }

@@ -29,6 +29,13 @@ export class Player {
       canJump: false        // 是否可以跳跃
     };
     
+    // 飞行模式
+    this.flyMode = {
+      enabled: false,       // 是否启用飞行模式
+      speed: 250,          // 飞行速度 (比正常移动更快)
+      friction: 0.9        // 飞行摩擦力
+    };
+    
     // 玩家尺寸
     this.size = {
       width: 12,
@@ -48,7 +55,9 @@ export class Player {
       up: false,
       down: false,
       jump: false,
-      prevJump: false
+      prevJump: false,
+      fly: false,           // 飞行模式切换按键
+      prevFly: false        // 上一帧飞行按键状态
     };
     
     // 游戏引用
@@ -79,11 +88,18 @@ export class Player {
     this.updatePhysics(deltaTime);
     
     // 分别处理X和Y方向的移动和碰撞
-    this.moveHorizontal(deltaTime);
-    this.moveVertical(deltaTime);
-    
-    // 最终安全检查，确保玩家不嵌入方块
-    this.ensureNotEmbedded();
+    if (this.flyMode.enabled) {
+      // 飞行模式下直接移动，不进行碰撞检测
+      this.position.x += this.physics.velocity.x * deltaTime;
+      this.position.y += this.physics.velocity.y * deltaTime;
+    } else {
+      // 正常模式下进行碰撞检测
+      this.moveHorizontal(deltaTime);
+      this.moveVertical(deltaTime);
+      
+      // 最终安全检查，确保玩家不嵌入方块
+      this.ensureNotEmbedded();
+    }
     
     // 边界限制（防止掉出世界）
     this.constrainToWorld();
@@ -93,20 +109,45 @@ export class Player {
    * 更新控制输入
    */
   updateControls(keys) {
-    // WASD 控制 - 只用于水平移动
+    // WASD 控制
     this.controls.left = keys['KeyA'] || keys['ArrowLeft'];
     this.controls.right = keys['KeyD'] || keys['ArrowRight'];
+    this.controls.up = keys['KeyW'] || keys['ArrowUp'];
+    this.controls.down = keys['KeyS'] || keys['ArrowDown'];
     
     // 跳跃控制 - 只使用空格键，避免冲突
     const jumpPressed = keys['Space'];
     this.controls.jump = jumpPressed && !this.controls.prevJump;
     this.controls.prevJump = jumpPressed;
+    
+    // 飞行模式切换 - 使用F键
+    const flyPressed = keys['KeyF'];
+    this.controls.fly = flyPressed && !this.controls.prevFly;
+    this.controls.prevFly = flyPressed;
+    
+    // 处理飞行模式切换
+    if (this.controls.fly) {
+      this.toggleFlyMode();
+    }
   }
   
   /**
    * 更新物理模拟
    */
   updatePhysics(deltaTime) {
+    if (this.flyMode.enabled) {
+      // 飞行模式物理
+      this.updateFlyingPhysics(deltaTime);
+    } else {
+      // 正常模式物理
+      this.updateNormalPhysics(deltaTime);
+    }
+  }
+  
+  /**
+   * 更新正常模式物理
+   */
+  updateNormalPhysics(deltaTime) {
     // 水平移动 - 简化逗辑
     if (this.controls.left) {
       this.physics.velocity.x = -this.physics.speed;
@@ -136,6 +177,44 @@ export class Player {
         this.physics.velocity.y = -this.physics.terminalVelocity;
       }
     }
+  }
+  
+  /**
+   * 更新飞行模式物理
+   */
+  updateFlyingPhysics(deltaTime) {
+    // 飞行模式下的全方向移动
+    const speed = this.flyMode.speed;
+    
+    // 水平移动
+    if (this.controls.left) {
+      this.physics.velocity.x = -speed;
+    } else if (this.controls.right) {
+      this.physics.velocity.x = speed;
+    } else {
+      // 应用飞行摩擦力
+      this.physics.velocity.x *= this.flyMode.friction;
+      if (Math.abs(this.physics.velocity.x) < 1) {
+        this.physics.velocity.x = 0;
+      }
+    }
+    
+    // 垂直移动 (在飞行模式下，W/S 或 上/下 箭头键控制垂直移动)
+    if (this.controls.up) {
+      this.physics.velocity.y = speed;
+    } else if (this.controls.down) {
+      this.physics.velocity.y = -speed;
+    } else {
+      // 应用飞行摩擦力
+      this.physics.velocity.y *= this.flyMode.friction;
+      if (Math.abs(this.physics.velocity.y) < 1) {
+        this.physics.velocity.y = 0;
+      }
+    }
+    
+    // 飞行模式下不受重力影响，也不进行地面检测
+    this.physics.onGround = false;
+    this.physics.canJump = false;
   }
   
   /**
@@ -346,6 +425,54 @@ export class Player {
   }
   
   /**
+   * 切换飞行模式
+   */
+  toggleFlyMode() {
+    this.flyMode.enabled = !this.flyMode.enabled;
+    
+    if (this.flyMode.enabled) {
+      console.log('✈️ 飞行模式开启');
+      // 在开启飞行模式时，清除下落速度
+      this.physics.velocity.y = 0;
+      this.physics.onGround = false;
+    } else {
+      console.log('🚶 飞行模式关闭');
+      // 关闭飞行模式时，清除垂直速度，让重力重新生效
+      this.physics.velocity.y = 0;
+    }
+  }
+  
+  /**
+   * 检查是否在飞行模式
+   */
+  isFlying() {
+    return this.flyMode.enabled;
+  }
+  
+  /**
+   * 禁用飞行模式
+   */
+  disableFlyMode() {
+    if (this.flyMode.enabled) {
+      this.flyMode.enabled = false;
+      this.physics.velocity.y = 0;
+      console.log('🚶 飞行模式已禁用');
+    }
+  }
+  
+  /**
+   * 启用飞行模式
+   */
+  enableFlyMode() {
+    if (!this.flyMode.enabled) {
+      this.flyMode.enabled = true;
+      this.physics.velocity.y = 0;
+      this.physics.onGround = false;
+      console.log('✈️ 飞行模式已启用');
+    }
+  }
+  
+  /**
    * 重生玩家
    */
   respawn() {
@@ -377,14 +504,26 @@ export class Player {
   render(ctx, camera) {
     const screenPos = camera.worldToScreen(this.position.x, this.position.y);
     
-    // 玩家主体
-    ctx.fillStyle = this.appearance.color;
+    // 玩家主体颜色根据飞行模式改变
+    ctx.fillStyle = this.flyMode.enabled ? '#87CEEB' : this.appearance.color; // 飞行时变为天空蓝
     ctx.fillRect(
       screenPos.x - this.size.width / 2,
       screenPos.y - this.size.height / 2,
       this.size.width,
       this.size.height
     );
+    
+    // 飞行模式特效
+    if (this.flyMode.enabled) {
+      // 绘制飞行光晕
+      ctx.fillStyle = 'rgba(135, 206, 235, 0.3)';
+      ctx.fillRect(
+        screenPos.x - this.size.width / 2 - 2,
+        screenPos.y - this.size.height / 2 - 2,
+        this.size.width + 4,
+        this.size.height + 4
+      );
+    }
     
     // 玩家眼睛
     ctx.fillStyle = this.appearance.eyeColor;
@@ -424,7 +563,8 @@ export class Player {
       `Pos: (${Math.round(this.position.x)}, ${Math.round(this.position.y)})`,
       `Vel: (${Math.round(this.physics.velocity.x)}, ${Math.round(this.physics.velocity.y)})`,
       `Ground: ${this.physics.onGround}`,
-      `Jump: ${this.physics.canJump}`
+      `Jump: ${this.physics.canJump}`,
+      `Flying: ${this.flyMode.enabled}`
     ];
     
     debugText.forEach((text, index) => {
@@ -457,7 +597,8 @@ export class Player {
       position: { ...this.position },
       velocity: { ...this.physics.velocity },
       onGround: this.physics.onGround,
-      canJump: this.physics.canJump
+      canJump: this.physics.canJump,
+      isFlying: this.flyMode.enabled
     };
   }
   
@@ -478,7 +619,8 @@ export class Player {
         velocity: { ...this.physics.velocity },
         onGround: this.physics.onGround
       },
-      appearance: { ...this.appearance }
+      appearance: { ...this.appearance },
+      flyMode: { ...this.flyMode }
     };
   }
   
@@ -499,6 +641,9 @@ export class Player {
     }
     if (data.appearance) {
       this.appearance = { ...this.appearance, ...data.appearance };
+    }
+    if (data.flyMode) {
+      this.flyMode = { ...this.flyMode, ...data.flyMode };
     }
   }
 }
