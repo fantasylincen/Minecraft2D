@@ -85,8 +85,10 @@ export class ConfigPanel {
       
       console.log('✅ 配置面板HTML创建完成');
       
-      // 默认显示第一个标签页
-      this.showTab('cave');
+      // 稍微延迟一下再显示默认标签页，确保DOM元素已经添加完成
+      setTimeout(() => {
+        this.showTab('cave');
+      }, 10);
       
     } catch (error) {
       console.error('❌ 创建配置面板失败:', error);
@@ -153,34 +155,86 @@ export class ConfigPanel {
         return '<div class="no-config">⚠️ 未找到配置数据</div>';
       }
       
-      return categories.map(category => {
-        const config = gameConfig.getConfig(category);
-        if (!config) {
-          console.warn(`⚠️ 配置类别 ${category} 不存在`);
-          return '';
-        }
-        
-        if (!config.settings) {
-          console.warn(`⚠️ 配置类别 ${category} 没有settings`);
-          return `
+      const contentParts = [];
+      
+      categories.forEach(category => {
+        try {
+          const config = gameConfig.getConfig(category);
+          console.log(`📄 处理配置类别 ${category}:`, config ? '存在' : '不存在');
+          
+          if (!config) {
+            console.warn(`⚠️ 配置类别 ${category} 不存在`);
+            contentParts.push(`
+              <div class="config-tab-content" data-category="${category}" style="display: none;">
+                <h3>${this.getCategoryIcon(category)} ${category}</h3>
+                <div class="error-message">⚠️ 配置不存在</div>
+              </div>
+            `);
+            return;
+          }
+          
+          if (!config.settings) {
+            console.warn(`⚠️ 配置类别 ${category} 没有settings`);
+            contentParts.push(`
+              <div class="config-tab-content" data-category="${category}" style="display: none;">
+                <h3>${this.getCategoryIcon(category)} ${config.displayName || category}</h3>
+                <div class="no-settings">⚠️ 该类别没有配置项</div>
+              </div>
+            `);
+            return;
+          }
+          
+          const settingKeys = Object.keys(config.settings);
+          console.log(`📄 处理配置类别 ${category}, 设置数量:`, settingKeys.length);
+          console.log(`📄 设置键名:`, settingKeys);
+          
+          if (settingKeys.length === 0) {
+            console.warn(`⚠️ 配置类别 ${category} 没有设置项`);
+            contentParts.push(`
+              <div class="config-tab-content" data-category="${category}" style="display: none;">
+                <h3>${this.getCategoryIcon(category)} ${config.displayName || category}</h3>
+                <div class="no-settings">⚠️ 没有可配置的项目</div>
+              </div>
+            `);
+            return;
+          }
+          
+          const settingsHTML = this.generateSettingsHTML(category, config.settings);
+          console.log(`📄 生成的设置 HTML 长度 (${category}):`, settingsHTML.length);
+          
+          if (settingsHTML.length === 0) {
+            console.warn(`⚠️ 配置类别 ${category} 生成的HTML为空`);
+          }
+          
+          contentParts.push(`
             <div class="config-tab-content" data-category="${category}" style="display: none;">
               <h3>${this.getCategoryIcon(category)} ${config.displayName || category}</h3>
-              <div class="no-settings">⚠️ 该类别没有配置项</div>
+              <div class="config-settings">
+                ${settingsHTML}
+              </div>
             </div>
-          `;
+          `);
+          
+        } catch (categoryError) {
+          console.error(`❌ 处理配置类别 ${category} 失败:`, categoryError);
+          contentParts.push(`
+            <div class="config-tab-content" data-category="${category}" style="display: none;">
+              <h3>${this.getCategoryIcon(category)} ${category}</h3>
+              <div class="error-message">❌ 配置加载失败: ${categoryError.message}</div>
+            </div>
+          `);
         }
-        
-        console.log(`📄 处理配置类别 ${category}, 设置数量:`, Object.keys(config.settings).length);
-        
-        return `
-          <div class="config-tab-content" data-category="${category}" style="display: none;">
-            <h3>${this.getCategoryIcon(category)} ${config.displayName || category}</h3>
-            <div class="config-settings">
-              ${this.generateSettingsHTML(category, config.settings)}
-            </div>
-          </div>
-        `;
-      }).join('');
+      });
+      
+      const finalContent = contentParts.join('');
+      console.log(`📄 生成的最终内容长度:`, finalContent.length);
+      
+      if (finalContent.length === 0) {
+        return '<div class="error-message">❌ 无法生成配置内容</div>';
+      }
+      
+      return finalContent;
+      
     } catch (error) {
       console.error('❌ 生成配置内容失败:', error);
       return '<div class="error-message">❌ 生成配置内容失败</div>';
@@ -204,11 +258,14 @@ export class ConfigPanel {
         return '<div class="no-settings">⚠️ 没有可配置的项目</div>';
       }
       
-      return settingsEntries.map(([key, setting]) => {
+      const settingHTMLParts = [];
+      
+      settingsEntries.forEach(([key, setting]) => {
         try {
           if (!setting) {
             console.warn(`⚠️ 设置项 ${category}.${key} 为空`);
-            return '';
+            settingHTMLParts.push(`<div class="error-setting">❌ 设置项 ${key} 数据为空</div>`);
+            return;
           }
           
           const inputId = `config-${category}-${key}`;
@@ -217,10 +274,19 @@ export class ConfigPanel {
           console.log(`🔧 处理设置项 ${category}.${key}:`, {
             value: currentValue,
             displayName: setting.displayName,
-            description: setting.description
+            description: setting.description,
+            min: setting.min,
+            max: setting.max
           });
           
-          return `
+          // 验证必要属性
+          if (setting.value === undefined) {
+            console.warn(`⚠️ 设置项 ${category}.${key} 缺少value属性`);
+            settingHTMLParts.push(`<div class="error-setting">❌ 设置项 ${key} 缺少数值</div>`);
+            return;
+          }
+          
+          const settingHTML = `
             <div class="config-setting-item">
               <div class="config-setting-header">
                 <label for="${inputId}" class="config-setting-label">
@@ -238,11 +304,24 @@ export class ConfigPanel {
               </div>
             </div>
           `;
+          
+          settingHTMLParts.push(settingHTML);
+          
         } catch (settingError) {
           console.error(`❌ 处理设置项 ${category}.${key} 失败:`, settingError);
-          return `<div class="error-setting">❌ 设置项 ${key} 处理失败</div>`;
+          settingHTMLParts.push(`<div class="error-setting">❌ 设置项 ${key} 处理失败: ${settingError.message}</div>`);
         }
-      }).join('');
+      });
+      
+      const finalHTML = settingHTMLParts.join('');
+      console.log(`🔧 生成的设置 HTML 长度 (${category}):`, finalHTML.length);
+      
+      if (finalHTML.length === 0) {
+        return '<div class="error-message">❌ 无法生成设置项</div>';
+      }
+      
+      return finalHTML;
+      
     } catch (error) {
       console.error(`❌ 生成设置项HTML失败 (${category}):`, error);
       return '<div class="error-message">❌ 生成设置项失败</div>';
@@ -393,55 +472,64 @@ export class ConfigPanel {
   showTab(category) {
     console.log(`📂 切换到标签页: ${category}`);
     
+    // 确保面板存在
+    const panel = document.getElementById(this.containerId);
+    if (!panel) {
+      console.error('❌ 配置面板不存在');
+      return;
+    }
+    
     // 隐藏所有标签页内容
-    const allContents = document.querySelectorAll('.config-tab-content');
+    const allContents = panel.querySelectorAll('.config-tab-content');
     console.log(`📂 找到 ${allContents.length} 个标签页内容`);
     allContents.forEach(content => {
       content.style.display = 'none';
     });
     
     // 移除所有标签页的激活状态
-    const allTabs = document.querySelectorAll('.config-tab');
+    const allTabs = panel.querySelectorAll('.config-tab');
     console.log(`📂 找到 ${allTabs.length} 个标签按钮`);
     allTabs.forEach(tab => {
       tab.classList.remove('active');
     });
     
-    // 显示目标标签页
-    const targetContent = document.querySelector(`[data-category="${category}"]`);
-    console.log(`📂 查找目标内容 [data-category="${category}"]`, targetContent);
+    // 显示目标标签页内容
+    const targetContent = panel.querySelector(`.config-tab-content[data-category="${category}"]`);
+    console.log(`📂 查找目标内容 .config-tab-content[data-category="${category}"]`, targetContent);
     
     if (targetContent) {
-      if (targetContent.classList.contains('config-tab-content')) {
-        targetContent.style.display = 'block';
-        console.log(`✅ 显示标签页内容: ${category}`);
-        
-        // 检查内容是否有配置项
-        const settingsDiv = targetContent.querySelector('.config-settings');
-        if (settingsDiv) {
-          const settingItems = settingsDiv.querySelectorAll('.config-setting-item');
-          console.log(`📂 标签页 ${category} 有 ${settingItems.length} 个配置项`);
-          if (settingItems.length === 0) {
-            console.warn(`⚠️ 标签页 ${category} 没有配置项`);
-          }
-        } else {
-          console.warn(`⚠️ 标签页 ${category} 没有.config-settings元素`);
+      targetContent.style.display = 'block';
+      console.log(`✅ 显示标签页内容: ${category}`);
+      
+      // 检查内容是否有配置项
+      const settingsDiv = targetContent.querySelector('.config-settings');
+      if (settingsDiv) {
+        const settingItems = settingsDiv.querySelectorAll('.config-setting-item');
+        console.log(`📂 标签页 ${category} 有 ${settingItems.length} 个配置项`);
+        if (settingItems.length === 0) {
+          console.warn(`⚠️ 标签页 ${category} 没有配置项，HTML内容:`, settingsDiv.innerHTML.substring(0, 200));
         }
-      }
-      if (targetContent.classList.contains('config-tab')) {
-        targetContent.classList.add('active');
+      } else {
+        console.warn(`⚠️ 标签页 ${category} 没有.config-settings元素`);
+        console.log('标签页内容HTML:', targetContent.innerHTML.substring(0, 500));
       }
     } else {
-      console.warn(`⚠️ 未找到标签页: ${category}`);
+      console.warn(`⚠️ 未找到标签页内容: ${category}`);
+      // 列出所有可用的标签页
+      const allContentTabs = panel.querySelectorAll('.config-tab-content');
+      console.log('可用的标签页:', Array.from(allContentTabs).map(tab => tab.dataset.category));
     }
     
     // 激活对应的标签按钮
-    const targetTab = document.querySelector(`.config-tab[data-category="${category}"]`);
+    const targetTab = panel.querySelector(`.config-tab[data-category="${category}"]`);
     if (targetTab) {
       targetTab.classList.add('active');
       console.log(`✅ 激活标签按钮: ${category}`);
     } else {
       console.warn(`⚠️ 未找到标签按钮: ${category}`);
+      // 列出所有可用的标签按钮
+      const allTabButtons = panel.querySelectorAll('.config-tab');
+      console.log('可用的标签按钮:', Array.from(allTabButtons).map(tab => tab.dataset.category));
     }
   }
   

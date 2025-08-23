@@ -144,7 +144,9 @@ export class Renderer {
   renderClouds() {
     if (!this.camera) return;
     
-    const cloudHeight = this.canvas.height * 0.2; // 云朵高度位置
+    // 云朵基础参数
+    const baseCloudHeight = this.canvas.height * 0.15; // 基础云朵高度位置
+    const cloudHeightVariation = this.canvas.height * 0.15; // 云朵高度变化范围
     const cloudSize = 60;
     const cloudSpacing = 200;
     
@@ -159,19 +161,55 @@ export class Renderer {
     
     for (let i = leftmostCloud; i <= rightmostCloud; i++) {
       const cloudX = i * cloudSpacing + this.environment.cloudOffset;
+      
+      // 为每个云朵生成固定但随机的高度
+      // 使用云朵索引作为种子，确保每个云朵的高度保持一致
+      const heightSeed = this.simpleHash(i);
+      const heightFactor = (heightSeed % 1000) / 1000; // 0-1之间的值
+      
+      // 使用平滑的高度分布，避免太极端的值
+      const smoothHeightFactor = this.smoothStep(heightFactor);
+      const cloudHeight = baseCloudHeight + (smoothHeightFactor * cloudHeightVariation);
+      
       const screenPos = this.camera.worldToScreen(cloudX, this.canvas.height - cloudHeight);
       
-      // 交替渲染白云和乌云
-      const isStormCloud = i % 5 === 0;
+      // 交替渲染白云和乌云，同时考虑高度影响云朵类型
+      const isStormCloud = (i % 5 === 0) || (heightFactor < 0.3); // 低云更容易是乌云
+      
+      // 根据高度调整云朵大小和透明度
+      const sizeFactor = 0.8 + (smoothHeightFactor * 0.4); // 高云稍大一些
+      const adjustedSize = cloudSize * sizeFactor;
+      
       this.renderCloud(
         screenPos.x, 
         screenPos.y, 
-        cloudSize, 
+        adjustedSize, 
         isStormCloud ? this.environment.darkCloudColor : this.environment.cloudColor
       );
     }
     
     this.ctx.globalAlpha = 1.0;
+  }
+  
+  /**
+   * 简单哈希函数，用于生成固定但随机的值
+   * @param {number} seed - 种子值
+   * @returns {number} 哈希值
+   */
+  simpleHash(seed) {
+    let hash = seed;
+    hash = ((hash << 13) ^ hash) & 0x7fffffff;
+    hash = (hash * (hash * hash * 15731 + 789221) + 1376312589) & 0x7fffffff;
+    return hash;
+  }
+  
+  /**
+   * 平滑步长函数，用于创建更自然的分布
+   * @param {number} t - 输入值 (0-1)
+   * @returns {number} 平滑后的值 (0-1)
+   */
+  smoothStep(t) {
+    return t * t * (3 - 2 * t);
   }
   
   /**

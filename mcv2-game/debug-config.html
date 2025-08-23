@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配置系统调试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            margin: 20px;
+        }
+        .debug-panel {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+        }
+        .debug-title {
+            color: #4a90e2;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .debug-info {
+            margin: 5px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .error {
+            color: #ff6b6b;
+        }
+        .success {
+            color: #51cf66;
+        }
+        .warning {
+            color: #ffd43b;
+        }
+        #test-config-btn {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        #test-config-btn:hover {
+            background: #357abd;
+        }
+    </style>
+</head>
+<body>
+    <h1>🛠️ MCv2 配置系统调试</h1>
+    
+    <div class="debug-panel">
+        <div class="debug-title">📋 系统状态检查</div>
+        <div id="system-status"></div>
+    </div>
+    
+    <div class="debug-panel">
+        <div class="debug-title">⚙️ 配置数据检查</div>
+        <div id="config-data"></div>
+    </div>
+    
+    <div class="debug-panel">
+        <div class="debug-title">🎮 配置面板测试</div>
+        <button id="test-config-btn">打开配置面板</button>
+        <div id="panel-status"></div>
+    </div>
+    
+    <script type="module">
+        import { gameConfig } from './src/config/GameConfig.js';
+        import { ConfigPanel } from './src/ui/ConfigPanel.js';
+        
+        // 系统状态检查
+        function checkSystemStatus() {
+            const statusDiv = document.getElementById('system-status');
+            let html = '';
+            
+            try {
+                // 检查GameConfig
+                html += `<div class="debug-info success">✅ GameConfig模块加载成功</div>`;
+                html += `<div class="debug-info">gameConfig实例: ${gameConfig ? '存在' : '不存在'}</div>`;
+                
+                if (gameConfig) {
+                    const categories = gameConfig.getCategories();
+                    html += `<div class="debug-info">配置类别数量: ${categories.length}</div>`;
+                    html += `<div class="debug-info">配置类别: [${categories.join(', ')}]</div>`;
+                    
+                    // 检查每个类别的配置
+                    categories.forEach(category => {
+                        const config = gameConfig.getConfig(category);
+                        if (config) {
+                            const settingCount = Object.keys(config.settings || {}).length;
+                            html += `<div class="debug-info">- ${category}: ${settingCount}个设置项</div>`;
+                        } else {
+                            html += `<div class="debug-info error">- ${category}: 配置不存在</div>`;
+                        }
+                    });
+                }
+                
+                // 检查ConfigPanel
+                html += `<div class="debug-info success">✅ ConfigPanel模块加载成功</div>`;
+                
+            } catch (error) {
+                html += `<div class="debug-info error">❌ 系统检查失败: ${error.message}</div>`;
+                console.error('系统检查错误:', error);
+            }
+            
+            statusDiv.innerHTML = html;
+        }
+        
+        // 配置数据检查
+        function checkConfigData() {
+            const dataDiv = document.getElementById('config-data');
+            let html = '';
+            
+            try {
+                if (!gameConfig) {
+                    html += `<div class="debug-info error">❌ gameConfig未定义</div>`;
+                    dataDiv.innerHTML = html;
+                    return;
+                }
+                
+                const categories = gameConfig.getCategories();
+                
+                categories.forEach(category => {
+                    const config = gameConfig.getConfig(category);
+                    html += `<div class="debug-info"><strong>${category}配置:</strong></div>`;
+                    
+                    if (config) {
+                        html += `<div class="debug-info">  显示名称: ${config.displayName}</div>`;
+                        html += `<div class="debug-info">  类别标识: ${config.category}</div>`;
+                        
+                        if (config.settings) {
+                            const settings = Object.entries(config.settings);
+                            html += `<div class="debug-info">  设置项 (${settings.length}个):</div>`;
+                            
+                            settings.slice(0, 3).forEach(([key, setting]) => {
+                                html += `<div class="debug-info">    ${key}: ${setting.value} (${setting.displayName})</div>`;
+                            });
+                            
+                            if (settings.length > 3) {
+                                html += `<div class="debug-info">    ... 还有${settings.length - 3}个设置项</div>`;
+                            }
+                        } else {
+                            html += `<div class="debug-info warning">  ⚠️ 无设置项</div>`;
+                        }
+                    } else {
+                        html += `<div class="debug-info error">  ❌ 配置为空</div>`;
+                    }
+                    
+                    html += `<div class="debug-info"></div>`;
+                });
+                
+            } catch (error) {
+                html += `<div class="debug-info error">❌ 配置数据检查失败: ${error.message}</div>`;
+                console.error('配置数据检查错误:', error);
+            }
+            
+            dataDiv.innerHTML = html;
+        }
+        
+        // 测试配置面板
+        let configPanel = null;
+        
+        function testConfigPanel() {
+            const statusDiv = document.getElementById('panel-status');
+            let html = '';
+            
+            try {
+                if (!configPanel) {
+                    html += `<div class="debug-info">创建ConfigPanel实例...</div>`;
+                    configPanel = new ConfigPanel('debug-config-panel');
+                    html += `<div class="debug-info success">✅ ConfigPanel创建成功</div>`;
+                }
+                
+                html += `<div class="debug-info">显示配置面板...</div>`;
+                configPanel.show();
+                html += `<div class="debug-info success">✅ 配置面板已显示</div>`;
+                
+                // 检查面板元素
+                const panelElement = document.getElementById('debug-config-panel');
+                if (panelElement) {
+                    const tabs = panelElement.querySelectorAll('.config-tab');
+                    const contents = panelElement.querySelectorAll('.config-tab-content');
+                    const settings = panelElement.querySelectorAll('.config-setting-item');
+                    
+                    html += `<div class="debug-info">面板元素检查:</div>`;
+                    html += `<div class="debug-info">  标签页: ${tabs.length}个</div>`;
+                    html += `<div class="debug-info">  内容区: ${contents.length}个</div>`;
+                    html += `<div class="debug-info">  设置项: ${settings.length}个</div>`;
+                    
+                    if (settings.length === 0) {
+                        html += `<div class="debug-info warning">⚠️ 没有找到设置项元素</div>`;
+                    }
+                } else {
+                    html += `<div class="debug-info error">❌ 未找到面板元素</div>`;
+                }
+                
+            } catch (error) {
+                html += `<div class="debug-info error">❌ 配置面板测试失败: ${error.message}</div>`;
+                console.error('配置面板测试错误:', error);
+            }
+            
+            statusDiv.innerHTML = html;
+        }
+        
+        // 页面加载完成后执行检查
+        document.addEventListener('DOMContentLoaded', () => {
+            checkSystemStatus();
+            checkConfigData();
+            
+            document.getElementById('test-config-btn').addEventListener('click', testConfigPanel);
+        });
+        
+        // 立即执行检查（防止DOMContentLoaded已经触发）
+        checkSystemStatus();
+        checkConfigData();
+        
+        document.getElementById('test-config-btn').addEventListener('click', testConfigPanel);
+    </script>
+</body>
+</html>
