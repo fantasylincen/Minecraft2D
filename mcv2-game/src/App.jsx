@@ -408,7 +408,27 @@ function App() {
     setShowControlsHelp(!showControlsHelp);
   };
   
-  // 键盘事件监听，处理H键切换控制说明和F3键切换调试信息
+  /**
+   * 调节帧率 (TODO #30)
+   * Author: MCv2 Development Team
+   */
+  const adjustFPS = (delta) => {
+    if (gameEngineRef.current && configPanelRef.current?.gameConfig) {
+      const gameConfig = configPanelRef.current.gameConfig;
+      const currentFPS = gameConfig.get('performance', 'targetFPS') || 60;
+      const newFPS = Math.max(10, Math.min(120, currentFPS + delta));
+      
+      // 限制步长为5的倍数
+      const adjustedFPS = Math.round(newFPS / 5) * 5;
+      
+      gameConfig.set('performance', 'targetFPS', adjustedFPS);
+      gameEngineRef.current.setTargetFPS(adjustedFPS);
+      
+      console.log(`🎯 帧率调节: ${adjustedFPS} FPS`);
+    }
+  };
+  
+  // 键盘事件监听，处理H键切换控制说明、F3键切换调试信息和帧率调节键
   useEffect(() => {
     const handleKeyPress = (event) => {
       // H键切换控制说明
@@ -420,6 +440,16 @@ function App() {
       else if (event.key === 'F3') {
         event.preventDefault();
         toggleDebugInfo();
+      }
+      // [ 键降低帧率 (TODO #30)
+      else if (event.key === '[') {
+        event.preventDefault();
+        adjustFPS(-5); // 每次降低5帧
+      }
+      // ] 键提高帧率 (TODO #30)
+      else if (event.key === ']') {
+        event.preventDefault();
+        adjustFPS(5); // 每次提高5帧
       }
     };
     

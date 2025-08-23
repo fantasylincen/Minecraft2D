@@ -287,11 +287,11 @@ export class GameConfig {
         },
         targetFPS: {
           value: 60,
-          min: 30,
+          min: 10,     // TODO #30: 帧率可调范围 10-120
           max: 120,
-          step: 10,
+          step: 5,     // TODO #30: 步長5
           unit: 'FPS',
-          description: '目标帧率',
+          description: '目标帧率 (10-120 FPS，步長5)',
           displayName: '目标帧率'
         }
       }
