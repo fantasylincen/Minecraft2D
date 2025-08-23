@@ -25,6 +25,7 @@ function App() {
     isFlying: false,
     flySpeed: 100
   });
+  const [showControlsHelp, setShowControlsHelp] = useState(true); // 控制说明显示状态
 
   useEffect(() => {
     let mounted = true;
@@ -370,6 +371,30 @@ function App() {
       configPanelRef.current.toggle();
     }
   };
+  
+  /**
+   * 切换控制说明显示
+   */
+  const toggleControlsHelp = () => {
+    setShowControlsHelp(!showControlsHelp);
+  };
+  
+  // 键盘事件监听，处理H键切换控制说明
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      // H键切换控制说明
+      if (event.key === 'h' || event.key === 'H') {
+        event.preventDefault();
+        toggleControlsHelp();
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyPress);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [showControlsHelp]);
 
   // 渲染加载状态
   if (gameStatus === 'loading' || gameStatus === 'initializing') {
@@ -550,24 +575,47 @@ function App() {
         </div>
         
         {/* 控制说明 */}
-        <div className="controls-help">
-          <h3>控制说明:</h3>
-          <ul>
-            <li><strong>WASD / 方向键:</strong> 移动</li>
-            <li><strong>空格键:</strong> 跳跃 (正常模式)</li>
-            <li><strong>F键:</strong> 切换飞行模式</li>
-            <li><strong>W/S:</strong> 上下飞行 (飞行模式)</li>
-            <li><strong>+/-键:</strong> 调节飞行速度</li>
-            <li><strong>ESC:</strong> 暂停/继续</li>
-            <li><strong>F3:</strong> 切换调试信息</li>
-            <li><strong>F2:</strong> 打开/关闭配置面板</li>
-          </ul>
-          <div style={{ marginTop: '10px', padding: '8px', background: 'rgba(135, 206, 235, 0.2)', borderRadius: '4px', border: '1px solid #87CEEB' }}>
-            <strong style={{ color: '#87CEEB' }}>飞行模式:</strong>
-            <br />在飞行模式下，玩家变为天空蓝色，可以全方向快速飞行，不受重力和地形碰撞影响。
-            <br /><strong>速度调节:</strong> 使用+/-键可在100%-1000%之间调节飞行速度。
+        {showControlsHelp && (
+          <div className="controls-help">
+            <div className="controls-help-header">
+              <h3>控制说明:</h3>
+              <button 
+                className="controls-help-toggle"
+                onClick={toggleControlsHelp}
+                title="隐藏控制说明 (H键)"
+              >
+                ✖
+              </button>
+            </div>
+            <ul>
+              <li><strong>WASD / 方向键:</strong> 移动</li>
+              <li><strong>空格键:</strong> 跳跃 (正常模式)</li>
+              <li><strong>F键:</strong> 切换飞行模式</li>
+              <li><strong>W/S:</strong> 上下飞行 (飞行模式)</li>
+              <li><strong>+/-键:</strong> 调节飞行速度</li>
+              <li><strong>ESC:</strong> 暂停/继续</li>
+              <li><strong>F3:</strong> 切换调试信息</li>
+              <li><strong>F2:</strong> 打开/关闭配置面板</li>
+              <li><strong>H键:</strong> 显示/隐藏控制说明</li>
+            </ul>
+            <div style={{ marginTop: '10px', padding: '8px', background: 'rgba(135, 206, 235, 0.2)', borderRadius: '4px', border: '1px solid #87CEEB' }}>
+              <strong style={{ color: '#87CEEB' }}>飞行模式:</strong>
+              <br />在飞行模式下，玩家变为天空蓝色，可以全方向快速飞行，不受重力和地形碰撞影响。
+              <br /><strong>速度调节:</strong> 使用+/-键可在100%-1000%之间调节飞行速度。
+            </div>
           </div>
-        </div>
+        )}
+        
+        {/* 显示控制说明按钮（当隐藏时） */}
+        {!showControlsHelp && (
+          <button 
+            className="show-controls-btn"
+            onClick={toggleControlsHelp}
+            title="显示控制说明 (H键)"
+          >
+            🎮 控制说明
+          </button>
+        )}
       </div>
     </div>
   );

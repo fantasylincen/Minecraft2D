@@ -133,12 +133,55 @@ body {
   position: absolute;
   bottom: 20px;
   left: 20px;
-  background: rgba(0,0,0,0.8);
+  background: rgba(0,0,0,0.5); /* 增强半透明效果 */
+  backdrop-filter: blur(10px); /* 添加模糊背景效果 */
   padding: 15px;
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.3);
   max-width: 300px;
   pointer-events: auto;
+  transition: all 0.3s ease; /* 添加平滑过渡效果 */
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3); /* 添加阴影效果 */
+}
+
+.controls-help:hover {
+  background: rgba(0,0,0,0.7); /* 鼠标悬停时增强背景 */
+  border-color: rgba(255,255,255,0.5);
+}
+
+.controls-help-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.controls-help-header h3 {
+  color: #4CAF50;
+  margin: 0;
+  font-size: 16px;
+}
+
+.controls-help-toggle {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.controls-help-toggle:hover {
+  background: rgba(255,255,255,0.2);
+  border-color: rgba(255,255,255,0.4);
+  transform: scale(1.1);
 }
 
 .controls-help h3 {
@@ -160,6 +203,36 @@ body {
 .controls-help strong {
   color: #FFC107;
   font-weight: 600;
+}
+
+/* 显示控制说明按钮 */
+.show-controls-btn {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background: rgba(76, 175, 80, 0.6);
+  backdrop-filter: blur(10px);
+  color: white;
+  border: 1px solid rgba(76, 175, 80, 0.8);
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  pointer-events: auto;
+  box-shadow: 0 2px 10px rgba(76, 175, 80, 0.3);
+}
+
+.show-controls-btn:hover {
+  background: rgba(76, 175, 80, 0.8);
+  border-color: rgba(76, 175, 80, 1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+}
+
+.show-controls-btn:active {
+  transform: translateY(0);
 }
 
 /* 加载屏幕 */

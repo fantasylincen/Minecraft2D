@@ -5,6 +5,20 @@
 ### 1. AI阻塞问题已解决
 **问题**: AI在运行"cd /Users/lincen/Desktop/codes/MCv2/mcv2-game && ls -la && npm run dev" 命令之后, 会阻塞在AI窗口, 无法进入下一步, 处于一直等待的状态
 
+ 
+- 使用 `is_background: true` 参数运行开发服务器
+- 创建了服务器管理最佳实践指南: `/docs/dev-server-best-practices.md`
+- 创建了服务器管理脚本: `/mcv2-game/dev-server.sh`
+- 正确命令: `run_in_terminal({ command: "npm run dev", is_background: true })`
+
+ 
+```bash
+# 使用管理脚本
+./dev-server.sh start   # 启动服务器
+./dev-server.sh status  # 检查状态
+./dev-server.sh stop    # 停止服务器
+```
+
 **解决日期**: 2025-08-24
 **状态**: ✅ 已完成
 
