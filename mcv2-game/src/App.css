@@ -454,45 +454,6 @@ body {
   scrollbar-width: none;
 }
 
-/* 游戏状态显示框 - 右下角 (TODO #20) */
-.game-stats-panel {
-  position: absolute;
-  bottom: 20px;
-  right: 440px; /* 留出调试控制台的空间 */
-  background: rgba(0, 0, 0, 0.9);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(76, 175, 80, 0.5);
-  border-radius: 8px;
-  padding: 12px 16px;
-  font-family: 'Courier New', monospace;
-  font-size: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-  pointer-events: auto;
-  z-index: 140;
-  min-width: 200px;
-  max-width: 300px;
-  height: 60px; /* 与调试控制台高度保持一致 */
-  display: flex;
-  align-items: center;
-}
-
-.game-stats-panel .game-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  width: 100%;
-}
-
-.game-stats-panel .game-stats span {
-  background: transparent;
-  padding: 2px 4px;
-  border-radius: 4px;
-  border: none;
-  color: #fff;
-  font-size: 11px;
-  white-space: nowrap;
-}
-
 /* 调试控制台样式 */
 /* Author: MCv2 Development Team */
 .debug-console {
@@ -682,22 +643,6 @@ body {
     left: 10px;
   }
   
-  .game-stats-panel {
-    right: 10px;
-    bottom: 280px; /* 调试控制台上方 */
-    left: auto;
-    width: calc(100vw - 40px);
-    max-width: calc(100vw - 40px);
-    height: auto;
-    min-height: 50px;
-  }
-  
-  .game-stats-panel .game-stats {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  
   .controls-help {
     position: relative;
     margin: 20px auto;
@@ -719,17 +664,5 @@ body {
   
   .debug-console-input {
     font-size: 11px;
-  }
-  
-  .game-stats-panel {
-    bottom: 220px; /* 调试控制台上方，高度减少后调整位置 */
-    padding: 8px 12px;
-    font-size: 10px;
-    min-height: 40px;
-  }
-  
-  .game-stats-panel .game-stats span {
-    font-size: 10px;
-    padding: 1px 3px;
   }
 }

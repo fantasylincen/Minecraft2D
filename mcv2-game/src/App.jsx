@@ -571,6 +571,21 @@ function App() {
             <h2>MCv2 - 2D Minecraft</h2>
             <span className="version">v1.0.0</span>
           </div>
+          
+          {/* 游戏状态信息 - 右上角 (TODO #27) */}
+          <div className="game-stats">
+            <span>FPS: {gameStats.fps}</span>
+            <span>方块: {gameStats.blocksRendered}</span>
+            <span>位置: ({gameStats.playerPos.x}, {gameStats.playerPos.y})</span>
+            <span style={{ color: gameStats.health <= 25 ? '#ff4757' : gameStats.health <= 50 ? '#ffa502' : '#2ed573' }}>
+              ❤️ {Math.round(gameStats.health)}/{gameStats.maxHealth}
+            </span>
+            {gameStats.isFlying && (
+              <span style={{ color: '#87CEEB', fontWeight: 'bold' }}>
+                ✈️ 飞行: {gameStats.flySpeed}%
+              </span>
+            )}
+          </div>
         </div>
         
         {/* 左下角控制区域 */}
@@ -638,24 +653,6 @@ function App() {
             </div>
           </div>
         )}
-
-        
-        {/* 游戏状态显示框 - 右下角 (TODO #20) */}
-        <div className="game-stats-panel">
-          <div className="game-stats">
-            <span>FPS: {gameStats.fps}</span>
-            <span>方块: {gameStats.blocksRendered}</span>
-            <span>位置: ({gameStats.playerPos.x}, {gameStats.playerPos.y})</span>
-            <span style={{ color: gameStats.health <= 25 ? '#ff4757' : gameStats.health <= 50 ? '#ffa502' : '#2ed573' }}>
-              ❤️ {Math.round(gameStats.health)}/{gameStats.maxHealth}
-            </span>
-            {gameStats.isFlying && (
-              <span style={{ color: '#87CEEB', fontWeight: 'bold' }}>
-                ✈️ 飞行: {gameStats.flySpeed}%
-              </span>
-            )}
-          </div>
-        </div>
 
         {/* 调试控制台 */}
         <DebugConsole 
