@@ -380,16 +380,37 @@ export class Renderer {
   
   /**
    * 更新性能统计
+   * Author: MCv2 Development Team  
+   * 修复FPS显示异常和0帧问题 (TODO #29)
    */
   updateStats(startTime) {
     const frameTime = performance.now() - startTime;
+    const currentTime = performance.now();
+    
     this.stats.frameCount++;
     
-    // 每秒更新一次FPS
-    if (performance.now() - this.stats.lastFrameTime >= 1000) {
-      this.stats.fps = this.stats.frameCount;
+    // 初始化lastFrameTime，防止初始化时间为0的问题
+    if (this.stats.lastFrameTime === 0) {
+      this.stats.lastFrameTime = currentTime;
+      this.stats.fps = 60; // 设置初始默认FPS
+      return;
+    }
+    
+    // 每秒更新一次FPS，添加稳定性检查
+    const timeDiff = currentTime - this.stats.lastFrameTime;
+    if (timeDiff >= 1000) {
+      // 防止除零错误和负值，确保合理的FPS范围
+      if (timeDiff > 0 && this.stats.frameCount > 0) {
+        const calculatedFPS = Math.round((this.stats.frameCount * 1000) / timeDiff);
+        // 限制FPS在合理范围内 (1-1000)
+        this.stats.fps = Math.max(1, Math.min(1000, calculatedFPS));
+      } else {
+        // 如果计算异常，保持之前的FPS值或设为默认值
+        this.stats.fps = Math.max(1, this.stats.fps || 60);
+      }
+      
       this.stats.frameCount = 0;
-      this.stats.lastFrameTime = performance.now();
+      this.stats.lastFrameTime = currentTime;
     }
   }
   
