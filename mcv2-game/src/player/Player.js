@@ -103,6 +103,11 @@ export class Player {
     } else {
       // 正常模式下进行碰撞检测
       this.moveHorizontal(deltaTime);
+      
+      // 主动检测地面状态 - 修复悬空不下落的bug
+      // Author: MCv2 Development Team
+      this.updateGroundState();
+      
       this.moveVertical(deltaTime);
       
       // 最终安全检查，确保玩家不嵌入方块
@@ -205,8 +210,59 @@ export class Player {
   }
   
   /**
-   * 更新飞行模式物理
+   * 主动更新地面状态
+   * Author: MCv2 Development Team
+   * 修复玩家从方块上横向移动到半空中不下落的bug
    */
+  updateGroundState() {
+    if (!this.terrainGenerator) return;
+    
+    const blockSize = this.worldConfig.BLOCK_SIZE;
+    const epsilon = 0.01;
+    
+    // 计算玩家脚下的位置
+    const left = this.position.x - this.size.width / 2 + epsilon;
+    const right = this.position.x + this.size.width / 2 - epsilon;
+    const bottom = this.position.y - this.size.height / 2;
+    
+    // 检查脚下的方块（向下扩展一小段距离检测）
+    const checkDistance = 2; // 检测脚下2像素范围
+    const groundCheckY = bottom - checkDistance;
+    
+    const leftBlock = Math.floor(left / blockSize);
+    const rightBlock = Math.floor(right / blockSize);
+    const groundBlock = Math.floor(groundCheckY / blockSize);
+    
+    // 检查脚下是否有固体方块
+    let hasGroundSupport = false;
+    for (let x = leftBlock; x <= rightBlock; x++) {
+      const blockId = this.terrainGenerator.getBlock(x, groundBlock);
+      if (blockConfig.isSolid(blockId)) {
+        hasGroundSupport = true;
+        break;
+      }
+    }
+    
+    // 更新地面状态
+    const wasOnGround = this.physics.onGround;
+    this.physics.onGround = hasGroundSupport;
+    
+    // 如果从地面变为悬空，立即开始应用重力
+    if (wasOnGround && !this.physics.onGround) {
+      // 检查是否为主动跳跃：如果有向上的速度，说明是跳跃，不要干扰
+      // 只有在没有向上速度或速度很小时，才触发重力（真正的悬空掉落）
+      if (this.physics.velocity.y < 50) { // 50是一个阈值，小于此值认为不是跳跃
+        this.physics.velocity.y = -1; // 微小的下向速度，触发重力
+      }
+      this.physics.canJump = false;
+    } else if (!wasOnGround && this.physics.onGround) {
+      // 如果从悬空变为在地面，停止下落
+      if (this.physics.velocity.y < 0) {
+        this.physics.velocity.y = 0;
+      }
+      this.physics.canJump = true;
+    }
+  }
   updateFlyingPhysics(deltaTime) {
     // 飞行模式下的全方向移动
     const speed = this.flyMode.speed * this.flyMode.speedMultiplier;
@@ -305,8 +361,7 @@ export class Player {
     // 尝试移动
     this.position.y += moveDistance;
     
-    // 重置地面状态
-    this.physics.onGround = false;
+    // 注意：地面状态由updateGroundState方法管理，此处不重置
     
     // 计算玩家边界（添加小偶置避免精度问题）
     const epsilon = 0.01;
