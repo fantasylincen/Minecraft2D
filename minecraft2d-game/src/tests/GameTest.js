@@ -1,5 +1,5 @@
 /**
- * MCv2 游戏功能测试
+ * Minecraft2D 游戏功能测试
  * 验证所有核心系统的功能正确性
  */
 
@@ -23,7 +23,7 @@ export class GameTest {
    * 运行所有测试
    */
   async runAllTests() {
-    console.log('🧪 开始MCv2游戏功能测试...');
+    console.log('🧪 开始Minecraft2D游戏功能测试...');
     
     // 创建测试用的画布
     const canvas = document.createElement('canvas');

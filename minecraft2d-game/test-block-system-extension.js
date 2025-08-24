@@ -263,7 +263,7 @@ const result = runBlockSystemExtensionTests();
 
 if (result.successRate >= 95) {
   console.log('\n🏆 方块系统扩展测试优秀！');
-  console.log('🧱 MCv2现在拥有完整的我的世界方块体系！');
+  console.log('🧱 Minecraft2D现在拥有完整的我的世界方块体系！');
   
   console.log('\n📋 第2个问题执行状态: 已完成！');
   console.log('   ✅ 添加了32种新方块类型');

@@ -5,7 +5,7 @@
 
 export class StorageManager {
   constructor() {
-    this.storagePrefix = 'mcv2_';
+    this.storagePrefix = 'minecraft2d_';
     this.compression = true;
     
     // 支持的存储类型

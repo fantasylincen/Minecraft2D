@@ -566,7 +566,7 @@ export class ConfigPanel {
     
     const a = document.createElement('a');
     a.href = url;
-    a.download = `mcv2-config-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `minecraft2d-config-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     
     URL.revokeObjectURL(url);

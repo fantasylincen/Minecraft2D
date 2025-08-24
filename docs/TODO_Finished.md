@@ -3,12 +3,12 @@
 ## ✅ 已解决问题列表
 
 ### 1. AI阻塞问题已解决
-**问题**: AI在运行"cd /Users/lincen/Desktop/codes/Minecraft2D/minecraft2d-game && ls -la && npm run dev" 命令之后, 会阻塞在AI窗口, 无法进入下一步, 处于一直等待的状态
+**问题**: AI在运行"cd ./minecraft2d-game && ls -la && npm run dev" 命令之后, 会阻塞在AI窗口, 无法进入下一步, 处于一直等待的状态
 
  
 - 使用 `is_background: true` 参数运行开发服务器
-- 创建了服务器管理最佳实践指南: `/docs/dev-server-best-practices.md`
-- 创建了服务器管理脚本: `/minecraft2d-game/dev-server.sh`
+- 创建了服务器管理最佳实践指南: `./docs/dev-server-best-practices.md`
+- 创建了服务器管理脚本: `./minecraft2d-game/dev-server.sh`
 - 正确命令: `run_in_terminal({ command: "npm run dev", is_background: true })`
 
  

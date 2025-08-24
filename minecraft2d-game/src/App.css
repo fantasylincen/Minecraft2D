@@ -1,4 +1,4 @@
-/* MCv2 Game Styles */
+/* Minecraft2D Game Styles */
 
 * {
   margin: 0;
@@ -513,7 +513,7 @@ body {
 }
 
 /* 调试控制台样式 */
-/* Author: MCv2 Development Team */
+/* Author: Minecraft2D Development Team */
 .debug-console {
   position: absolute;
   bottom: 20px;

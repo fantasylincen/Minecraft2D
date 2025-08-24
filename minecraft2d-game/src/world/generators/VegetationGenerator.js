@@ -151,7 +151,7 @@ export class VegetationGenerator {
   
   /**
    * 检查方块是否适合植被生长
-   * Author: MCv2 Development Team
+   * Author: Minecraft2D Development Team
    * @param {number} blockId - 方块ID
    * @returns {boolean} 是否适合
    */

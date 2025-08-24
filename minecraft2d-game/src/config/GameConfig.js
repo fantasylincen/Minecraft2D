@@ -513,7 +513,7 @@ export class GameConfig {
         }
       }
       
-      localStorage.setItem('mcv2_game_config', JSON.stringify({
+      localStorage.setItem('minecraft2d_game_config', JSON.stringify({
         version: this.configVersion,
         data: configData,
         savedAt: Date.now()
@@ -528,7 +528,7 @@ export class GameConfig {
    */
   loadFromStorage() {
     try {
-      const saved = localStorage.getItem('mcv2_game_config');
+      const saved = localStorage.getItem('minecraft2d_game_config');
       if (!saved) return;
       
       const savedData = JSON.parse(saved);

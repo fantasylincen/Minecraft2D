@@ -1,6 +1,6 @@
 /**
  * 地形生成诊断测试
- * Author: MCv2 Development Team
+ * Author: Minecraft2D Development Team
  * 
  * 测试当前地形生成系统，诊断为什么地形变成了全石块平坦地形
  */
@@ -204,7 +204,7 @@ function checkBlockConfig() {
  */
 async function main() {
   console.log('='.repeat(60));
-  console.log('🔧 MCv2 地形生成诊断工具');
+  console.log('🔧 Minecraft2D 地形生成诊断工具');
   console.log('='.repeat(60));
   
   await diagnoseTerrain();

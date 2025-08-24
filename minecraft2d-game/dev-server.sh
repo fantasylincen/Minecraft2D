@@ -1,15 +1,15 @@
 #!/bin/bash
 
-# MCv2开发服务器管理脚本
+# Minecraft2D开发服务器管理脚本
 # 用于正确管理开发服务器的启动、停止和状态检查
 
-PROJECT_DIR="/Users/lincen/Desktop/codes/MCv2/mcv2-game"
+PROJECT_DIR="."
 SERVER_URL="http://localhost:5173"
 PID_FILE="$PROJECT_DIR/.dev-server.pid"
 
 case "$1" in
     start)
-        echo "🚀 启动MCv2开发服务器..."
+        echo "🚀 启动Minecraft2D开发服务器..."
         cd "$PROJECT_DIR"
         
         # 检查是否已经在运行
@@ -17,6 +17,33 @@ case "$1" in
             echo "✅ 开发服务器已经在运行中"
             echo "📍 访问地址: $SERVER_URL"
             exit 0
+        fi
+        
+        # 检查node和npm是否已安装
+        if ! command -v node >/dev/null 2>&1; then
+            echo "❌ 未找到Node.js，请先安装Node.js"
+            exit 1
+        fi
+        
+        if ! command -v npm >/dev/null 2>&1; then
+            echo "❌ 未找到npm，请先安装npm"
+            exit 1
+        fi
+        
+        # 检查package.json是否存在
+        if [ ! -f "$PROJECT_DIR/package.json" ]; then
+            echo "❌ 未找到package.json文件，请确保在正确的项目目录中"
+            exit 1
+        fi
+        
+        # 安装依赖（如果node_modules不存在）
+        if [ ! -d "$PROJECT_DIR/node_modules" ]; then
+            echo "📦 安装项目依赖..."
+            npm install
+            if [ $? -ne 0 ]; then
+                echo "❌ 依赖安装失败"
+                exit 1
+            fi
         fi
         
         # 启动服务器并记录PID
@@ -39,7 +66,7 @@ case "$1" in
         ;;
         
     stop)
-        echo "🛑 停止MCv2开发服务器..."
+        echo "🛑 停止Minecraft2D开发服务器..."
         
         # 尝试通过PID文件停止
         if [ -f "$PID_FILE" ]; then
@@ -69,7 +96,7 @@ case "$1" in
         ;;
         
     status)
-        echo "📊 检查MCv2开发服务器状态..."
+        echo "📊 检查Minecraft2D开发服务器状态..."
         
         if curl -s "$SERVER_URL" >/dev/null 2>&1; then
             echo "✅ 开发服务器正在运行"
@@ -90,7 +117,7 @@ case "$1" in
         ;;
         
     restart)
-        echo "🔄 重启MCv2开发服务器..."
+        echo "🔄 重启Minecraft2D开发服务器..."
         $0 stop
         sleep 2
         $0 start
@@ -112,7 +139,7 @@ case "$1" in
         ;;
         
     *)
-        echo "MCv2开发服务器管理脚本"
+        echo "Minecraft2D开发服务器管理脚本"
         echo ""
         echo "用法: $0 {start|stop|status|restart|logs}"
         echo ""

@@ -1,5 +1,5 @@
 /**
- * MCv2 游戏功能验证脚本
+ * Minecraft2D 游戏功能验证脚本
  * 验证核心模块的基本功能
  */
 
@@ -60,7 +60,7 @@ global.requestAnimationFrame = mockRequestAnimationFrame;
 
 // 验证函数
 async function verifyGameFunctionality() {
-  console.log('🧪 开始MCv2游戏功能验证...\n');
+  console.log('🧪 开始Minecraft2D游戏功能验证...\n');
   
   let passedTests = 0;
   let totalTests = 0;
@@ -230,7 +230,7 @@ async function verifyGameFunctionality() {
     console.log('\n💾 验证存储系统:');
     test('localStorage 可用性', () => {
       try {
-        const testKey = 'mcv2_test';
+        const testKey = 'minecraft2d_test';
         const testValue = 'test_data';
         localStorage.setItem(testKey, testValue);
         const retrieved = localStorage.getItem(testKey);
@@ -318,7 +318,7 @@ async function verifyGameFunctionality() {
   console.log(`成功率: ${((passedTests / totalTests) * 100).toFixed(1)}%`);
   
   if (passedTests === totalTests) {
-    console.log('\n🎉 所有验证项目都通过了！MCv2游戏核心功能正常。');
+    console.log('\n🎉 所有验证项目都通过了！Minecraft2D游戏核心功能正常。');
   } else {
     console.log(`\n⚠️  有 ${totalTests - passedTests} 个验证项目未通过，请检查相关功能。`);
   }

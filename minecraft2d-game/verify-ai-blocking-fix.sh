@@ -5,7 +5,7 @@
 
 echo "🧪 开始验证AI阻塞问题解决方案..."
 
-PROJECT_DIR="/Users/lincen/Desktop/codes/MCv2/mcv2-game"
+PROJECT_DIR="~/Desktop/codes/Minecraft2D/minecraft2d-game"
 SERVER_URL="http://localhost:5173"
 
 cd "$PROJECT_DIR" || exit 1

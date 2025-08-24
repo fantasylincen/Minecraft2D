@@ -145,7 +145,7 @@ export class Player {
       this.moveHorizontal(deltaTime);
       
       // 主动检测地面状态 - 修复悬空不下落的bug
-      // Author: MCv2 Development Team
+      // Author: Minecraft2D Development Team
       this.updateGroundState();
       
       this.moveVertical(deltaTime);
@@ -257,7 +257,7 @@ export class Player {
   
   /**
    * 更新下落高度跟踪 (TODO #26)
-   * Author: MCv2 Development Team
+   * Author: Minecraft2D Development Team
    */
   updateFallTracking() {
     const wasOnGround = this.physics.onGround;
@@ -288,7 +288,7 @@ export class Player {
   
   /**
    * 主动更新地面状态
-   * Author: MCv2 Development Team
+   * Author: Minecraft2D Development Team
    * 修复玩家从方块上横向移动到半空中不下落的bug
    */
   updateGroundState() {
@@ -858,7 +858,7 @@ export class Player {
   
   /**
    * 摔伤检测 (TODO #18 & #26)
-   * Author: MCv2 Development Team
+   * Author: Minecraft2D Development Team
    */
   checkFallDamage() {
     if (!this.fallDamage.enabled || this.flyMode.enabled) {

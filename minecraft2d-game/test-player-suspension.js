@@ -1,6 +1,6 @@
 /**
  * 玩家悬空不下落问题诊断工具
- * Author: MCv2 Development Team
+ * Author: Minecraft2D Development Team
  * 
  * 测试玩家在各种情况下的地面检测和重力应用
  */
@@ -181,7 +181,7 @@ function analyzeResults() {
  */
 async function main() {
   console.log('='.repeat(60));
-  console.log('🔧 MCv2 玩家悬空问题诊断工具');
+  console.log('🔧 Minecraft2D 玩家悬空问题诊断工具');
   console.log('='.repeat(60));
   
   await testPlayerSuspensionBug();

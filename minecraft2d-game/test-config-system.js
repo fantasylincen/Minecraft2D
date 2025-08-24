@@ -385,7 +385,7 @@ const result = runConfigSystemTests();
 
 if (result.successRate >= 95) {
   console.log('\n🏆 配置系统功能验证优秀！');
-  console.log('🎮 MCv2游戏配置管理系统已完成！');
+  console.log('🎮 Minecraft2D游戏配置管理系统已完成！');
   
   console.log('\n📋 实现成果总结:');
   console.log('   ✅ 问题解决: 洞穴掏空比例过高 → 精确控制在15%');

@@ -1,9 +1,9 @@
 /**
- * MCv2游戏综合功能验证
+ * Minecraft2D游戏综合功能验证
  * 验证地形拼接修复后的整体游戏功能
  */
 
-console.log('🎮 开始MCv2游戏综合功能验证...\n');
+console.log('🎮 开始Minecraft2D游戏综合功能验证...\n');
 
 // 模拟游戏各个系统的验证
 async function runComprehensiveValidation() {
@@ -274,7 +274,7 @@ async function runComprehensiveValidation() {
   // 详细分析
   if (passedTests === totalTests) {
     console.log('\n🎉 所有功能验证都通过了！');
-    console.log('\n✨ MCv2游戏功能完整验证成功！');
+    console.log('\n✨ Minecraft2D游戏功能完整验证成功！');
     
     console.log('\n🚀 主要功能亮点:');
     console.log('   🌍 地形生成: 基于Simplex噪音的多层分形地形');
@@ -323,12 +323,12 @@ async function runComprehensiveValidation() {
 
 // 执行综合验证
 runComprehensiveValidation().then(result => {
-  console.log('\n🏁 MCv2游戏综合功能验证完成！');
+  console.log('\n🏁 Minecraft2D游戏综合功能验证完成！');
   
   if (result.successRate >= 95) {
     console.log('\n🎊 恭喜！游戏功能验证优秀！');
     console.log('🌐 游戏服务器运行地址: http://localhost:5174');
-    console.log('🎮 现在可以开始享受MCv2的精彩游戏体验了！');
+    console.log('🎮 现在可以开始享受Minecraft2D的精彩游戏体验了！');
     
     console.log('\n🔥 推荐游戏体验流程:');
     console.log('   1. 🚶 使用WASD移动，感受平滑的地形过渡');

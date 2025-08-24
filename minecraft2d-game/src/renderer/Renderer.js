@@ -401,7 +401,7 @@ export class Renderer {
   
   /**
    * 更新性能统计
-   * Author: MCv2 Development Team  
+   * Author: Minecraft2D Development Team  
    * 修复FPS显示异常和0帧问题 (TODO #29)
    */
   updateStats(startTime) {
@@ -478,7 +478,7 @@ export class Renderer {
   
   /**
    * Toggle debug console visibility
-   * Author: MCv2 Development Team
+   * Author: Minecraft2D Development Team
    */
   toggleDebugConsole() {
     this.settings.showDebugConsole = !this.settings.showDebugConsole;
@@ -486,7 +486,7 @@ export class Renderer {
   
   /**
    * Set debug console visibility
-   * Author: MCv2 Development Team
+   * Author: Minecraft2D Development Team
    * @param {boolean} visible - Whether the console should be visible
    */
   setDebugConsoleVisible(visible) {
@@ -495,7 +495,7 @@ export class Renderer {
   
   /**
    * Get debug console visibility state
-   * Author: MCv2 Development Team
+   * Author: Minecraft2D Development Team
    * @returns {boolean} Whether the debug console is visible
    */
   isDebugConsoleVisible() {
@@ -504,7 +504,7 @@ export class Renderer {
   
   /**
    * Get extended renderer statistics
-   * Author: MCv2 Development Team
+   * Author: Minecraft2D Development Team
    * @returns {Object} Extended statistics object
    */
   getExtendedStats() {
@@ -520,7 +520,7 @@ export class Renderer {
   
   /**
    * Estimate memory usage (rough calculation)
-   * Author: MCv2 Development Team
+   * Author: Minecraft2D Development Team
    * @returns {string} Estimated memory usage in MB
    */
   estimateMemoryUsage() {
@@ -551,7 +551,7 @@ export class Renderer {
   
   /**
    * 渲染太阳 (TODO #17)
-   * Author: MCv2 Development Team
+   * Author: Minecraft2D Development Team
    */
   renderSun() {
     const timeOfDay = this.environment.timeOfDay;
@@ -606,7 +606,7 @@ export class Renderer {
   
   /**
    * 渲染月亮 (TODO #17)
-   * Author: MCv2 Development Team
+   * Author: Minecraft2D Development Team
    */
   renderMoon() {
     const timeOfDay = this.environment.timeOfDay;
@@ -653,7 +653,7 @@ export class Renderer {
   
   /**
    * 渲染星星 (TODO #17)
-   * Author: MCv2 Development Team
+   * Author: Minecraft2D Development Team
    */
   renderStars() {
     const timeOfDay = this.environment.timeOfDay;
@@ -701,7 +701,7 @@ export class Renderer {
   
   /**
    * 计算光照级别 (TODO #17)
-   * Author: MCv2 Development Team
+   * Author: Minecraft2D Development Team
    * @param {number} worldY - 世界 Y 坐标
    * @returns {number} 光照级别 (0-1)
    */
@@ -740,7 +740,7 @@ export class Renderer {
   
   /**
    * 应用光照效果到颜色 (TODO #17)
-   * Author: MCv2 Development Team
+   * Author: Minecraft2D Development Team
    * @param {string} color - 原始颜色
    * @param {number} lightLevel - 光照级别 (0-1)
    * @returns {string} 应用光照后的颜色

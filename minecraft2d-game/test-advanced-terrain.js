@@ -400,7 +400,7 @@ runAdvancedTerrainTests().then ?
     
     if (result.successRate >= 90) {
       console.log('\n🏆 高级地形生成系统测试优秀！');
-      console.log('🌍 MCv2游戏现在拥有完整的程序化生成系统！');
+      console.log('🌍 Minecraft2D游戏现在拥有完整的程序化生成系统！');
       console.log('\n📋 原方案执行状态: 基本完成！');
       console.log('   • Simplex Noise地形生成 ✅');
       console.log('   • 7种生物群系系统 ✅');

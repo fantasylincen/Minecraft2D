@@ -211,7 +211,7 @@ const result = runControlsHelpTests();
 
 if (result.successRate >= 95) {
   console.log('\n🏆 操作提示框功能验证优秀！');
-  console.log('🎮 MCv2游戏的操作提示框已实现现代化设计！');
+  console.log('🎮 Minecraft2D游戏的操作提示框已实现现代化设计！');
   
   console.log('\n📋 功能特性总结:');
   console.log('   ✅ 半透明毛玻璃效果 - 现代化视觉设计');

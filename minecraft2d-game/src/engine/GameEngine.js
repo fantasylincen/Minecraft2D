@@ -1,5 +1,5 @@
 /**
- * MCv2 游戏引擎核心模块
+ * Minecraft2D 游戏引擎核心模块
  * 负责游戏主循环、状态管理和各子系统协调
  */
 
@@ -326,7 +326,7 @@ export class GameEngine {
     this.ctx.fillStyle = '#000';
     this.ctx.font = '32px Arial';
     this.ctx.textAlign = 'center';
-    this.ctx.fillText('MCv2 - 2D Minecraft', this.canvas.width / 2, this.canvas.height / 2 - 50);
+    this.ctx.fillText('Minecraft2D - 2D Minecraft', this.canvas.width / 2, this.canvas.height / 2 - 50);
     
     // 显示状态信息
     this.ctx.font = '16px Arial';
@@ -383,7 +383,7 @@ export class GameEngine {
   
   /**
    * 更新时间系统 (TODO #17)
-   * Author: MCv2 Development Team
+   * Author: Minecraft2D Development Team
    */
   updateTimeSystem(deltaTime) {
     if (!this.timeSystem.enabled) return;

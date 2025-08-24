@@ -1,6 +1,6 @@
 /**
  * 完整地形生成验证测试
- * Author: MCv2 Development Team
+ * Author: Minecraft2D Development Team
  * 
  * 验证修复后的地形生成系统，包括地形变化、植被生成和洞穴系统
  */
@@ -395,7 +395,7 @@ function analyzeCaves(chunk) {
  */
 async function main() {
   console.log('='.repeat(70));
-  console.log('🔧 MCv2 地形生成完整验证工具');
+  console.log('🔧 Minecraft2D 地形生成完整验证工具');
   console.log('='.repeat(70));
   
   await verifyTerrainGeneration();
