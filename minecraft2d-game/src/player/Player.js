@@ -118,6 +118,16 @@ export class Player {
       prevMine: false       // 上一帧挖掘按键状态
     };
     
+    // 挖掘系统 (TODO #25)
+    this.mining = {
+      targetBlock: null,     // 当前挖掘的目标方块
+      miningProgress: 0,     // 挖掘进度 (0-1)
+      miningTime: 0,         // 已挖掘时间
+      isMining: false,       // 是否正在挖掘
+      lastMineTime: 0,       // 上次挖掘时间
+      mineCooldown: 100      // 挖掘冷却时间(毫秒)
+    };
+    
     // 游戏引用
     this.terrainGenerator = null;
     
