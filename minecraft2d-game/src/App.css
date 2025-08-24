@@ -533,6 +533,56 @@ body {
   z-index: 150;
 }
 
+/* 开关控件样式 */
+.config-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+
+.config-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.config-slider-switch {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.config-slider-switch:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+.config-switch input:checked + .config-slider-switch {
+  background-color: #4CAF50;
+}
+
+.config-switch input:checked + .config-slider-switch:before {
+  transform: translateX(26px);
+}
+
+.config-switch input:focus + .config-slider-switch {
+  box-shadow: 0 0 1px #4CAF50;
+}
+
 /* 调试控制台收缩状态 - 与状态面板高度一致 */
 .debug-console.collapsed {
   height: 60px;

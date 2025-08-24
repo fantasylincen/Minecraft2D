@@ -13,6 +13,7 @@ import { ConfigPanel } from './ui/ConfigPanel.js';
 import DebugConsole from './ui/DebugConsole.jsx';
 import { gameConfig } from './config/GameConfig.js';
 import { InventoryController } from './ui/InventoryUI.jsx';
+import { HealthBar } from './ui/HealthBar.jsx';
 
 function App() {
   const canvasRef = useRef(null);
@@ -189,10 +190,10 @@ function App() {
       
       gameEngine.start();
       
-      // 设置状态更新定时器
+      // 设置状态更新定时器 (提高频率以获得更稳定的时间显示)
       const statsInterval = setInterval(() => {
         updateGameStats(gameEngine, renderer, player);
-      }, 1000);
+      }, 100); // 从1000ms改为100ms，提高更新频率
       
       // 启动自动保存
       console.log('启动自动保存...');
@@ -326,22 +327,34 @@ function App() {
       // 获取时间信息 (TODO #17)
       const timeInfo = gameEngine.getTimeInfo();
       
-      setGameStats({
+      // 获取实体统计信息
+      let entityStats = { total: 0, byType: {} };
+      if (gameEngine.entityManager) {
+        entityStats = gameEngine.entityManager.getStats();
+      }
+      
+      setGameStats(prevStats => ({
+        ...prevStats,
         fps: stats.fps,
         blocksRendered: stats.blocksRendered,
         playerPos: {
-          x: Math.round(playerPos.x / blockSize * 10) / 10, // 保留一位小数
-          y: Math.round(playerPos.y / blockSize * 10) / 10  // 保留一位小数
+          x: Math.floor(playerPos.x / blockSize), // 转换为方块索引坐标，无小数
+          y: Math.floor(playerPos.y / blockSize)  // 转换为方块索引坐标，无小数
         },
         isFlying: playerStatus.isFlying,
         flySpeed: playerStatus.flySpeed || 100,
         health: playerStatus.health || 100,      // 生命值 (TODO #18)
         maxHealth: playerStatus.maxHealth || 100, // 最大生命值
+        hunger: playerStatus.hunger || 20,       // 饥饿值
+        maxHunger: playerStatus.maxHunger || 20, // 最大饥饿值
         // 时间信息 (TODO #17)
         timeString: timeInfo.timeString,
         timePhase: timeInfo.phase,
-        timeOfDay: timeInfo.timeOfDay
-      });
+        timeOfDay: timeInfo.timeOfDay,
+        // 实体信息
+        entities: entityStats.total,
+        entitiesByType: entityStats.byType
+      }));
     }
   };
   
@@ -664,6 +677,12 @@ function App() {
       
       {/* 游戏UI */}
       <div className="game-ui">
+        {/* 血条显示 - 物品栏上方 */}
+        <HealthBar 
+          player={gameEngineRef.current?.systems?.player} 
+          gameEngine={gameEngineRef.current} 
+        />
+        
         {/* 顶部状态栏 */}
         <div className="top-bar">
           <div className="game-title">
@@ -679,6 +698,9 @@ function App() {
             <span style={{ color: gameStats.health <= 25 ? '#ff4757' : gameStats.health <= 50 ? '#ffa502' : '#2ed573' }}>
               ❤️ {Math.round(gameStats.health)}/{gameStats.maxHealth}
             </span>
+            <span style={{ color: gameStats.hunger <= 5 ? '#ff4757' : gameStats.hunger <= 10 ? '#ffa502' : '#2ed573' }}>
+              🍖 {Math.round(gameStats.hunger)}/{gameStats.maxHunger}
+            </span>
             {gameStats.isFlying && (
               <span style={{ color: '#87CEEB', fontWeight: 'bold' }}>
                 ✈️ 飞行: {gameStats.flySpeed}%
@@ -687,6 +709,10 @@ function App() {
             {/* 时间信息 (TODO #17) */}
             <span style={{ color: '#FFD700', fontWeight: 'bold' }}>
               🕰️ {gameStats.timeString} {gameStats.timePhase}
+            </span>
+            {/* 实体信息 */}
+            <span>
+              👹 实体: {gameStats.entities}
             </span>
           </div>
         </div>

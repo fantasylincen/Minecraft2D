@@ -31,6 +31,15 @@ export class Player {
       canJump: false        // 是否可以跳跃
     };
     
+    // 水中状态
+    this.inWater = {
+      isSwimming: false,    // 是否在游泳
+      swimSpeed: 75,        // 游泳速度 (像素/秒)
+      buoyancy: 0.5,        // 浮力系数 (0-1)
+      waterFriction: 0.95,  // 水中摩擦力
+      swimUpForce: 200      // 向上游动力
+    };
+    
     // 飞行模式
     this.flyMode = {
       enabled: false,       // 是否启用飞行模式
@@ -64,6 +73,17 @@ export class Player {
       regenDelay: 5000    // 受伤后多久开始回血 (毫秒)
     };
     
+    // 饥饿值系统 (TODO #25)
+    this.hunger = {
+      current: 20,         // 当前饥饿值 (0-20)
+      max: 20,            // 最大饥饿值
+      saturation: 5,       // 饱和度 (0-20)
+      exhaustion: 0,       // 疲劳度 (0-4)
+      lastFoodTime: 0,     // 上次进食时间
+      foodRegenDelay: 10000, // 进食后多久开始饥饿 (毫秒)
+      lastStarveTime: 0    // 上次因饥饿掉血时间
+    };
+    
     // 摔伤系统 (TODO #18)
     this.fallDamage = {
       enabled: true,      // 是否启用摔伤
@@ -93,7 +113,9 @@ export class Player {
       speedUp: false,       // 提升飞行速度按键
       prevSpeedUp: false,   // 上一帧提升速度按键状态
       speedDown: false,     // 降低飞行速度按键
-      prevSpeedDown: false  // 上一帧降低速度按键状态
+      prevSpeedDown: false, // 上一帧降低速度按键状态
+      mine: false,          // 挖掘按键状态
+      prevMine: false       // 上一帧挖掘按键状态
     };
     
     // 游戏引用
@@ -122,6 +144,54 @@ export class Player {
   }
   
   /**
+   * 检查玩家是否在水中
+   * @returns {boolean} 是否在水中
+   */
+  isInWater() {
+    if (!this.terrainGenerator) return false;
+    
+    const blockSize = this.worldConfig.BLOCK_SIZE;
+    const epsilon = 0.01;
+    
+    // 计算玩家中心位置
+    const centerX = this.position.x;
+    const centerY = this.position.y;
+    
+    // 转换为中心方块坐标
+    const centerBlockX = Math.floor(centerX / blockSize);
+    const centerBlockY = Math.floor(centerY / blockSize);
+    
+    // 检查中心位置是否在水中
+    const centerBlockId = this.terrainGenerator.getBlock(centerBlockX, centerBlockY);
+    if (blockConfig.isFluid(centerBlockId)) {
+      return true;
+    }
+    
+    // 检查玩家身体其他部分是否在水中
+    const left = this.position.x - this.size.width / 2 + epsilon;
+    const right = this.position.x + this.size.width / 2 - epsilon;
+    const top = this.position.y + this.size.height / 2 - epsilon;
+    const bottom = this.position.y - this.size.height / 2 + epsilon;
+    
+    const leftBlock = Math.floor(left / blockSize);
+    const rightBlock = Math.floor(right / blockSize);
+    const topBlock = Math.floor(top / blockSize);
+    const bottomBlock = Math.floor(bottom / blockSize);
+    
+    // 检查玩家周围的方块是否为水
+    for (let x = leftBlock; x <= rightBlock; x++) {
+      for (let y = bottomBlock; y <= topBlock; y++) {
+        const blockId = this.terrainGenerator.getBlock(x, y);
+        if (blockConfig.isFluid(blockId)) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  }
+  
+  /**
    * 更新玩家状态
    */
   update(deltaTime, keys) {
@@ -131,6 +201,9 @@ export class Player {
     
     // 更新控制输入
     this.updateControls(keys);
+    
+    // 检查是否在水中
+    this.inWater.isSwimming = this.isInWater();
     
     // 应用物理模拟（但不移动位置）
     this.updatePhysics(deltaTime);
@@ -159,6 +232,9 @@ export class Player {
     
     // 更新健康系统 (TODO #18)
     this.updateHealth(deltaTime);
+    
+    // 处理挖掘逻辑
+    this.handleMining(deltaTime);
   }
   
   /**
@@ -189,6 +265,11 @@ export class Player {
     const speedDownPressed = keys['Minus'] || keys['NumpadSubtract']; // -键
     this.controls.speedDown = speedDownPressed && !this.controls.prevSpeedDown;
     this.controls.prevSpeedDown = speedDownPressed;
+    
+    // 挖掘控制 - 使用空格键（长按）
+    const minePressed = keys['Space'];
+    this.controls.mine = minePressed;
+    // 注意：这里不使用prevMine来检测按下事件，而是检测持续按住
     
     // 处理飞行模式切换
     if (this.controls.fly) {
@@ -223,34 +304,48 @@ export class Player {
   updateNormalPhysics(deltaTime) {
     // 水平移动 - 简化逗辑
     if (this.controls.left) {
-      this.physics.velocity.x = -this.physics.speed;
+      this.physics.velocity.x = this.inWater.isSwimming ? 
+        -this.inWater.swimSpeed : -this.physics.speed;
     } else if (this.controls.right) {
-      this.physics.velocity.x = this.physics.speed;
+      this.physics.velocity.x = this.inWater.isSwimming ? 
+        this.inWater.swimSpeed : this.physics.speed;
     } else {
-      // 应用摩擦力
-      this.physics.velocity.x *= this.physics.friction;
+      // 应用摩擦力（水中摩擦力不同）
+      const friction = this.inWater.isSwimming ? 
+        this.inWater.waterFriction : this.physics.friction;
+      this.physics.velocity.x *= friction;
       if (Math.abs(this.physics.velocity.x) < 1) {
         this.physics.velocity.x = 0;
       }
     }
     
     // 跳跃 - 简化条件
-    if (this.controls.jump && this.physics.onGround) {
-      this.physics.velocity.y = this.physics.jumpForce;
-      this.physics.onGround = false;
-      this.physics.canJump = false;
+    if (this.controls.jump && (this.physics.onGround || this.inWater.isSwimming)) {
+      if (this.inWater.isSwimming) {
+        // 在水中向上游动
+        this.physics.velocity.y = this.inWater.swimUpForce;
+      } else {
+        // 正常跳跃
+        this.physics.velocity.y = this.physics.jumpForce;
+        this.physics.onGround = false;
+        this.physics.canJump = false;
+      }
     }
     
     // 更新下落高度跟踪 (TODO #26)
     this.updateFallTracking();
     
-    // 应用重力
+    // 应用重力（水中重力不同）
     if (!this.physics.onGround) {
-      this.physics.velocity.y -= this.physics.gravity * deltaTime;
+      const gravity = this.inWater.isSwimming ? 
+        this.physics.gravity * (1 - this.inWater.buoyancy) : this.physics.gravity;
+      this.physics.velocity.y -= gravity * deltaTime;
       
       // 限制最大下落速度
-      if (this.physics.velocity.y < -this.physics.terminalVelocity) {
-        this.physics.velocity.y = -this.physics.terminalVelocity;
+      const terminalVelocity = this.inWater.isSwimming ? 
+        this.physics.terminalVelocity * 0.5 : this.physics.terminalVelocity;
+      if (this.physics.velocity.y < -terminalVelocity) {
+        this.physics.velocity.y = -terminalVelocity;
       }
     }
   }
@@ -724,8 +819,15 @@ export class Player {
   render(ctx, camera) {
     const screenPos = camera.worldToScreen(this.position.x, this.position.y);
     
-    // 玩家主体颜色根据飞行模式改变
-    ctx.fillStyle = this.flyMode.enabled ? '#87CEEB' : this.appearance.color; // 飞行时变为天空蓝
+    // 玩家主体颜色根据飞行模式和水中状态改变
+    let playerColor = this.appearance.color;
+    if (this.flyMode.enabled) {
+      playerColor = '#87CEEB'; // 飞行时变为天空蓝
+    } else if (this.inWater.isSwimming) {
+      playerColor = '#1E90FF'; // 在水中变为水蓝色
+    }
+    
+    ctx.fillStyle = playerColor;
     ctx.fillRect(
       screenPos.x - this.size.width / 2,
       screenPos.y - this.size.height / 2,
@@ -754,6 +856,20 @@ export class Player {
       const speedText = `${this.getFlySpeedPercentage()}%`;
       ctx.fillText(speedText, screenPos.x, screenPos.y - this.size.height / 2 - 15);
     }
+    // 水中特效
+    else if (this.inWater.isSwimming) {
+      // 绘制水泡效果
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      // 随机生成一些小水泡
+      for (let i = 0; i < 3; i++) {
+        const bubbleX = screenPos.x + (Math.random() - 0.5) * this.size.width;
+        const bubbleY = screenPos.y + (Math.random() - 0.5) * this.size.height;
+        const bubbleSize = 1 + Math.random() * 2;
+        ctx.beginPath();
+        ctx.arc(bubbleX, bubbleY, bubbleSize, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
     
     // 玩家眼睛
     ctx.fillStyle = this.appearance.eyeColor;
@@ -776,9 +892,128 @@ export class Player {
       eyeSize
     );
     
+    // 渲染玩家手中持有的物品
+    this.renderHeldItem(ctx, screenPos);
+    
     // 调试信息（可选）
     if (this.showDebugInfo) {
       this.renderDebugInfo(ctx, screenPos);
+    }
+  }
+  
+  /**
+   * 渲染玩家手中持有的物品
+   */
+  renderHeldItem(ctx, screenPos) {
+    const heldItem = this.getHeldItem();
+    if (!heldItem || heldItem.isEmpty()) {
+      return; // 没有手持物品，不渲染
+    }
+    
+    const itemDef = heldItem.getItemDefinition();
+    if (!itemDef) {
+      return; // 物品定义不存在
+    }
+    
+    // 获取物品图标（使用与UI中相同的映射）
+    const itemIcon = this.getItemIcon(itemDef);
+    if (!itemIcon) {
+      return; // 没有图标
+    }
+    
+    // 保存原始的变换状态
+    ctx.save();
+    
+    // 设置渲染样式
+    ctx.font = '10px Arial'; // 恢复为10px（原来20px的一半）
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    // 根据物品稀有度设置颜色
+    const rarityColor = this.getItemRarityColor(itemDef.rarity);
+    ctx.fillStyle = rarityColor;
+    
+    // 在玩家手中位置渲染物品图标（在玩家右手上方）
+    const handX = screenPos.x + 10; // 右手位置
+    const handY = screenPos.y - 5;  // 手的高度
+    
+    ctx.fillText(itemIcon, handX, handY);
+    
+    // 如果是工具类物品且有耐久度，渲染耐久度条
+    if (heldItem.durability !== null && heldItem.durability !== undefined) {
+      const maxDurability = itemDef.durability || itemDef.material?.durability || 100;
+      const durabilityRatio = heldItem.durability / maxDurability;
+      
+      // 绘制耐久度条背景（恢复为原来的一半大小）
+      const barWidth = 10; // 恢复为10（原来20的一半）
+      const barHeight = 1.5; // 恢复为1.5（原来3的一半）
+      const barX = handX - barWidth / 2;
+      const barY = handY + 8; // 恢复为8（原来15的一半位置）
+      
+      ctx.fillStyle = '#333333';
+      ctx.fillRect(barX, barY, barWidth, barHeight);
+      
+      // 绘制耐久度条
+      ctx.fillStyle = durabilityRatio > 0.3 ? '#55ff55' : '#ff5555'; // 绿色或红色
+      ctx.fillRect(barX, barY, barWidth * durabilityRatio, barHeight);
+    }
+    
+    // 恢复原始的变换状态
+    ctx.restore();
+  }
+  
+  /**
+   * 获取物品图标（与UI中相同的映射）
+   */
+  getItemIcon(item) {
+    if (!item) return '';
+    
+    // 简单的图标映射（与InventoryUI.jsx中一致）
+    const iconMap = {
+      'block_dirt': '🟫',
+      'block_stone': '⬜',
+      'block_grass': '🟩',
+      'block_sand': '🟨',
+      'block_water': '🟦',
+      'block_wood': '🟤',
+      'block_leaves': '🍃',
+      'block_iron_ore': '⚪',
+      'block_gold_ore': '🟡',
+      'block_diamond_ore': '💎',
+      'pickaxe_wood': '⛏️',
+      'pickaxe_stone': '🔨',
+      'pickaxe_iron': '⚒️',
+      'pickaxe_diamond': '💎⛏️',
+      'iron_ingot': '🔗',
+      'gold_ingot': '🥇',
+      'diamond': '💎',
+      'stick': '🪵',
+      'apple': '🍎',
+      'bread': '🍞'
+    };
+    
+    return iconMap[item.id] || '❓';
+  }
+  
+  /**
+   * 获取物品稀有度颜色（与UI中相同的映射）
+   */
+  getItemRarityColor(rarity) {
+    const ItemRarity = {
+      COMMON: 'common',
+      UNCOMMON: 'uncommon',
+      RARE: 'rare',
+      EPIC: 'epic',
+      LEGENDARY: 'legendary'
+    };
+    
+    switch (rarity) {
+      case ItemRarity.COMMON: return '#ffffff';
+      case ItemRarity.UNCOMMON: return '#55ff55';
+      case ItemRarity.RARE: return '#5555ff';
+      case ItemRarity.EPIC: return '#aa00aa';
+      case ItemRarity.LEGENDARY: return '#ffaa00';
+      default: return '#ffffff';
     }
   }
   
@@ -795,6 +1030,7 @@ export class Player {
       `Ground: ${this.physics.onGround}`,
       `Jump: ${this.physics.canJump}`,
       `Flying: ${this.flyMode.enabled}`,
+      `In Water: ${this.inWater.isSwimming}`,
       this.flyMode.enabled ? `Speed: ${this.getFlySpeedPercentage()}%` : ''
     ].filter(text => text !== ''); // 过滤空字符串
     
@@ -832,7 +1068,10 @@ export class Player {
       isFlying: this.flyMode.enabled,
       flySpeed: this.getFlySpeedPercentage(),
       health: this.health.current,
-      maxHealth: this.health.max
+      maxHealth: this.health.max,
+      hunger: this.hunger.current,
+      maxHunger: this.hunger.max,
+      saturation: this.hunger.saturation
     };
   }
   
@@ -842,17 +1081,93 @@ export class Player {
   updateHealth(deltaTime) {
     const currentTime = performance.now();
     
-    // 自然回血（在没有受伤一段时间后）
+    // 更新饥饿值系统
+    this.updateHunger(deltaTime);
+    
+    // 自然回血（在没有受伤一段时间后，且饥饿值足够）
     if (this.health.current < this.health.max && 
-        currentTime - this.health.lastDamageTime > this.health.regenDelay) {
+        currentTime - this.health.lastDamageTime > this.health.regenDelay &&
+        this.hunger.current >= 18) { // 需要足够的饥饿值才能回血
       
       const regenAmount = this.health.regenRate * deltaTime;
       this.health.current = Math.min(this.health.max, this.health.current + regenAmount);
     }
     
+    // 检查是否因饥饿而掉血
+    this.checkStarvation();
+    
     // 检查是否死亡
     if (this.health.current <= 0) {
       this.handleDeath();
+    }
+  }
+  
+  /**
+   * 更新饥饿值系统
+   * @param {number} deltaTime 时间增量
+   */
+  updateHunger(deltaTime) {
+    const currentTime = performance.now();
+    
+    // 增加疲劳度（基于活动）
+    this.increaseExhaustion(deltaTime);
+    
+    // 当疲劳度达到4时，减少饱和度或饥饿值
+    if (this.hunger.exhaustion >= 4) {
+      this.hunger.exhaustion -= 4;
+      
+      if (this.hunger.saturation > 0) {
+        this.hunger.saturation = Math.max(0, this.hunger.saturation - 1);
+      } else if (this.hunger.current > 0) {
+        this.hunger.current = Math.max(0, this.hunger.current - 1);
+      }
+    }
+  }
+  
+  /**
+   * 增加疲劳度
+   * @param {number} deltaTime 时间增量
+   */
+  increaseExhaustion(deltaTime) {
+    let exhaustionIncrease = 0;
+    
+    // 基础消耗
+    exhaustionIncrease += 0.01 * deltaTime;
+    
+    // 移动消耗
+    if (Math.abs(this.physics.velocity.x) > 0.1) {
+      exhaustionIncrease += 0.01 * deltaTime;
+    }
+    
+    // 跳跃消耗
+    if (this.controls.jump && !this.physics.onGround) {
+      exhaustionIncrease += 0.05;
+    }
+    
+    // 游泳消耗
+    if (this.inWater.isSwimming) {
+      exhaustionIncrease += 0.015 * deltaTime;
+    }
+    
+    // 飞行消耗
+    if (this.flyMode.enabled) {
+      exhaustionIncrease += 0.01 * deltaTime * this.flyMode.speedMultiplier;
+    }
+    
+    this.hunger.exhaustion += exhaustionIncrease;
+  }
+  
+  /**
+   * 检查是否因饥饿而掉血
+   */
+  checkStarvation() {
+    // 当饥饿值为0时，每4秒掉1点血
+    if (this.hunger.current === 0) {
+      const currentTime = performance.now();
+      if (!this.hunger.lastStarveTime || currentTime - this.hunger.lastStarveTime > 4000) {
+        this.takeDamage(1, 'starvation');
+        this.hunger.lastStarveTime = currentTime;
+      }
     }
   }
   
@@ -1004,7 +1319,8 @@ export class Player {
     this.inventory.addItem('block_dirt', 64);
     this.inventory.addItem('block_stone', 32);
     this.inventory.addItem('block_grass', 16);
-    this.inventory.addItem('apple', 5);
+    this.inventory.addItem('apple', 10);
+    this.inventory.addItem('bread', 5);
     
     console.log('🎒 玩家物品栏初始化完成');
     this.inventory.debugPrint();
@@ -1096,5 +1412,235 @@ export class Player {
     
     // 检查工具是否可以挖掘这种方块类型
     return itemConfig.canToolMineBlock(heldItem.itemId, blockInfo.type);
+  }
+  
+  /**
+   * 处理挖掘逻辑 (TODO #9)
+   * Author: Minecraft2D Development Team
+   */
+  handleMining(deltaTime) {
+    if (!this.terrainGenerator) return;
+    
+    const currentTime = performance.now();
+    
+    // 检查是否按住空格键进行挖掘
+    if (this.controls.mine) {
+      // 检查冷却时间
+      if (currentTime - this.mining.lastMineTime >= this.mining.mineCooldown) {
+        // 获取视线方向最近的方块
+        const targetBlock = this.getTargetBlock();
+        
+        if (targetBlock && targetBlock.blockId !== blockConfig.getBlock('air').id) {
+          // 检查方块是否可破坏
+          const blockInfo = blockConfig.getBlock(targetBlock.blockId);
+          if (blockInfo && blockInfo.breakable) {
+            // 检查手持工具是否可以挖掘该方块
+            if (this.canMineBlockWithHeldItem(targetBlock.blockId)) {
+              // 开始或继续挖掘
+              this.startOrContinueMining(targetBlock, deltaTime);
+            } else {
+              // 工具不匹配，重置挖掘进度
+              this.resetMiningProgress();
+            }
+          } else {
+            // 方块不可破坏，重置挖掘进度
+            this.resetMiningProgress();
+          }
+        } else {
+          // 没有目标方块，重置挖掘进度
+          this.resetMiningProgress();
+        }
+        
+        this.mining.lastMineTime = currentTime;
+      }
+    } else {
+      // 没有按住挖掘键，重置挖掘进度
+      this.resetMiningProgress();
+    }
+  }
+  
+  /**
+   * 获取视线方向最近的方块 (TODO #9)
+   * Author: Minecraft2D Development Team
+   */
+  getTargetBlock() {
+    if (!this.terrainGenerator) return null;
+    
+    // 玩家眼睛位置（屏幕中心）
+    const eyeX = this.position.x;
+    const eyeY = this.position.y + 2; // 眼睛稍微高一点
+    
+    // 简单的视线方向计算（向右看）
+    // 在3D版本中，这会根据鼠标位置计算方向
+    const directionX = 1; // 向右看
+    const directionY = 0; // 水平方向
+    
+    // 射线步进参数
+    const stepSize = 0.5; // 步进大小
+    const maxDistance = 5; // 最大挖掘距离（方块数）
+    
+    // 将玩家位置转换为方块坐标
+    let currentX = eyeX;
+    let currentY = eyeY;
+    
+    // 沿视线方向步进
+    for (let i = 0; i < maxDistance / stepSize; i++) {
+      currentX += directionX * stepSize;
+      currentY += directionY * stepSize;
+      
+      // 转换为方块坐标
+      const blockX = Math.floor(currentX / this.worldConfig.BLOCK_SIZE);
+      const blockY = Math.floor(currentY / this.worldConfig.BLOCK_SIZE);
+      
+      // 获取方块
+      const blockId = this.terrainGenerator.getBlock(blockX, blockY);
+      
+      // 如果不是空气方块，返回这个方块
+      if (blockId !== blockConfig.getBlock('air').id) {
+        return {
+          x: blockX,
+          y: blockY,
+          blockId: blockId
+        };
+      }
+    }
+    
+    return null; // 没有找到目标方块
+  }
+  
+  /**
+   * 开始或继续挖掘 (TODO #9)
+   * Author: Minecraft2D Development Team
+   */
+  startOrContinueMining(targetBlock, deltaTime) {
+    // 检查是否是同一个方块
+    if (this.mining.targetBlock && 
+        this.mining.targetBlock.x === targetBlock.x && 
+        this.mining.targetBlock.y === targetBlock.y) {
+      // 继续挖掘同一方块
+      this.mining.isMining = true;
+    } else {
+      // 开始挖掘新方块
+      this.mining.targetBlock = targetBlock;
+      this.mining.miningProgress = 0;
+      this.mining.miningTime = 0;
+      this.mining.isMining = true;
+    }
+    
+    // 计算挖掘速度（基于方块硬度和工具）
+    const blockInfo = blockConfig.getBlock(targetBlock.blockId);
+    const hardness = blockInfo ? blockInfo.hardness || 1.0 : 1.0;
+    
+    // 获取手持工具的挖掘速度加成
+    let speedMultiplier = 1.0;
+    const heldItem = this.getHeldItem();
+    if (heldItem && !heldItem.isEmpty()) {
+      const itemDef = heldItem.getItemDefinition();
+      if (itemDef && itemDef.type.startsWith('tool_')) {
+        // 工具提供挖掘速度加成
+        speedMultiplier = 1.5; // 示例加成
+      }
+    }
+    
+    // 计算挖掘时间（硬度越高，需要的时间越长）
+    const baseMiningTime = hardness * 1000; // 基础挖掘时间（毫秒）
+    const actualMiningTime = baseMiningTime / speedMultiplier;
+    
+    // 更新挖掘进度
+    this.mining.miningTime += deltaTime * 1000; // 转换为毫秒
+    this.mining.miningProgress = Math.min(1.0, this.mining.miningTime / actualMiningTime);
+    
+    // 检查是否挖掘完成
+    if (this.mining.miningProgress >= 1.0) {
+      this.completeMining(targetBlock);
+    }
+  }
+  
+  /**
+   * 完成挖掘 (TODO #9)
+   * Author: Minecraft2D Development Team
+   */
+  completeMining(targetBlock) {
+    if (!this.terrainGenerator) return;
+    
+    // 破坏方块
+    this.terrainGenerator.setBlock(targetBlock.x, targetBlock.y, blockConfig.getBlock('air').id);
+    
+    // 获取方块掉落物
+    const blockInfo = blockConfig.getBlock(targetBlock.blockId);
+    if (blockInfo && blockInfo.drops) {
+      // 添加掉落物到物品栏
+      blockInfo.drops.forEach(dropId => {
+        this.addItemToInventory(dropId, 1);
+      });
+    }
+    
+    // 消耗工具耐久度
+    const toolDamaged = this.damageHeldItem(1);
+    if (toolDamaged) {
+      console.log('🔨 工具在挖掘过程中损坏!');
+    }
+    
+    console.log(`⛏️ 挖掘完成: 破坏方块 (${targetBlock.x}, ${targetBlock.y})`);
+    
+    // 重置挖掘状态
+    this.resetMiningProgress();
+  }
+  
+  /**
+   * 重置挖掘进度 (TODO #9)
+   * Author: Minecraft2D Development Team
+   */
+  resetMiningProgress() {
+    this.mining.targetBlock = null;
+    this.mining.miningProgress = 0;
+    this.mining.miningTime = 0;
+    this.mining.isMining = false;
+  }
+  
+  /**
+   * 吃食物
+   * @param {string} foodItemId 食物物品ID
+   * @returns {boolean} 是否成功吃下食物
+   */
+  eatFood(foodItemId) {
+    const foodItem = itemConfig.getItem(foodItemId);
+    if (!foodItem || foodItem.type !== ItemType.FOOD) {
+      return false;
+    }
+    
+    // 检查是否能吃下食物（饥饿值未满）
+    if (this.hunger.current >= this.hunger.max) {
+      return false;
+    }
+    
+    // 增加饥饿值和饱和度
+    this.hunger.current = Math.min(this.hunger.max, this.hunger.current + (foodItem.foodValue || 0));
+    this.hunger.saturation = Math.min(this.hunger.current, this.hunger.saturation + (foodItem.saturation || 0));
+    
+    // 记录进食时间
+    this.hunger.lastFoodTime = performance.now();
+    
+    console.log(`🍎 吃了 ${foodItem.name}，饥饿值: ${this.hunger.current}/${this.hunger.max}, 饱和度: ${this.hunger.saturation}`);
+    
+    return true;
+  }
+  
+  /**
+   * 从物品栏消耗食物
+   * @param {string} foodItemId 食物物品ID
+   * @returns {boolean} 是否成功消耗食物
+   */
+  consumeFoodFromInventory(foodItemId) {
+    // 检查物品栏中是否有该食物
+    if (!this.inventory.hasItem(foodItemId, 1)) {
+      return false;
+    }
+    
+    // 消耗食物
+    this.inventory.removeItem(foodItemId, 1);
+    
+    // 吃下食物
+    return this.eatFood(foodItemId);
   }
 }

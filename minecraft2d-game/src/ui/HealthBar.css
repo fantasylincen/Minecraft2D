@@ -1,0 +1,112 @@
+/* 血条组件样式 */
+
+.health-bar-container {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 110;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+/* 生命值和饥饿值条容器 - 左右结构 */
+.status-bars {
+  display: flex;
+  gap: 15px; /* 与物品栏的间距为15像素 */
+  align-items: center;
+}
+
+.health-bar, .hunger-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #555;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.health-bar-label, .hunger-bar-label {
+  font-size: 14px;
+  font-weight: bold;
+  color: #FFFFFF;
+  white-space: nowrap;
+}
+
+.health-bar-background, .hunger-bar-background {
+  width: 120px;
+  height: 16px;
+  background: #333;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #444;
+}
+
+.health-bar-fill, .hunger-bar-fill {
+  height: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+  border-radius: 8px;
+}
+
+.health-bar-text, .hunger-bar-text {
+  font-size: 12px;
+  font-weight: bold;
+  color: #FFFFFF;
+  min-width: 50px;
+  text-align: center;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .health-bar-container {
+    top: 10px;
+    transform: translateX(-50%);
+  }
+  
+  .health-bar, .hunger-bar {
+    padding: 6px 10px;
+  }
+  
+  .health-bar-label, .hunger-bar-label {
+    font-size: 12px;
+  }
+  
+  .health-bar-background, .hunger-bar-background {
+    width: 100px;
+    height: 14px;
+  }
+  
+  .health-bar-text, .hunger-bar-text {
+    font-size: 11px;
+    min-width: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .health-bar-container {
+    top: 5px;
+  }
+  
+  .health-bar, .hunger-bar {
+    padding: 4px 8px;
+  }
+  
+  .health-bar-label, .hunger-bar-label {
+    font-size: 11px;
+  }
+  
+  .health-bar-background, .hunger-bar-background {
+    width: 80px;
+    height: 12px;
+  }
+  
+  .health-bar-text, .hunger-bar-text {
+    font-size: 10px;
+    min-width: 35px;
+  }
+}

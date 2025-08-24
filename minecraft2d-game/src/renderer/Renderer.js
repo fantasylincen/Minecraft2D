@@ -18,7 +18,8 @@ export class Renderer {
       enableParticles: true,
       enableLighting: false,
       renderDistance: 5, // 区块渲染距离
-      showDebugConsole: false // 调试控制台显示状态
+      showDebugConsole: false, // 调试控制台显示状态
+      eternalDay: false // 永久白日模式 (新增)
     };
     
     // 环境设置
@@ -114,7 +115,7 @@ export class Renderer {
     const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
     
     // 根据时间计算天空颜色
-    const timeOfDay = this.environment.timeOfDay;
+    const timeOfDay = this.settings.eternalDay ? 0.5 : this.environment.timeOfDay; // 永久白日模式下始终为正午
     let skyColor1, skyColor2;
     
     if (timeOfDay < 0.2 || timeOfDay > 0.8) {
@@ -139,17 +140,20 @@ export class Renderer {
     this.stats.drawCalls++;
     
     // 渲染星星 (只在夜晚显示) (TODO #17)
-    if (timeOfDay < 0.25 || timeOfDay > 0.75) {
+    // 永久白日模式下不显示星星
+    if (!this.settings.eternalDay && (timeOfDay < 0.25 || timeOfDay > 0.75)) {
       this.renderStars();
     }
     
     // 渲染太阳 (白天和黄昏时显示) (TODO #17)
-    if (timeOfDay >= 0.2 && timeOfDay <= 0.8) {
+    // 永久白日模式下始终显示太阳
+    if (this.settings.eternalDay || (timeOfDay >= 0.2 && timeOfDay <= 0.8)) {
       this.renderSun();
     }
     
     // 渲染月亮 (夜晚和黄昏时显示) (TODO #17)
-    if (timeOfDay < 0.3 || timeOfDay > 0.7) {
+    // 永久白日模式下不显示月亮
+    if (!this.settings.eternalDay && (timeOfDay < 0.3 || timeOfDay > 0.7)) {
       this.renderMoon();
     }
   }
@@ -459,7 +463,17 @@ export class Renderer {
    * 设置时间
    */
   setTimeOfDay(time) {
+    // 如果启用了永久白日模式，时间始终为正午
+    if (this.settings.eternalDay) {
+      time = 0.5; // 正午时间
+    }
+    
+    const oldTime = this.environment.timeOfDay;
     this.environment.timeOfDay = Math.max(0, Math.min(1, time));
+    // 添加日志以便调试
+    if (Math.abs(oldTime - this.environment.timeOfDay) > 0.01) {
+      console.log(`_renderer: 时间更新为 ${this.environment.timeOfDay.toFixed(3)} (${(this.environment.timeOfDay * 24).toFixed(1)}h)`);
+    }
   }
   
   /**
@@ -547,6 +561,29 @@ export class Renderer {
     this.stats.fps = 0;
     this.stats.drawCalls = 0;
     this.stats.blocksRendered = 0;
+  }
+  
+  /**
+   * 切换永久白日模式
+   * @param {boolean} enabled - 是否启用永久白日模式
+   */
+  setEternalDay(enabled) {
+    this.settings.eternalDay = enabled;
+    
+    // 如果启用了永久白日模式，将时间设置为正午
+    if (enabled) {
+      this.environment.timeOfDay = 0.5;
+    }
+    
+    console.log(`☀️ 永久白日模式: ${enabled ? '启用' : '禁用'}`);
+  }
+  
+  /**
+   * 获取永久白日模式状态
+   * @returns {boolean} 是否启用了永久白日模式
+   */
+  isEternalDay() {
+    return this.settings.eternalDay;
   }
   
   /**
@@ -700,32 +737,55 @@ export class Renderer {
   }
   
   /**
-   * 计算光照级别 (TODO #17)
+   * 计算光照级别 (TODO #17, #29)
    * Author: Minecraft2D Development Team
    * @param {number} worldY - 世界 Y 坐标
    * @returns {number} 光照级别 (0-1)
    */
   calculateLightLevel(worldY) {
+    // 如果启用了永久白日模式，始终返回最大光照
+    if (this.settings.eternalDay) {
+      // 深度光照衰减 (地下更暗)
+      const surfaceLevel = this.worldConfig.WORLD_HEIGHT * 0.7; // 假设地表附近
+      const depthFactor = Math.max(0.1, Math.min(1.0, worldY / surfaceLevel));
+      
+      // 永久白日模式下始终使用最大光照
+      const finalLight = 1.0 * depthFactor;
+      
+      // 确保最低亮度，避免完全黑暗
+      return Math.max(0.15, Math.min(1.0, finalLight));
+    }
+    
     const timeOfDay = this.environment.timeOfDay;
     
     // 基础环境光照 (根据时间计算)
-    let ambientLight = 1.0; // 默认亮度
+    let ambientLight = 1.0;
     
-    if (timeOfDay < 0.2 || timeOfDay > 0.8) {
-      // 夜晚：非常暗
-      ambientLight = 0.3;
-    } else if (timeOfDay < 0.3 || timeOfDay > 0.7) {
-      // 黄昏/黎明：较暗
-      if (timeOfDay < 0.3) {
-        // 黎明渐亮
-        ambientLight = 0.3 + (timeOfDay - 0.2) / 0.1 * 0.4; // 0.3 到 0.7
+    // 更真实的光照模型
+    if (timeOfDay >= 0.25 && timeOfDay <= 0.75) {
+      // 白天时段 (6:00-18:00)
+      if (timeOfDay >= 0.45 && timeOfDay <= 0.55) {
+        // 正午时段 (10:48-13:12) 光照最强
+        ambientLight = 1.0;
+      } else if (timeOfDay >= 0.35 && timeOfDay <= 0.65) {
+        // 上午/下午时段 (8:24-15:36) 光照较强
+        ambientLight = 0.9;
       } else {
-        // 黄昏渐暗
-        ambientLight = 0.7 - (timeOfDay - 0.7) / 0.1 * 0.4; // 0.7 到 0.3
+        // 早晨/傍晚时段 (6:00-8:24, 15:36-18:00) 光照中等
+        ambientLight = 0.7;
       }
     } else {
-      // 白天：明亮
-      ambientLight = 0.7 + (1.0 - Math.abs(timeOfDay - 0.5) * 2) * 0.3; // 0.7 到 1.0
+      // 夜晚时段
+      if (timeOfDay < 0.1 || timeOfDay > 0.9) {
+        // 深夜 (0:00-2:24, 21:36-24:00) 最暗
+        ambientLight = 0.15;
+      } else if (timeOfDay < 0.2 || timeOfDay > 0.8) {
+        // 黎明/黄昏 (2:24-6:00, 18:00-21:36) 较暗
+        ambientLight = 0.3;
+      } else {
+        // 过渡时段
+        ambientLight = 0.2;
+      }
     }
     
     // 深度光照衰减 (地下更暗)
@@ -735,11 +795,12 @@ export class Renderer {
     // 综合光照计算
     const finalLight = ambientLight * depthFactor;
     
-    return Math.max(0.1, Math.min(1.0, finalLight)); // 限制在 0.1-1.0 范围
+    // 确保最低亮度，避免完全黑暗
+    return Math.max(0.15, Math.min(1.0, finalLight));
   }
   
   /**
-   * 应用光照效果到颜色 (TODO #17)
+   * 应用光照效果到颜色 (TODO #17, #29)
    * Author: Minecraft2D Development Team
    * @param {string} color - 原始颜色
    * @param {number} lightLevel - 光照级别 (0-1)
@@ -765,17 +826,55 @@ export class Renderer {
       r = g = b = 128;
     }
     
-    // 应用光照系数
-    r = Math.floor(r * lightLevel);
-    g = Math.floor(g * lightLevel);
-    b = Math.floor(b * lightLevel);
+    // 应用光照系数，但确保不会过暗
+    const adjustedLightLevel = Math.max(0.3, lightLevel); // 确保最低亮度为0.3
+    r = Math.floor(r * adjustedLightLevel);
+    g = Math.floor(g * adjustedLightLevel);
+    b = Math.floor(b * adjustedLightLevel);
     
-    // 在夜晚添加轻微的蓝色色调
-    if (lightLevel < 0.5) {
-      const nightTint = (0.5 - lightLevel) * 0.3; // 最多 30% 的夜晚色调
-      r = Math.floor(r * (1 - nightTint * 0.3));
-      g = Math.floor(g * (1 - nightTint * 0.2));
-      b = Math.floor(b * (1 + nightTint * 0.1)); // 轻微增加蓝色
+    // 如果启用了永久白日模式，不应用时间相关的色调调整
+    if (!this.settings.eternalDay) {
+      // 根据时间添加色调调整
+      const timeOfDay = this.environment.timeOfDay;
+      if (timeOfDay >= 0.25 && timeOfDay <= 0.75) {
+        // 白天时段 - 添加轻微的暖色调
+        let dayIntensity = 0;
+        if (timeOfDay >= 0.45 && timeOfDay <= 0.55) {
+          // 正午时段
+          dayIntensity = 0.15;
+        } else if (timeOfDay >= 0.35 && timeOfDay <= 0.65) {
+          // 上午/下午时段
+          dayIntensity = 0.1;
+        } else {
+          // 早晨/傍晚时段
+          dayIntensity = 0.05;
+        }
+        
+        if (dayIntensity > 0) {
+          r = Math.floor(r * (1 + dayIntensity)); // 增加红色
+          g = Math.floor(g * (1 + dayIntensity * 0.5)); // 轻微增加绿色
+          b = Math.floor(b * (1 - dayIntensity * 0.2)); // 轻微减少蓝色
+        }
+      } else {
+        // 夜晚时段 - 添加蓝色色调模拟月光
+        let nightIntensity = 0;
+        if (timeOfDay < 0.1 || timeOfDay > 0.9) {
+          // 深夜，最暗
+          nightIntensity = 0.2;
+        } else if (timeOfDay < 0.2 || timeOfDay > 0.8) {
+          // 黎明/黄昏，较暗
+          nightIntensity = 0.1;
+        } else {
+          // 过渡时段
+          nightIntensity = 0.05;
+        }
+        
+        if (nightIntensity > 0) {
+          r = Math.floor(r * (1 - nightIntensity * 0.1)); // 轻微减少红色
+          g = Math.floor(g * (1 - nightIntensity * 0.05)); // 轻微减少绿色
+          b = Math.floor(b * (1 + nightIntensity * 0.2)); // 增加蓝色
+        }
+      }
     }
     
     // 确保颜色值在有效范围内

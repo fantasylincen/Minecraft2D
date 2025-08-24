@@ -296,6 +296,37 @@ export class GameConfig {
         }
       }
     });
+    
+    // 时间系统配置 (新增)
+    this.configs.set('time', {
+      category: '时间系统',
+      displayName: '时间系统配置',
+      settings: {
+        eternalDay: {
+          value: false,
+          description: '启用永久白日模式（时间静止在12:00，亮度始终100%）',
+          displayName: '永久白日模式'
+        },
+        timeSpeed: {
+          value: 1.0,
+          min: 0.1,
+          max: 5.0,
+          step: 0.1,
+          unit: 'x',
+          description: '时间流逝速度倍数',
+          displayName: '时间速度'
+        },
+        dayDuration: {
+          value: 120,
+          min: 30,
+          max: 600,
+          step: 10,
+          unit: '秒',
+          description: '一天的持续时间',
+          displayName: '一天时长'
+        }
+      }
+    });
   }
   
   /**

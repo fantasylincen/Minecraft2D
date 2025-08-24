@@ -352,6 +352,27 @@ export class ConfigPanel {
    * 生成输入控件
    */
   generateInputControl(inputId, category, key, setting) {
+    // 确保正确识别布尔值类型
+    if (typeof setting.value === 'boolean' || 
+        (typeof setting.value === 'string' && (setting.value === 'true' || setting.value === 'false'))) {
+      // 如果是字符串形式的布尔值，转换为实际布尔值
+      const boolValue = typeof setting.value === 'boolean' ? setting.value : setting.value === 'true';
+      return `
+        <label class="config-switch">
+          <input 
+            type="checkbox" 
+            id="${inputId}" 
+            class="config-checkbox"
+            data-category="${category}"
+            data-key="${key}"
+            ${boolValue ? 'checked' : ''}
+          >
+          <span class="config-slider-switch"></span>
+        </label>
+      `;
+    }
+    
+    // 数值使用滑块控件
     if (typeof setting.value === 'number') {
       return `
         <input 
@@ -372,6 +393,7 @@ export class ConfigPanel {
       `;
     }
     
+    // 其他类型使用文本输入框
     return `
       <input 
         type="text" 
@@ -444,6 +466,7 @@ export class ConfigPanel {
   handleInput(event) {
     const target = event.target;
     
+    // 处理滑块和文本输入框
     if (target.classList.contains('config-slider') || target.classList.contains('config-input')) {
       const category = target.dataset.category;
       const key = target.dataset.key;
@@ -453,6 +476,22 @@ export class ConfigPanel {
       if (target.type === 'range') {
         value = parseFloat(value);
       }
+      
+      // 更新配置
+      gameConfig.set(category, key, value);
+      
+      // 更新显示
+      this.updateValueDisplay(target.id, value, category, key);
+      
+      // 触发回调
+      this.notifyUpdate(category, key, value);
+    }
+    
+    // 处理复选框（开关控件）
+    if (target.classList.contains('config-checkbox')) {
+      const category = target.dataset.category;
+      const key = target.dataset.key;
+      const value = target.checked;
       
       // 更新配置
       gameConfig.set(category, key, value);
@@ -485,7 +524,19 @@ export class ConfigPanel {
     if (valueDisplay) {
       const config = gameConfig.getConfig(category);
       const setting = config.settings[key];
-      valueDisplay.textContent = this.formatValue(value, setting.unit);
+      
+      // 如果是布尔值，显示是/否而不是true/false
+      if (typeof value === 'boolean') {
+        valueDisplay.textContent = value ? '是' : '否';
+      } else {
+        valueDisplay.textContent = this.formatValue(value, setting.unit);
+      }
+    }
+    
+    // 如果是复选框，更新其选中状态
+    const checkbox = document.getElementById(inputId);
+    if (checkbox && checkbox.type === 'checkbox') {
+      checkbox.checked = value === true || value === 'true';
     }
   }
   

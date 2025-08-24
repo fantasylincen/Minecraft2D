@@ -3,6 +3,8 @@
  * 负责游戏主循环、状态管理和各子系统协调
  */
 
+import { EntityManager } from '../entities/EntityManager.js';
+
 export class GameEngine {
   constructor(canvas) {
     this.canvas = canvas;
@@ -26,7 +28,8 @@ export class GameEngine {
       timeSpeed: 1.0,          // 时间流逝速度 (1.0为正常速度)
       dayDuration: 120,        // 一天的持续时间（秒）
       realTimeElapsed: 0,      // 真实时间经过（秒）
-      enabled: true            // 时间系统是否启用
+      enabled: true,           // 时间系统是否启用
+      eternalDay: false        // 永久白日模式 (新增)
     };
     
     // 子系统
@@ -36,7 +39,8 @@ export class GameEngine {
       camera: null,
       renderer: null,
       storageManager: null,
-      inputHandler: null
+      inputHandler: null,
+      entityManager: null      // 实体管理器
     };
     
     // 游戏世界配置
@@ -45,6 +49,9 @@ export class GameEngine {
       CHUNK_SIZE: 16,
       BLOCK_SIZE: 16
     };
+    
+    // 实体管理器
+    this.entityManager = new EntityManager(this.worldConfig);
     
     // 绑定方法
     this.gameLoop = this.gameLoop.bind(this);
@@ -202,6 +209,16 @@ export class GameEngine {
     if (this.systems.hasOwnProperty(name)) {
       this.systems[name] = system;
       console.log(`📦 注册子系统: ${name}`);
+      
+      // 特殊处理：当注册玩家时，设置实体管理器的玩家引用
+      if (name === 'player' && this.entityManager) {
+        this.entityManager.setPlayer(system);
+      }
+      
+      // 特殊处理：当注册地形生成器时，设置实体管理器的地形生成器引用
+      if (name === 'terrainGenerator' && this.entityManager) {
+        this.entityManager.setTerrainGenerator(system);
+      }
     } else {
       console.warn(`⚠️  未知的子系统: ${name}`);
     }
@@ -294,6 +311,11 @@ export class GameEngine {
       this.systems.terrainGenerator.update(deltaTime);
     }
     
+    // 更新实体管理器
+    if (this.entityManager) {
+      this.entityManager.update(deltaTime);
+    }
+    
     // 同步时间到渲染器 (TODO #17)
     if (this.systems.renderer) {
       this.systems.renderer.setTimeOfDay(this.timeSystem.timeOfDay);
@@ -309,6 +331,11 @@ export class GameEngine {
     
     if (this.systems.renderer) {
       this.systems.renderer.render(this.ctx);
+      
+      // 渲染实体
+      if (this.entityManager && this.systems.camera) {
+        this.entityManager.render(this.ctx, this.systems.camera);
+      }
     } else {
       // 如果还没有渲染器，显示基础信息
       this.renderBasicInfo();
@@ -386,6 +413,9 @@ export class GameEngine {
    * Author: Minecraft2D Development Team
    */
   updateTimeSystem(deltaTime) {
+    // 如果启用了永久白日模式，不更新时间
+    if (this.timeSystem.eternalDay) return;
+    
     if (!this.timeSystem.enabled) return;
     
     // 累计真实时间
@@ -410,6 +440,9 @@ export class GameEngine {
    * @param {number} time - 时间值 (0-1)
    */
   setTimeOfDay(time) {
+    // 如果启用了永久白日模式，不设置时间
+    if (this.timeSystem.eternalDay) return;
+    
     this.timeSystem.timeOfDay = Math.max(0, Math.min(1, time));
     console.log(`🕰️ 时间设置为: ${(this.timeSystem.timeOfDay * 24).toFixed(1)}时`);
   }
@@ -476,5 +509,36 @@ export class GameEngine {
     } else {
       return '夜晚';
     }
+  }
+  
+  /**
+   * 设置永久白日模式
+   * @param {boolean} enabled - 是否启用永久白日模式
+   */
+  setEternalDay(enabled) {
+    this.timeSystem.eternalDay = enabled;
+    
+    // 如果启用了永久白日模式，将时间设置为正午并停止时间流逝
+    if (enabled) {
+      this.timeSystem.timeOfDay = 0.5;
+      this.timeSystem.enabled = false; // 停止时间流逝
+    } else {
+      this.timeSystem.enabled = true; // 恢复时间流逝
+    }
+    
+    // 同步到渲染器
+    if (this.systems.renderer) {
+      this.systems.renderer.setEternalDay(enabled);
+    }
+    
+    console.log(`☀️ 永久白日模式: ${enabled ? '启用' : '禁用'}`);
+  }
+  
+  /**
+   * 获取永久白日模式状态
+   * @returns {boolean} 是否启用了永久白日模式
+   */
+  isEternalDay() {
+    return this.timeSystem.eternalDay || false;
   }
 }
