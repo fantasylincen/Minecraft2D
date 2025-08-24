@@ -516,14 +516,26 @@ export class GameEngine {
    * @param {boolean} enabled - 是否启用永久白日模式
    */
   setEternalDay(enabled) {
+    const wasEternalDay = this.timeSystem.eternalDay;
     this.timeSystem.eternalDay = enabled;
     
     // 如果启用了永久白日模式，将时间设置为正午并停止时间流逝
     if (enabled) {
-      this.timeSystem.timeOfDay = 0.5;
+      this.timeSystem.timeOfDay = 0.5; // 正午时间
       this.timeSystem.enabled = false; // 停止时间流逝
+      
+      // 立即同步时间到渲染器
+      if (this.systems.renderer) {
+        this.systems.renderer.setTimeOfDay(0.5);
+      }
+      
+      console.log('☀️ 永久白日模式已启用，时间跳转到12:00');
     } else {
-      this.timeSystem.enabled = true; // 恢复时间流逝
+      // 如果是从永久白日模式切换到正常模式，恢复时间流逝
+      if (wasEternalDay) {
+        this.timeSystem.enabled = true;
+        console.log('☀️ 永久白日模式已禁用，时间系统恢复正常');
+      }
     }
     
     // 同步到渲染器

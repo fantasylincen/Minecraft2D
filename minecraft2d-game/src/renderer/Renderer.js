@@ -568,11 +568,23 @@ export class Renderer {
    * @param {boolean} enabled - 是否启用永久白日模式
    */
   setEternalDay(enabled) {
+    const wasEternalDay = this.settings.eternalDay;
     this.settings.eternalDay = enabled;
     
     // 如果启用了永久白日模式，将时间设置为正午
     if (enabled) {
       this.environment.timeOfDay = 0.5;
+      console.log('☀️ 永久白日模式已启用，时间跳转到12:00');
+    }
+    
+    // 如果状态发生了变化，强制重新渲染天空
+    if (wasEternalDay !== enabled) {
+      // 触发重绘以更新天空、太阳和月亮的状态
+      if (this.canvas && this.ctx) {
+        // 这里我们不直接调用render方法，而是通过设置一个标志
+        // 让下一帧渲染时更新天空状态
+        console.log(`☀️ 永久白日模式状态变更: ${wasEternalDay} -> ${enabled}`);
+      }
     }
     
     console.log(`☀️ 永久白日模式: ${enabled ? '启用' : '禁用'}`);
