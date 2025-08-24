@@ -305,6 +305,31 @@ body {
   transform: translateY(0) !important;
 }
 
+/* 界面控制按钮特殊样式 - 紫色主题 */
+.ui-control-btn {
+  background: rgba(156, 39, 176, 0.8) !important; /* 紫色主题 */
+  color: white !important;
+  border: 1px solid #9c27b0 !important;
+  padding: 6px 12px !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+  backdrop-filter: blur(5px) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+.ui-control-btn:hover {
+  background: rgba(156, 39, 176, 1) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(156, 39, 176, 0.3) !important;
+}
+
+.ui-control-btn:active {
+  transform: translateY(0) !important;
+}
+
 /* 游戏配置按钮特殊样式 - 蓝色主题 (TODO #26) */
 .config-panel-btn {
   background: rgba(74, 144, 226, 0.8) !important; /* 蓝色主题 */
@@ -327,6 +352,31 @@ body {
 }
 
 .config-panel-btn:active {
+  transform: translateY(0) !important;
+}
+
+/* 错误日志按钮特殊样式 - 红色主题 */
+.error-log-btn {
+  background: rgba(220, 53, 69, 0.8) !important; /* 红色主题 */
+  color: white !important;
+  border: 1px solid #dc3545 !important;
+  padding: 6px 12px !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+  backdrop-filter: blur(5px) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+.error-log-btn:hover {
+  background: rgba(220, 53, 69, 1) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3) !important;
+}
+
+.error-log-btn:active {
   transform: translateY(0) !important;
 }
 
@@ -739,6 +789,103 @@ body {
   transition: all 0.3s ease;
   box-shadow: 0 4px 20px rgba(0,0,0,0.3);
   z-index: 140; /* 稍低于调试控制台 */
+}
+
+/* 界面控制面板样式 */
+.ui-control-panel {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  width: 250px;
+  pointer-events: auto;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 160;
+}
+
+.ui-control-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.ui-control-panel-header h3 {
+  color: #9c27b0;
+  margin: 0;
+  font-size: 16px;
+}
+
+.ui-control-panel-close {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.ui-control-panel-close:hover {
+  background: rgba(255, 100, 100, 0.3);
+  border-color: rgba(255, 100, 100, 0.5);
+  transform: scale(1.1);
+}
+
+.ui-control-panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ui-control-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ui-control-item label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ui-control-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.ui-control-item button {
+  background: rgba(156, 39, 176, 0.8);
+  color: white;
+  border: 1px solid #9c27b0;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.ui-control-item button:hover {
+  background: rgba(156, 39, 176, 1);
+  transform: translateY(-1px);
 }
 
 /* 小屏幕适配 */

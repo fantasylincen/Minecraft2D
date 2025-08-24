@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft2D 界面控制测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #4CAF50;
+            text-align: center;
+        }
+        .instructions {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .instructions h2 {
+            color: #FFC107;
+            margin-top: 0;
+        }
+        .instructions ul {
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin-bottom: 10px;
+        }
+        .test-steps {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #4CAF50;
+        }
+        .test-steps h2 {
+            color: #4CAF50;
+            margin-top: 0;
+        }
+        .step {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+        .step h3 {
+            color: #87CEEB;
+            margin-top: 0;
+        }
+        .links {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .links a {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 0 10px;
+            transition: background 0.3s;
+        }
+        .links a:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Minecraft2D 界面控制测试</h1>
+        
+        <div class="instructions">
+            <h2>功能说明</h2>
+            <p>在新版本的Minecraft2D中，我们添加了界面元素控制功能，允许玩家：</p>
+            <ul>
+                <li>通过"界面控制"按钮打开控制面板</li>
+                <li>单独控制每个界面元素的显示/隐藏</li>
+                <li>一键显示或隐藏所有界面元素</li>
+            </ul>
+            <p>这些功能可以帮助玩家：</p>
+            <ul>
+                <li>获得更清晰的游戏视野</li>
+                <li>专注于游戏核心体验</li>
+                <li>自定义界面布局</li>
+            </ul>
+        </div>
+        
+        <div class="test-steps">
+            <h2>测试步骤</h2>
+            
+            <div class="step">
+                <h3>步骤 1: 启动游戏</h3>
+                <p>点击下方的"启动游戏"链接，在新窗口中打开Minecraft2D游戏。</p>
+            </div>
+            
+            <div class="step">
+                <h3>步骤 2: 查找界面控制按钮</h3>
+                <p>在游戏中找到左下角的控制面板，其中应该包含一个紫色的"界面控制"按钮（🎛️图标）。</p>
+            </div>
+            
+            <div class="step">
+                <h3>步骤 3: 打开界面控制面板</h3>
+                <p>点击"界面控制"按钮，应该会弹出一个控制面板，其中包含所有可控制的界面元素选项。</p>
+            </div>
+            
+            <div class="step">
+                <h3>步骤 4: 测试单个元素控制</h3>
+                <p>尝试勾选/取消勾选不同的界面元素，观察游戏界面上相应元素的显示/隐藏：</p>
+                <ul>
+                    <li>控制说明面板</li>
+                    <li>调试控制台</li>
+                    <li>配置面板按钮</li>
+                    <li>错误日志面板</li>
+                    <li>物品栏界面</li>
+                    <li>血条显示</li>
+                    <li>顶部状态栏</li>
+                </ul>
+            </div>
+            
+            <div class="step">
+                <h3>步骤 5: 测试一键控制</h3>
+                <p>点击"显示所有界面元素"和"隐藏所有界面元素"按钮，验证一键控制功能是否正常工作。</p>
+            </div>
+            
+            <div class="step">
+                <h3>步骤 6: 关闭控制面板</h3>
+                <p>点击控制面板右上角的"✖"按钮，验证控制面板是否能正常关闭。</p>
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="/Minecraft2D/" target="_blank">启动游戏</a>
+            <a href="/Minecraft2D/debug-config.html" target="_blank">配置调试</a>
+        </div>
+    </div>
+</body>
+</html>

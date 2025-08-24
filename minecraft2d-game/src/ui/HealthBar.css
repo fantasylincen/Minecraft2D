@@ -2,7 +2,8 @@
 
 .health-bar-container {
   position: fixed;
-  top: 20px;
+  /* 将血条定位到物品栏上方 */
+  bottom: 83px; /* 20px(物品栏底部位置) + 48px(物品栏高度) + 15px(间距) = 83px */
   left: 50%;
   transform: translateX(-50%);
   z-index: 110;

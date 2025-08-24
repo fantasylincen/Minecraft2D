@@ -2,12 +2,14 @@
 
 ## 🔄 待处理问题
 
-1. 血条和饥饿值的位置未按要求放置
 
-2. 挖掘系统增加功能: 
-    玩家增加一个朝向功能, 这个功能代表玩家面朝何方, 玩家可以360度自由朝向, 朝向跟随玩家的移动方向发生变化, 
-    玩家可以根据wasd的移动改变玩家
+
+
+- [TODO_Finished.md](TODO_Finished.md) - 已完成的任务列表
+- [TODO_Completed.md](TODO_Completed.md) - 最近完成的任务详情
+- [ITERATIVE_DEVELOPMENT_PLAN.md](ITERATIVE_DEVELOPMENT_PLAN.md) - 未来迭代开发计划
 
 ## ℹ️ 备注
-- 已完成的问题记录在 `TODO_Finished.md` 文件中
+- 已完成的问题记录在 `TODO_Finished.md` 和 `TODO_Completed.md` 文件中
 - 技术细节和解决方案参见相关文档
+- 未来功能开发请参考 `ITERATIVE_DEVELOPMENT_PLAN.md` 文件

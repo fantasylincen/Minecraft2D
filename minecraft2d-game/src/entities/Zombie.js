@@ -4,6 +4,7 @@
  */
 
 import { Mob } from './Mob.js';
+import { blockConfig } from '../config/BlockConfig.js';
 
 export class Zombie extends Mob {
   constructor(worldConfig, x = 0, y = 0) {

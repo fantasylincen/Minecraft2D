@@ -38,7 +38,8 @@ export class Renderer {
       lastFrameTime: 0,
       fps: 0,
       drawCalls: 0,
-      blocksRendered: 0
+      blocksRendered: 0,
+      lastBlocksRendered: 0 // 上一次完整统计周期的方块数量
     };
     
     // 游戏对象引用
@@ -83,6 +84,12 @@ export class Renderer {
     // 渲染玩家
     if (this.player) {
       this.player.render(ctx, this.camera);
+      this.stats.drawCalls++;
+    }
+    
+    // 渲染玩家放置预览 (新增 - 方块放置预览 - 基础实现)
+    if (this.player) {
+      this.player.renderPlacementPreview(this.ctx, this.camera);
       this.stats.drawCalls++;
     }
     
@@ -435,6 +442,9 @@ export class Renderer {
         this.stats.fps = Math.max(1, this.stats.fps || 60);
       }
       
+      // 保存当前渲染的方块数量
+      this.stats.lastBlocksRendered = this.stats.blocksRendered;
+      
       this.stats.frameCount = 0;
       this.stats.lastFrameTime = currentTime;
     }
@@ -550,7 +560,11 @@ export class Renderer {
    * 获取渲染统计
    */
   getStats() {
-    return { ...this.stats };
+    return { 
+      ...this.stats,
+      // 返回上一次完整统计周期的方块数量，避免中间值的跳动
+      blocksRendered: this.stats.lastBlocksRendered !== undefined ? this.stats.lastBlocksRendered : this.stats.blocksRendered
+    };
   }
   
   /**
@@ -561,6 +575,7 @@ export class Renderer {
     this.stats.fps = 0;
     this.stats.drawCalls = 0;
     this.stats.blocksRendered = 0;
+    this.stats.lastBlocksRendered = 0;
   }
   
   /**
@@ -603,7 +618,8 @@ export class Renderer {
    * Author: Minecraft2D Development Team
    */
   renderSun() {
-    const timeOfDay = this.environment.timeOfDay;
+    // 在永久白日模式下，太阳始终固定在正午位置
+    const timeOfDay = this.settings.eternalDay ? 0.5 : this.environment.timeOfDay;
     
     // 计算太阳位置 (从东南到西南的弧线运动)
     const sunAngle = (timeOfDay - 0.25) * Math.PI; // -PI/4 到 3PI/4
@@ -658,6 +674,11 @@ export class Renderer {
    * Author: Minecraft2D Development Team
    */
   renderMoon() {
+    // 在永久白日模式下，月亮不显示
+    if (this.settings.eternalDay) {
+      return;
+    }
+    
     const timeOfDay = this.environment.timeOfDay;
     
     // 计算月亮位置 (与太阳相反的运动轨迹)
@@ -705,6 +726,11 @@ export class Renderer {
    * Author: Minecraft2D Development Team
    */
   renderStars() {
+    // 在永久白日模式下，星星不显示
+    if (this.settings.eternalDay) {
+      return;
+    }
+    
     const timeOfDay = this.environment.timeOfDay;
     
     // 计算星星亮度 (夜晚更亮)
@@ -726,7 +752,7 @@ export class Renderer {
         const y = (this.simpleHash(seed + 1) % (this.canvas.height * 0.6)); // 只在上半部显示
         const size = 1 + (this.simpleHash(seed + 2) % 3); // 1-3像素大小
         const brightness = 0.5 + ((this.simpleHash(seed + 3) % 500) / 1000); // 0.5-1.0亮度
-        
+      
         stars.push({ x, y, size, brightness });
       }
       
@@ -735,7 +761,7 @@ export class Renderer {
         const alpha = starAlpha * star.brightness;
         this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
         this.ctx.fillRect(star.x, star.y, star.size, star.size);
-        
+      
         // 为一些星星添加闪烁效果
         if (star.brightness > 0.8 && Math.random() > 0.7) {
           this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.5})`;
@@ -765,7 +791,7 @@ export class Renderer {
       const finalLight = 1.0 * depthFactor;
       
       // 确保最低亮度，避免完全黑暗
-      return Math.max(0.15, Math.min(1.0, finalLight));
+      return Math.max(0.5, Math.min(1.0, finalLight)); // 提高最低亮度到0.5以确保明亮
     }
     
     const timeOfDay = this.environment.timeOfDay;
@@ -839,7 +865,7 @@ export class Renderer {
     }
     
     // 应用光照系数，但确保不会过暗
-    const adjustedLightLevel = Math.max(0.3, lightLevel); // 确保最低亮度为0.3
+    const adjustedLightLevel = Math.max(0.5, lightLevel); // 确保最低亮度为0.5以保持明亮
     r = Math.floor(r * adjustedLightLevel);
     g = Math.floor(g * adjustedLightLevel);
     b = Math.floor(b * adjustedLightLevel);

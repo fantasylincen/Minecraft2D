@@ -1,19 +1,17 @@
-import React, { useEffect, useRef, useState } from 'react';
-import './App.css';
-
-// 导入游戏核心模块
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GameEngine } from './engine/GameEngine.js';
-import { blockConfig } from './config/BlockConfig.js';
-import { TerrainGenerator } from './world/TerrainGenerator.js';
 import { Player } from './player/Player.js';
 import { Camera } from './camera/Camera.js';
 import { Renderer } from './renderer/Renderer.js';
+import { TerrainGenerator } from './world/TerrainGenerator.js';
 import { StorageManager } from './storage/StorageManager.js';
-import { ConfigPanel } from './ui/ConfigPanel.js';
-import DebugConsole from './ui/DebugConsole.jsx';
-import { gameConfig } from './config/GameConfig.js';
-import { InventoryController } from './ui/InventoryUI.jsx';
 import { HealthBar } from './ui/HealthBar.jsx';
+import { InventoryController } from './ui/InventoryUI.jsx';
+import { ErrorLogViewer } from './ui/ErrorLogViewer.jsx';
+import DebugConsole from './ui/DebugConsole.jsx';
+import { GameConfig, gameConfig } from './config/GameConfig.js';
+import { ConfigPanel } from './ui/ConfigPanel.js';
+import errorLogger from './utils/ErrorLogger.js';
 
 function App() {
   const canvasRef = useRef(null);
@@ -29,10 +27,25 @@ function App() {
     isFlying: false,
     flySpeed: 100
   });
-  const [showControlsHelp, setShowControlsHelp] = useState(false); // 控制说明默认隐藏 (TODO #21)
-
+  const [showControlsHelp, setShowControlsHelp] = useState(false);
+  const [showErrorLog, setShowErrorLog] = useState(false);
+  // 添加状态来控制各个界面元素的显示，默认全部显示
+  const [uiVisibility, setUiVisibility] = useState({
+    controlsHelp: true,
+    debugConsole: true,
+    configPanel: true,
+    errorLog: true,
+    inventory: true,
+    healthBar: true,
+    topBar: true
+  });
+  const [showUiControlPanel, setShowUiControlPanel] = useState(false);
+  
   useEffect(() => {
     let mounted = true;
+    
+    // 初始化错误日志记录器
+    errorLogger.init();
     
     // 确保Canvas元素已经准备好后再初始化游戏
     const initGame = async () => {
@@ -193,7 +206,7 @@ function App() {
       // 设置状态更新定时器 (提高频率以获得更稳定的时间显示)
       const statsInterval = setInterval(() => {
         updateGameStats(gameEngine, renderer, player);
-      }, 100); // 从1000ms改为100ms，提高更新频率
+      }, 2000); // 改为2秒更新一次，与Renderer.js中的FPS计算频率一致
       
       // 启动自动保存
       console.log('启动自动保存...');
@@ -204,6 +217,7 @@ function App() {
       // 初始化配置面板
       console.log('初始化配置面板...');
       const configPanel = new ConfigPanel();
+      configPanel.gameConfig = gameConfig;  // 添加这一行
       configPanelRef.current = configPanel;
       
       // 为配置面板提供游戏引擎访问权限 (TODO #15)
@@ -223,6 +237,28 @@ function App() {
       
       configPanel.onUpdate('cave', 'initialCaveChance', (value) => {
         console.log(`🕳️ 洞穴初始概率更新为: ${value}`);
+      });
+      
+      // 添加时间系统配置变更回调
+      configPanel.onUpdate('time', 'eternalDay', (value) => {
+        if (gameEngine) {
+          gameEngine.setEternalDay(value);
+          console.log(`☀️ 永久白日模式${value ? '启用' : '禁用'}`);
+        }
+      });
+      
+      configPanel.onUpdate('time', 'timeSpeed', (value) => {
+        if (gameEngine) {
+          gameEngine.setTimeSpeed(value);
+          console.log(`⏱️ 时间速度更新为: ${value}x`);
+        }
+      });
+      
+      configPanel.onUpdate('time', 'dayDuration', (value) => {
+        if (gameEngine) {
+          gameEngine.setDayDuration(value);
+          console.log(`🌅 一天时长更新为: ${value}秒`);
+        }
       });
       
       console.log('✅ 配置面板初始化完成');
@@ -434,8 +470,7 @@ function App() {
    * Author: Minecraft2D Development Team
    */
   const adjustFPS = (delta) => {
-    if (gameEngineRef.current && configPanelRef.current?.gameConfig) {
-      const gameConfig = configPanelRef.current.gameConfig;
+    if (gameEngineRef.current) {
       const currentFPS = gameConfig.get('performance', 'targetFPS') || 60;
       const newFPS = Math.max(10, Math.min(120, currentFPS + delta));
       
@@ -485,6 +520,13 @@ function App() {
     }
   };
   
+  /**
+   * 切换错误日志查看器显示
+   */
+  const toggleErrorLog = () => {
+    setShowErrorLog(!showErrorLog);
+  };
+  
   // 键盘事件监听，处理H键切换控制说明、F3键切换调试信息和帧率调节键
   useEffect(() => {
     const handleKeyPress = (event) => {
@@ -492,6 +534,11 @@ function App() {
       if (event.key === 'h' || event.key === 'H') {
         event.preventDefault();
         toggleControlsHelp();
+      }
+      // F1键切换界面控制面板
+      else if (event.key === 'F1') {
+        event.preventDefault();
+        toggleUiControlPanel();
       }
       // F3键切换调试信息和调试控制台
       else if (event.key === 'F3') {
@@ -540,8 +587,75 @@ function App() {
     return () => {
       document.removeEventListener('keydown', handleKeyPress);
     };
-  }, [showControlsHelp, debugInfo]);
-
+  }, [showControlsHelp, debugInfo, showUiControlPanel]);
+  
+  // 添加错误日志记录功能
+  useEffect(() => {
+    // 客户端错误处理
+    const handleError = (event) => {
+      const errorInfo = {
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+        url: window.location.href
+      };
+      
+      // 记录到控制台
+      console.error('客户端错误:', errorInfo);
+      
+      // 发送到服务器记录（如果需要的话）
+      // 这里我们只是记录到本地文件的思路，实际实现需要后端支持
+      logClientError(errorInfo);
+    };
+    
+    // Promise拒绝处理
+    const handleUnhandledRejection = (event) => {
+      const errorInfo = {
+        message: event.reason?.message || String(event.reason),
+        stack: event.reason?.stack || '',
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+        url: window.location.href
+      };
+      
+      console.error('未处理的Promise拒绝:', errorInfo);
+      logClientError(errorInfo);
+    };
+    
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, []);
+  
+  // 初始化错误日志记录器
+  useEffect(() => {
+    errorLogger.init();
+  }, []);
+  
+  // 记录客户端错误到日志文件
+  const logClientError = async (errorInfo) => {
+    try {
+      // 在实际应用中，这里会发送到后端API来记录错误
+      // 由于这是一个纯前端应用，我们只能在控制台记录
+      // 并提供一个下载错误日志的功能
+      
+      // 构建日志内容
+      const logEntry = `[${errorInfo.timestamp}] ${errorInfo.message} at ${errorInfo.filename}:${errorInfo.lineno}:${errorInfo.colno}\n`;
+      
+      // 这里只是示例，实际记录需要后端支持
+      console.log('错误已记录到日志:', logEntry);
+    } catch (logError) {
+      console.error('记录错误日志时发生异常:', logError);
+    }
+  };
+  
   // 渲染加载状态
   if (gameStatus === 'loading' || gameStatus === 'initializing') {
     return (
@@ -655,6 +769,28 @@ function App() {
     );
   }
 
+  // 恢复默认界面设置
+  const resetUiVisibility = () => {
+    setUiVisibility({
+      controlsHelp: true,
+      debugConsole: true,
+      configPanel: true,
+      errorLog: true,
+      inventory: true,
+      healthBar: true,
+      topBar: true
+    });
+    setShowUiControlPanel(false);
+    setShowControlsHelp(false);
+    setShowErrorLog(false);
+    setShowDebugConsole(false);
+  };
+
+  // 切换界面控制面板显示
+  const toggleUiControlPanel = () => {
+    setShowUiControlPanel(!showUiControlPanel);
+  };
+
   return (
     <div className="game-container">
       {/* 游戏画布 */}
@@ -678,81 +814,236 @@ function App() {
       {/* 游戏UI */}
       <div className="game-ui">
         {/* 血条显示 - 物品栏上方 */}
-        <HealthBar 
-          player={gameEngineRef.current?.systems?.player} 
-          gameEngine={gameEngineRef.current} 
-        />
+        {uiVisibility.healthBar && (
+          <HealthBar 
+            player={gameEngineRef.current?.systems?.player} 
+            gameEngine={gameEngineRef.current} 
+          />
+        )}
         
         {/* 顶部状态栏 */}
-        <div className="top-bar">
-          <div className="game-title">
-            <h2>Minecraft2D - 2D Minecraft</h2>
-            <span className="version">v1.0.0</span>
-          </div>
-          
-          {/* 游戏状态信息 - 右上角 (TODO #27) */}
-          <div className="game-stats">
-            <span>FPS: {gameStats.fps}</span>
-            <span>方块: {gameStats.blocksRendered}</span>
-            <span>位置: ({gameStats.playerPos.x}, {gameStats.playerPos.y})</span>
-            <span style={{ color: gameStats.health <= 25 ? '#ff4757' : gameStats.health <= 50 ? '#ffa502' : '#2ed573' }}>
-              ❤️ {Math.round(gameStats.health)}/{gameStats.maxHealth}
-            </span>
-            <span style={{ color: gameStats.hunger <= 5 ? '#ff4757' : gameStats.hunger <= 10 ? '#ffa502' : '#2ed573' }}>
-              🍖 {Math.round(gameStats.hunger)}/{gameStats.maxHunger}
-            </span>
-            {gameStats.isFlying && (
-              <span style={{ color: '#87CEEB', fontWeight: 'bold' }}>
-                ✈️ 飞行: {gameStats.flySpeed}%
-              </span>
-            )}
-            {/* 时间信息 (TODO #17) */}
-            <span style={{ color: '#FFD700', fontWeight: 'bold' }}>
-              🕰️ {gameStats.timeString} {gameStats.timePhase}
-            </span>
-            {/* 实体信息 */}
-            <span>
-              👹 实体: {gameStats.entities}
-            </span>
-          </div>
-        </div>
-        
-        {/* 左下角控制区域 */}
-        <div className="left-control-area">
-          {/* 控制面板 - 移动到左下角，2排布局 */}
-          <div className="control-panel">
-            {/* 第一排: 3个主要功能按钮 */}
-            <div className="control-panel-row1">
-              <button onClick={toggleDebugInfo}>
-                {debugInfo ? '隐藏调试信息' : '显示调试信息'}
-              </button>
-              <button onClick={saveGame}>保存游戏</button>
-              <button onClick={regenerateWorld}>重新生成世界</button>
+        {uiVisibility.topBar && (
+          <div className="top-bar">
+            <div className="game-title">
+              <h2>Minecraft2D - 2D Minecraft</h2>
+              <span className="version">v1.0.0</span>
             </div>
             
-            {/* 第二排: 配置和控制说明按钮 */}
-            <div className="control-panel-row2">
-              <button 
-                onClick={toggleConfigPanel}
-                className="config-panel-btn"
-              >
-                ⚙️ 游戏配置
-              </button>
-              
-              {/* 控制说明按钮（始终显示，但改为切换按钮） */}
-              <button 
-                className="show-controls-btn"
-                onClick={toggleControlsHelp}
-                title={showControlsHelp ? '隐藏控制说明 (H键)' : '显示控制说明 (H键)'}
-              >
-                🎮 {showControlsHelp ? '隐藏控制' : '控制说明'}
-              </button>
+            {/* 游戏状态信息 - 右上角 (TODO #27) */}
+            <div className="game-stats">
+              <span>FPS: {gameStats.fps}</span>
+              <span>方块: {gameStats.blocksRendered}</span>
+              <span>位置: ({gameStats.playerPos.x}, {gameStats.playerPos.y})</span>
+              <span style={{ color: gameStats.health <= 25 ? '#ff4757' : gameStats.health <= 50 ? '#ffa502' : '#2ed573' }}>
+                ❤️ {Math.round(gameStats.health)}/{gameStats.maxHealth}
+              </span>
+              <span style={{ color: gameStats.hunger <= 5 ? '#ff4757' : gameStats.hunger <= 10 ? '#ffa502' : '#2ed573' }}>
+                🍖 {Math.round(gameStats.hunger)}/{gameStats.maxHunger}
+              </span>
+              {gameStats.isFlying && (
+                <span style={{ color: '#87CEEB', fontWeight: 'bold' }}>
+                  ✈️ 飞行: {gameStats.flySpeed}%
+                </span>
+              )}
+              {/* 时间信息 (TODO #17) */}
+              <span style={{ color: '#FFD700', fontWeight: 'bold' }}>
+                🕰️ {gameStats.timeString} {gameStats.timePhase}
+              </span>
+              {/* 实体信息 */}
+              <span>
+                👹 实体: {gameStats.entities}
+              </span>
             </div>
           </div>
-        </div>
+        )}
+        
+        {/* 左下角控制区域 */}
+        {uiVisibility.configPanel && (
+          <div className="left-control-area">
+            {/* 控制面板 - 移动到左下角，2排布局 */}
+            <div className="control-panel">
+              {/* 第一排: 3个主要功能按钮 */}
+              <div className="control-panel-row1">
+                <button onClick={toggleDebugInfo}>
+                  {debugInfo ? '隐藏调试信息' : '显示调试信息'}
+                </button>
+                <button onClick={saveGame}>保存游戏</button>
+                <button onClick={regenerateWorld}>重新生成世界</button>
+              </div>
+              
+              {/* 第二排: 配置和控制说明按钮 */}
+              <div className="control-panel-row2">
+                <button 
+                  onClick={toggleConfigPanel}
+                  className="config-panel-btn"
+                >
+                  ⚙️ 游戏配置
+                </button>
+                
+                {/* 控制说明按钮（始终显示，但改为切换按钮） */}
+                <button 
+                  className="show-controls-btn"
+                  onClick={toggleControlsHelp}
+                  title={showControlsHelp ? '隐藏控制说明 (H键)' : '显示控制说明 (H键)'}
+                >
+                  🎮 {showControlsHelp ? '隐藏控制' : '控制说明'}
+                </button>
+                
+                {/* 错误日志按钮 */}
+                <button 
+                  className="error-log-btn"
+                  onClick={toggleErrorLog}
+                  title="查看客户端错误日志"
+                >
+                  📝 错误日志
+                </button>
+                
+                {/* 界面元素控制按钮 */}
+                <button 
+                  className="ui-control-btn"
+                  onClick={toggleUiControlPanel}
+                  title="界面元素控制面板"
+                >
+                  🎛️ 界面控制
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* 界面控制面板 */}
+        {showUiControlPanel && (
+          <div className="ui-control-panel">
+            <div className="ui-control-panel-header">
+              <h3>界面元素控制</h3>
+              <button 
+                className="ui-control-panel-close"
+                onClick={toggleUiControlPanel}
+                title="关闭控制面板"
+              >
+                ✖
+              </button>
+            </div>
+            <div className="ui-control-panel-content">
+              <div className="ui-control-item">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={uiVisibility.controlsHelp}
+                    onChange={(e) => setUiVisibility(prev => ({
+                      ...prev,
+                      controlsHelp: e.target.checked
+                    }))}
+                  />
+                  控制说明面板
+                </label>
+              </div>
+              <div className="ui-control-item">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={uiVisibility.debugConsole}
+                    onChange={(e) => setUiVisibility(prev => ({
+                      ...prev,
+                      debugConsole: e.target.checked
+                    }))}
+                  />
+                  调试控制台
+                </label>
+              </div>
+              <div className="ui-control-item">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={uiVisibility.configPanel}
+                    onChange={(e) => setUiVisibility(prev => ({
+                      ...prev,
+                      configPanel: e.target.checked
+                    }))}
+                  />
+                  左下角控制按钮面板
+                </label>
+              </div>
+              <div className="ui-control-item">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={uiVisibility.errorLog}
+                    onChange={(e) => setUiVisibility(prev => ({
+                      ...prev,
+                      errorLog: e.target.checked
+                    }))}
+                  />
+                  错误日志面板
+                </label>
+              </div>
+              <div className="ui-control-item">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={uiVisibility.inventory}
+                    onChange={(e) => setUiVisibility(prev => ({
+                      ...prev,
+                      inventory: e.target.checked
+                    }))}
+                  />
+                  物品栏界面
+                </label>
+              </div>
+              <div className="ui-control-item">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={uiVisibility.healthBar}
+                    onChange={(e) => setUiVisibility(prev => ({
+                      ...prev,
+                      healthBar: e.target.checked
+                    }))}
+                  />
+                  血条显示
+                </label>
+              </div>
+              <div className="ui-control-item">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={uiVisibility.topBar}
+                    onChange={(e) => setUiVisibility(prev => ({
+                      ...prev,
+                      topBar: e.target.checked
+                    }))}
+                  />
+                  顶部状态栏 (FPS, 时间等)
+                </label>
+              </div>
+              <div className="ui-control-item">
+                <button 
+                  onClick={() => setUiVisibility({
+                    controlsHelp: true,
+                    debugConsole: true,
+                    configPanel: true,
+                    errorLog: true,
+                    inventory: true,
+                    healthBar: true,
+                    topBar: true
+                  })}
+                >
+                  显示所有界面元素
+                </button>
+              </div>
+              <div className="ui-control-item">
+                <button 
+                  onClick={resetUiVisibility}
+                >
+                  恢复默认设置
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* 控制说明 */}
-        {showControlsHelp && (
+        {uiVisibility.controlsHelp && showControlsHelp && (
           <div className="controls-help">
             <div className="controls-help-header">
               <h3>控制说明:</h3>
@@ -788,15 +1079,20 @@ function App() {
         )}
 
         {/* 调试控制台 */}
-        <DebugConsole 
-          gameEngine={gameEngineRef.current}
-          isVisible={showDebugConsole}
-          onToggleVisible={toggleDebugInfo}
-          onSaveGame={saveGame}
-        />
+        {uiVisibility.debugConsole && (
+          <DebugConsole 
+            gameEngine={gameEngineRef.current}
+            isVisible={showDebugConsole}
+            onToggleVisible={toggleDebugInfo}
+            onSaveGame={saveGame}
+          />
+        )}
+        
+        {/* 错误日志查看器 */}
+        {uiVisibility.errorLog && showErrorLog && <ErrorLogViewer />}
         
         {/* 物品栏UI */}
-        {gameEngineRef.current && gameEngineRef.current.systems.player && (
+        {uiVisibility.inventory && gameEngineRef.current && gameEngineRef.current.systems.player && (
           <InventoryController 
             inventory={gameEngineRef.current.systems.player.getInventory()}
             gameEngine={gameEngineRef.current}

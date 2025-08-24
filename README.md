@@ -59,7 +59,7 @@ cd minecraft2d-game
 npm install
 
 # 启动开发服务器
-npm run dev
+./dev-server.sh start
 
 # 构建生产版本
 npm run build

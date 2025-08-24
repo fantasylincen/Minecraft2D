@@ -5,7 +5,8 @@
 
 import { blockConfig } from '../config/BlockConfig.js';
 import { Inventory } from './Inventory.js';
-import { itemConfig } from '../config/ItemConfig.js';
+import { itemConfig, ItemType } from '../config/ItemConfig.js';
+
 
 export class Player {
   constructor(worldConfig) {
@@ -18,6 +19,16 @@ export class Player {
       prevX: 0,
       prevY: 300
     };
+    
+    // 玩家朝向 (新增)
+    this.facing = {
+      angle: 0, // 朝向角度 (弧度)
+      directionX: 1, // 朝向向量X分量
+      directionY: 0  // 朝向向量Y分量
+    };
+    
+    // 鼠标位置
+    this.mousePosition = { x: 0, y: 0 };
     
     // 玩家物理属性
     this.physics = {
@@ -128,6 +139,12 @@ export class Player {
       mineCooldown: 100      // 挖掘冷却时间(毫秒)
     };
     
+    // 放置方块系统 (新增 - 放置方块功能 - 基础实现)
+    this.placement = {
+      lastPlaceTime: 0,      // 上次放置时间
+      placeCooldown: 200     // 放置冷却时间(毫秒)
+    };
+    
     // 游戏引用
     this.terrainGenerator = null;
     
@@ -151,6 +168,18 @@ export class Player {
    */
   setTerrainGenerator(terrainGenerator) {
     this.terrainGenerator = terrainGenerator;
+  }
+
+  /**
+   * 设置鼠标位置
+   * @param {number} x 鼠标世界坐标X
+   * @param {number} y 鼠标世界坐标Y
+   */
+  setMousePosition(x, y) {
+    this.mousePosition.x = x;
+    this.mousePosition.y = y;
+    // 立即更新朝向
+    this.updateFacing();
   }
   
   /**
@@ -212,6 +241,9 @@ export class Player {
     // 更新控制输入
     this.updateControls(keys);
     
+    // 更新玩家朝向 (新增)
+    this.updateFacing();
+    
     // 检查是否在水中
     this.inWater.isSwimming = this.isInWater();
     
@@ -245,6 +277,9 @@ export class Player {
     
     // 处理挖掘逻辑
     this.handleMining(deltaTime);
+    
+    // 处理放置方块逻辑 (新增 - 放置方块功能 - 基础实现)
+    this.handleBlockPlacement();
   }
   
   /**
@@ -280,6 +315,11 @@ export class Player {
     const minePressed = keys['Space'];
     this.controls.mine = minePressed;
     // 注意：这里不使用prevMine来检测按下事件，而是检测持续按住
+    
+    // 放置方块控制 - 使用鼠标右键（新增）
+    // 注意：鼠标事件需要在GameEngine中处理并传递给Player
+    // 这里我们添加一个place控制状态，由外部设置
+    // this.controls.place 将由外部设置
     
     // 处理飞行模式切换
     if (this.controls.fly) {
@@ -604,7 +644,7 @@ export class Player {
     // 计算玩家边界
     const left = this.position.x - this.size.width / 2 + epsilon;
     const right = this.position.x + this.size.width / 2 - epsilon;
-    const top = this.position.y + this.size.height / 2 - epsilon;
+    const top = this.position.y + this.size.height / 2 + epsilon;
     const bottom = this.position.y - this.size.height / 2 + epsilon;
     
     const leftBlock = Math.floor(left / blockSize);
@@ -905,10 +945,43 @@ export class Player {
     // 渲染玩家手中持有的物品
     this.renderHeldItem(ctx, screenPos);
     
+    // 调试模式下渲染朝向激光线条 (新增)
+    if (this.showDebugInfo) {
+      this.renderFacingLaser(ctx, screenPos);
+    }
+    
     // 调试信息（可选）
     if (this.showDebugInfo) {
       this.renderDebugInfo(ctx, screenPos);
     }
+  }
+  
+  /**
+   * 渲染玩家朝向激光线条 (新增)
+   * 调试模式下: 用一个从玩家身体中心发射一根宽度为2的亮蓝色激光线条指向玩家的朝向, 射线的长度为2个玩家的身高
+   */
+  renderFacingLaser(ctx, screenPos) {
+    // 保存原始的变换状态
+    ctx.save();
+    
+    // 设置激光线条样式
+    ctx.strokeStyle = '#00FFFF'; // 亮蓝色
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    
+    // 计算激光线条的终点
+    const laserLength = this.size.height * 2; // 2个玩家的身高
+    const endX = screenPos.x + this.facing.directionX * laserLength;
+    const endY = screenPos.y + this.facing.directionY * laserLength;
+    
+    // 绘制激光线条
+    ctx.beginPath();
+    ctx.moveTo(screenPos.x, screenPos.y);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+    
+    // 恢复原始的变换状态
+    ctx.restore();
   }
   
   /**
@@ -1470,6 +1543,390 @@ export class Player {
   }
   
   /**
+   * 处理放置方块逻辑 (新增 - 放置方块功能 - 基础实现)
+   * Author: Minecraft2D Development Team
+   */
+  handleBlockPlacement() {
+    if (!this.terrainGenerator) return;
+    
+    // 检查是否按下了放置键（右键）
+    if (this.controls.place) {
+      // 检查冷却时间，防止过快放置
+      const currentTime = performance.now();
+      if (currentTime - this.placement.lastPlaceTime >= this.placement.placeCooldown) {
+        // 获取当前手持物品
+        const heldItem = this.getHeldItem();
+        
+        // 检查手中是否有方块类物品
+        if (heldItem && !heldItem.isEmpty() && heldItem.getItemDefinition().type === ItemType.BLOCK) {
+          // 获取放置位置（玩家前方一格）
+          const placementPosition = this.getPlacementPosition();
+          
+          if (placementPosition) {
+            // 检查放置位置是否合法
+            if (this.isPlacementPositionValid(placementPosition)) {
+              // 放置方块
+              const blockId = heldItem.getItemDefinition().blockId;
+              if (this.terrainGenerator.setBlock(placementPosition.x, placementPosition.y, blockId)) {
+                // 消耗物品
+                this.consumeHeldItem(1);
+                
+                // 添加放置音效 (新增 - 放置方块功能 - 交互优化)
+                this.playPlaceSound();
+                
+                // 添加放置成功提示 (新增 - 放置方块功能 - 交互优化)
+                console.log(`✅ 放置方块成功: ${heldItem.getItemDefinition().name} at (${placementPosition.x}, ${placementPosition.y})`);
+                
+                // 更新最后放置时间 (新增 - 多方块放置优化 - 基础实现)
+                this.placement.lastPlaceTime = currentTime;
+              }
+            } else {
+              // 添加放置失败提示 (新增 - 放置方块功能 - 交互优化)
+              console.log('❌ 放置位置不合法');
+              this.showPlaceFailureMessage();
+            }
+          }
+        } else {
+          // 添加放置失败提示 (新增 - 放置方块功能 - 交互优化)
+          console.log('❌ 手中没有可放置的方块');
+          this.showPlaceFailureMessage();
+        }
+        
+        // 更新最后放置时间 (移到这里以支持连续放置)
+        this.placement.lastPlaceTime = currentTime;
+      }
+    }
+  }
+  
+  /**
+   * 播放放置音效 (新增 - 放置方块功能 - 交互优化)
+   * Author: Minecraft2D Development Team
+   */
+  playPlaceSound() {
+    // 简单的音效实现（使用Web Audio API）
+    try {
+      // 创建音频上下文
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      
+      // 创建振荡器
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      // 连接节点
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      // 设置音调和音量
+      oscillator.type = 'square';
+      oscillator.frequency.setValueAtTime(220, audioContext.currentTime); // A3音符
+      gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+      
+      // 播放并快速停止
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + 0.1);
+      
+      console.log('🎵 播放放置音效');
+    } catch (error) {
+      // 如果Web Audio API不可用，使用控制台输出代替
+      console.log('🎵 [音效] 方块放置');
+    }
+  }
+  
+  /**
+   * 显示放置失败消息 (新增 - 放置方块功能 - 交互优化)
+   * Author: Minecraft2D Development Team
+   */
+  showPlaceFailureMessage() {
+    // 在实际游戏中，这里会显示一个短暂的提示消息
+    // 目前使用控制台输出
+    console.log('⚠️ 方块放置失败');
+  }
+  
+  /**
+   * 获取放置预览位置 (新增 - 方块放置预览 - 基础实现)
+   * @returns {Object|null} 预览位置坐标
+   */
+  getPlacementPreviewPosition() {
+    if (!this.terrainGenerator) return null;
+    
+    // 使用玩家的朝向方向计算预览位置
+    const directionX = this.facing.directionX;
+    const directionY = this.facing.directionY;
+    
+    // 计算玩家中心位置
+    const playerCenterX = this.position.x;
+    const playerCenterY = this.position.y;
+    
+    // 计算预览位置（玩家前方一格）
+    const previewX = Math.floor((playerCenterX + directionX * this.worldConfig.BLOCK_SIZE) / this.worldConfig.BLOCK_SIZE);
+    const previewY = Math.floor((playerCenterY + directionY * this.worldConfig.BLOCK_SIZE) / this.worldConfig.BLOCK_SIZE);
+    
+    return { x: previewX, y: previewY };
+  }
+  
+  /**
+   * 检查预览位置是否合法 (新增 - 方块放置预览 - 基础实现)
+   * @param {Object} position 预览位置
+   * @returns {boolean} 是否合法
+   */
+  isPlacementPreviewValid(position) {
+    if (!this.terrainGenerator) return false;
+    
+    // 检查位置是否在世界范围内
+    if (position.y < 0 || position.y >= this.worldConfig.WORLD_HEIGHT) {
+      return false;
+    }
+    
+    // 检查目标位置是否为空气方块
+    const targetBlockId = this.terrainGenerator.getBlock(position.x, position.y);
+    if (targetBlockId !== blockConfig.getBlock('air').id) {
+      return false; // 目标位置已经有方块
+    }
+    
+    // 检查预览位置是否与玩家碰撞
+    // 简化检查：确保预览位置不在玩家占据的空间内
+    const playerBlockX = Math.floor(this.position.x / this.worldConfig.BLOCK_SIZE);
+    const playerBlockY = Math.floor(this.position.y / this.worldConfig.BLOCK_SIZE);
+    
+    if (position.x === playerBlockX && position.y === playerBlockY) {
+      return false; // 不能在自己所在位置放置方块
+    }
+    
+    // 检查预览位置是否在玩家身体范围内
+    const playerLeft = Math.floor((this.position.x - this.size.width/2) / this.worldConfig.BLOCK_SIZE);
+    const playerRight = Math.floor((this.position.x + this.size.width/2) / this.worldConfig.BLOCK_SIZE);
+    const playerBottom = Math.floor((this.position.y - this.size.height/2) / this.worldConfig.BLOCK_SIZE);
+    const playerTop = Math.floor((this.position.y + this.size.height/2) / this.worldConfig.BLOCK_SIZE);
+    
+    if (position.x >= playerLeft && position.x <= playerRight && 
+        position.y >= playerBottom && position.y <= playerTop) {
+      return false; // 预览位置与玩家身体重叠
+    }
+    
+    return true;
+  }
+  
+  /**
+   * 渲染放置预览 (新增 - 方块放置预览 - 基础实现)
+   * @param {CanvasRenderingContext2D} ctx 渲染上下文
+   * @param {Object} camera 摄像机对象
+   */
+  renderPlacementPreview(ctx, camera) {
+    if (!ctx || !camera) return;
+    
+    // 获取当前手持物品
+    const heldItem = this.getHeldItem();
+    
+    // 检查手中是否有方块类物品
+    if (!heldItem || heldItem.isEmpty() || heldItem.getItemDefinition().type !== ItemType.BLOCK) {
+      return;
+    }
+    
+    // 获取预览位置
+    const previewPosition = this.getPlacementPreviewPosition();
+    if (!previewPosition) return;
+    
+    // 检查预览位置是否合法
+    const isValid = this.isPlacementPreviewValid(previewPosition);
+    
+    // 计算屏幕坐标
+    const blockSize = this.worldConfig.BLOCK_SIZE;
+    const worldPosX = previewPosition.x * blockSize + blockSize / 2;
+    const worldPosY = previewPosition.y * blockSize + blockSize / 2;
+    
+    // 检查是否在视野内
+    if (!camera.isInView(worldPosX, worldPosY)) {
+      return;
+    }
+    
+    const screenPos = camera.worldToScreen(worldPosX, worldPosY);
+    const screenSize = blockSize * camera.zoom;
+    
+    // 如果方块太小就不渲染
+    if (screenSize < 1) return;
+    
+    // 获取方块信息
+    const blockId = heldItem.getItemDefinition().blockId;
+    const block = blockConfig.getBlock(blockId);
+    if (!block) return;
+    
+    // 保存当前上下文状态
+    ctx.save();
+    
+    // 设置预览颜色（绿色表示可放置，红色表示不可放置）
+    const baseColor = isValid ? 'rgba(0, 255, 0, 0.5)' : 'rgba(255, 0, 0, 0.5)';
+    
+    // 添加预览方块的旋转动画 (新增 - 方块放置预览 - 视觉优化)
+    const time = performance.now() / 1000; // 转换为秒
+    const rotation = Math.sin(time * 2) * 0.1; // 轻微的旋转动画
+    
+    // 移动到方块中心并应用旋转
+    ctx.translate(screenPos.x, screenPos.y);
+    ctx.rotate(rotation);
+    
+    // 渲染半透明预览方块
+    ctx.fillStyle = baseColor;
+    ctx.fillRect(
+      -screenSize / 2,
+      -screenSize / 2,
+      screenSize,
+      screenSize
+    );
+    
+    // 添加预览方块的边框效果 (新增 - 方块放置预览 - 视觉优化)
+    ctx.strokeStyle = isValid ? 'rgba(0, 255, 0, 0.8)' : 'rgba(255, 0, 0, 0.8)';
+    ctx.lineWidth = Math.max(1, screenSize * 0.1);
+    ctx.strokeRect(
+      -screenSize / 2,
+      -screenSize / 2,
+      screenSize,
+      screenSize
+    );
+    
+    // 优化预览方块的透明度变化 (新增 - 方块放置预览 - 视觉优化)
+    const pulse = Math.sin(time * 3) * 0.2 + 0.8; // 0.6-1.0的脉冲效果
+    const pulseColor = isValid ? 
+      `rgba(0, 255, 0, ${0.5 * pulse})` : 
+      `rgba(255, 0, 0, ${0.5 * pulse})`;
+    
+    // 渲染脉冲效果层
+    ctx.fillStyle = pulseColor;
+    ctx.fillRect(
+      -screenSize / 2 + screenSize * 0.1,
+      -screenSize / 2 + screenSize * 0.1,
+      screenSize * 0.8,
+      screenSize * 0.8
+    );
+    
+    // 恢复上下文状态
+    ctx.restore();
+  }
+  
+  /**
+   * 获取放置位置 (新增)
+   * @returns {Object|null} 放置位置坐标
+   */
+  getPlacementPosition() {
+    if (!this.terrainGenerator) return null;
+    
+    // 使用玩家的朝向方向计算放置位置
+    const directionX = this.facing.directionX;
+    const directionY = this.facing.directionY;
+    
+    // 计算玩家中心位置
+    const playerCenterX = this.position.x;
+    const playerCenterY = this.position.y;
+    
+    // 计算放置位置（玩家前方一格）
+    const placementX = Math.floor((playerCenterX + directionX * this.worldConfig.BLOCK_SIZE) / this.worldConfig.BLOCK_SIZE);
+    const placementY = Math.floor((playerCenterY + directionY * this.worldConfig.BLOCK_SIZE) / this.worldConfig.BLOCK_SIZE);
+    
+    return { x: placementX, y: placementY };
+  }
+  
+  /**
+   * 检查放置位置是否合法 (新增)
+   * @param {Object} position 放置位置
+   * @returns {boolean} 是否合法
+   */
+  isPlacementPositionValid(position) {
+    if (!this.terrainGenerator) return false;
+    
+    // 检查位置是否在世界范围内
+    if (position.y < 0 || position.y >= this.worldConfig.WORLD_HEIGHT) {
+      return false;
+    }
+    
+    // 检查目标位置是否为空气方块
+    const targetBlockId = this.terrainGenerator.getBlock(position.x, position.y);
+    if (targetBlockId !== blockConfig.getBlock('air').id) {
+      return false; // 目标位置已经有方块
+    }
+    
+    // 检查放置位置是否与玩家碰撞
+    // 简化检查：确保放置位置不在玩家占据的空间内
+    const playerBlockX = Math.floor(this.position.x / this.worldConfig.BLOCK_SIZE);
+    const playerBlockY = Math.floor(this.position.y / this.worldConfig.BLOCK_SIZE);
+    
+    if (position.x === playerBlockX && position.y === playerBlockY) {
+      return false; // 不能在自己所在位置放置方块
+    }
+    
+    // 检查放置位置是否在玩家身体范围内
+    const playerLeft = Math.floor((this.position.x - this.size.width/2) / this.worldConfig.BLOCK_SIZE);
+    const playerRight = Math.floor((this.position.x + this.size.width/2) / this.worldConfig.BLOCK_SIZE);
+    const playerBottom = Math.floor((this.position.y - this.size.height/2) / this.worldConfig.BLOCK_SIZE);
+    const playerTop = Math.floor((this.position.y + this.size.height/2) / this.worldConfig.BLOCK_SIZE);
+    
+    if (position.x >= playerLeft && position.x <= playerRight && 
+        position.y >= playerBottom && position.y <= playerTop) {
+      return false; // 放置位置与玩家身体重叠
+    }
+    
+    return true;
+  }
+  
+  /**
+   * 消耗手持物品 (新增)
+   * @param {number} count 消耗数量
+   */
+  consumeHeldItem(count = 1) {
+    const heldItem = this.getHeldItem();
+    if (heldItem && !heldItem.isEmpty()) {
+      // 从物品栏移除物品
+      const removed = heldItem.removeItem(count);
+      if (heldItem.count <= 0) {
+        // 如果物品用完了，清空槽位
+        heldItem.clear();
+      }
+    }
+  }
+  
+  /**
+   * 测试放置方块功能 (新增 - 用于测试)
+   * Author: Minecraft2D Development Team
+   */
+  testBlockPlacement() {
+    console.log('🧪 测试放置方块功能');
+    
+    // 检查玩家是否持有方块物品
+    const heldItem = this.getHeldItem();
+    if (!heldItem || heldItem.isEmpty()) {
+      console.log('⚠️ 玩家手中没有物品');
+      return false;
+    }
+    
+    const itemDef = heldItem.getItemDefinition();
+    if (!itemDef || itemDef.type !== ItemType.BLOCK) {
+      console.log('⚠️ 玩家手中物品不是方块类型');
+      return false;
+    }
+    
+    console.log(`✅ 玩家持有方块: ${itemDef.name} (ID: ${itemDef.blockId})`);
+    
+    // 获取放置位置
+    const placementPos = this.getPlacementPosition();
+    if (!placementPos) {
+      console.log('⚠️ 无法确定放置位置');
+      return false;
+    }
+    
+    console.log(`📍 放置位置: (${placementPos.x}, ${placementPos.y})`);
+    
+    // 检查放置位置是否合法
+    const isValid = this.isPlacementPositionValid(placementPos);
+    console.log(`⚖️ 放置位置合法性: ${isValid ? '合法' : '非法'}`);
+    
+    if (isValid) {
+      console.log('✅ 放置方块功能测试通过');
+      return true;
+    } else {
+      console.log('❌ 放置方块功能测试失败');
+      return false;
+    }
+  }
+  
+  /**
    * 获取视线方向最近的方块 (TODO #9)
    * Author: Minecraft2D Development Team
    */
@@ -1480,10 +1937,9 @@ export class Player {
     const eyeX = this.position.x;
     const eyeY = this.position.y + 2; // 眼睛稍微高一点
     
-    // 简单的视线方向计算（向右看）
-    // 在3D版本中，这会根据鼠标位置计算方向
-    const directionX = 1; // 向右看
-    const directionY = 0; // 水平方向
+    // 使用玩家的朝向方向计算视线方向
+    const directionX = this.facing.directionX;
+    const directionY = this.facing.directionY;
     
     // 射线步进参数
     const stepSize = 0.5; // 步进大小
@@ -1595,6 +2051,31 @@ export class Player {
     
     // 重置挖掘状态
     this.resetMiningProgress();
+  }
+  
+  /**
+   * 更新玩家朝向 (新增)
+   * 玩家可以360度自由朝向，朝向跟随鼠标位置发生变化
+   */
+  updateFacing() {
+    // 根据鼠标位置更新朝向
+    const deltaX = this.mousePosition.x - this.position.x;
+    const deltaY = this.mousePosition.y - this.position.y;
+    
+    // 只有当鼠标位置有明显变化时才更新朝向
+    if (Math.abs(deltaX) > 0.1 || Math.abs(deltaY) > 0.1) {
+      // 计算朝向角度
+      this.facing.angle = Math.atan2(deltaY, deltaX);
+      this.facing.directionX = Math.cos(this.facing.angle);
+      this.facing.directionY = Math.sin(this.facing.angle);
+    }
+  }
+  
+  /**
+   * 获取玩家朝向信息
+   */
+  getFacing() {
+    return { ...this.facing };
   }
   
   /**

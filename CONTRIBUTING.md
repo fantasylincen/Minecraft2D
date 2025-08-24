@@ -135,8 +135,8 @@ cd minecraft2d-game
 # 安装依赖
 npm install
 
-# 启动开发服务器
-npm run dev
+# 启动服务器
+./dev-server.sh start  
 
 # 运行物品栏系统测试
 open http://localhost:5173/test-inventory.html

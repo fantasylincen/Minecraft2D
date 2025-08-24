@@ -164,6 +164,75 @@ export class GameEngine {
       this.handleKeyUp(e);
     });
     
+    // 鼠标事件监听 (新增 - 放置方块功能 - 基础实现)
+    this.canvas.addEventListener('contextmenu', (e) => {
+      // 阻止右键菜单显示
+      e.preventDefault();
+    });
+    
+    this.canvas.addEventListener('mousedown', (e) => {
+      // 右键点击触发放置方块
+      if (e.button === 2) { // 2表示右键
+        if (this.systems.player) {
+          // 设置放置控制状态
+          this.systems.player.controls.place = true;
+        }
+      }
+    });
+    
+    this.canvas.addEventListener('mouseup', (e) => {
+      // 右键释放
+      if (e.button === 2) { // 2表示右键
+        if (this.systems.player) {
+          // 重置放置控制状态
+          this.systems.player.controls.place = false;
+        }
+      }
+    });
+    
+    // 添加鼠标离开画布时也重置放置控制状态 (新增 - 多方块放置优化 - 基础实现)
+    this.canvas.addEventListener('mouseleave', () => {
+      if (this.systems.player) {
+        // 重置放置控制状态
+        this.systems.player.controls.place = false;
+      }
+    });
+    
+    // 添加鼠标位置跟踪
+    this.mousePosition = { x: 0, y: 0 };
+    
+    this.canvas.addEventListener('mousemove', (e) => {
+      const rect = this.canvas.getBoundingClientRect();
+      this.mousePosition.x = e.clientX - rect.left;
+      this.mousePosition.y = e.clientY - rect.top;
+      
+      // 将鼠标位置传递给玩家
+      if (this.systems.player && this.systems.camera) {
+        const worldPos = this.systems.camera.screenToWorld(this.mousePosition.x, this.mousePosition.y);
+        this.systems.player.setMousePosition(worldPos.x, worldPos.y);
+      }
+    });
+    
+    this.canvas.addEventListener('mousedown', (e) => {
+      // 左键点击触发光线追踪
+      if (e.button === 0) { // 0表示左键
+        if (this.systems.player) {
+          // 设置放置控制状态
+          this.systems.player.controls.place = true;
+        }
+      }
+    });
+    
+    this.canvas.addEventListener('mouseup', (e) => {
+      // 左键释放
+      if (e.button === 0) { // 0表示左键
+        if (this.systems.player) {
+          // 重置放置控制状态
+          this.systems.player.controls.place = false;
+        }
+      }
+    });
+    
     console.log('⌨️  输入系统初始化完成');
   }
   
@@ -171,10 +240,8 @@ export class GameEngine {
    * 处理按键按下
    */
   handleKeyDown(event) {
-    // 阻止默认行为
-    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'KeyF', 'Equal', 'Minus', 'NumpadAdd', 'NumpadSubtract'].includes(event.code)) {
-      event.preventDefault();
-    }
+    // 不再阻止任何按键的默认行为，让浏览器处理所有按键
+    // 只处理特定的功能键
     
     // 特殊按键处理
     switch (event.code) {
@@ -523,12 +590,12 @@ export class GameEngine {
     if (enabled) {
       this.timeSystem.timeOfDay = 0.5; // 正午时间
       this.timeSystem.enabled = false; // 停止时间流逝
-      
+    
       // 立即同步时间到渲染器
       if (this.systems.renderer) {
         this.systems.renderer.setTimeOfDay(0.5);
       }
-      
+    
       console.log('☀️ 永久白日模式已启用，时间跳转到12:00');
     } else {
       // 如果是从永久白日模式切换到正常模式，恢复时间流逝
