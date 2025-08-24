@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 
 /**
  * Debug Console Component
- * Author: MCv2 Development Team
+ * Author: Minecraft2D Development Team
  * 
  * Provides a game debug console for real-time debugging and game state inspection
  */
@@ -16,7 +16,7 @@ const DebugConsole = ({ gameEngine, isVisible, onToggleVisible, onSaveGame }) =>
 
   // Initialize console with welcome message
   useEffect(() => {
-    addLog('=== MCv2 Debug Console ===', 'system');
+    addLog('=== Minecraft2D Debug Console ===', 'system');
     addLog('Type "help" for available commands', 'info');
   }, []);
 

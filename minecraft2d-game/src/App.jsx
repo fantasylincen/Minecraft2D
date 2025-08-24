@@ -122,7 +122,7 @@ function App() {
         throw new Error('Failed to get 2D rendering context');
       }
 
-      console.log('🎮 开始初始化MCv2游戏...');
+      console.log('🎮 开始初始化Minecraft2D游戏...');
       console.log('Canvas element:', canvas);
       console.log('Canvas size:', canvas.offsetWidth, 'x', canvas.offsetHeight);
       
@@ -227,7 +227,7 @@ function App() {
       console.log('✅ 配置面板初始化完成');
       
       setGameStatus('running');
-      console.log('🎉 MCv2游戏启动成功！');
+      console.log('🎉 Minecraft2D游戏启动成功！');
       
       // 清理函数
       return () => {
@@ -347,7 +347,7 @@ function App() {
   
   /**
    * 切换调试信息和调试控制台
-   * Author: MCv2 Development Team
+   * Author: Minecraft2D Development Team
    */
   const toggleDebugInfo = () => {
     if (gameEngineRef.current) {
@@ -418,7 +418,7 @@ function App() {
   
   /**
    * 调节帧率 (TODO #30)
-   * Author: MCv2 Development Team
+   * Author: Minecraft2D Development Team
    */
   const adjustFPS = (delta) => {
     if (gameEngineRef.current && configPanelRef.current?.gameConfig) {
@@ -438,7 +438,7 @@ function App() {
   
   /**
    * 调节时间 (TODO #17)
-   * Author: MCv2 Development Team
+   * Author: Minecraft2D Development Team
    */
   const adjustTime = (delta) => {
     if (gameEngineRef.current) {
@@ -451,7 +451,7 @@ function App() {
   
   /**
    * 调节时间速度 (TODO #17)
-   * Author: MCv2 Development Team
+   * Author: Minecraft2D Development Team
    */
   const adjustTimeSpeed = (delta) => {
     if (gameEngineRef.current) {
@@ -464,7 +464,7 @@ function App() {
   
   /**
    * 切换时间系统状态 (TODO #17)
-   * Author: MCv2 Development Team
+   * Author: Minecraft2D Development Team
    */
   const toggleTimeSystem = () => {
     if (gameEngineRef.current) {
@@ -567,7 +567,7 @@ function App() {
           color: 'white'
         }}>
           <div className="loading-content">
-            <h1>MCv2 - 2D Minecraft</h1>
+            <h1>Minecraft2D - 2D Minecraft</h1>
             <div className="loading-spinner"></div>
             <p>{gameStatus === 'loading' ? '正在加载...' : '正在初始化游戏引擎...'}</p>
           </div>
@@ -667,7 +667,7 @@ function App() {
         {/* 顶部状态栏 */}
         <div className="top-bar">
           <div className="game-title">
-            <h2>MCv2 - 2D Minecraft</h2>
+            <h2>Minecraft2D - 2D Minecraft</h2>
             <span className="version">v1.0.0</span>
           </div>
           

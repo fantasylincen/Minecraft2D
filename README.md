@@ -1,15 +1,15 @@
-# MCv2 - 2D Minecraft 风格沙盒游戏
+# Minecraft2D - 2D Minecraft 风格沙盒游戏
 
 <div align="center">
 
-![MCv2 Logo](https://img.shields.io/badge/MCv2-2D%20Minecraft-brightgreen?style=for-the-badge&logo=minecraft)
+![Minecraft2D Logo](https://img.shields.io/badge/Minecraft2D-2D%20Minecraft-brightgreen?style=for-the-badge&logo=minecraft)
 ![React](https://img.shields.io/badge/React-18.2.0-blue?style=for-the-badge&logo=react)
 ![Vite](https://img.shields.io/badge/Vite-4.4.5-646CFF?style=for-the-badge&logo=vite)
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-yellow?style=for-the-badge&logo=javascript)
 
 一个基于React和Vite构建的2D Minecraft风格沙盒游戏，具有完整的游戏引擎、物理系统、地形生成和物品栏管理。
 
-[在线演示](https://your-demo-link.com) • [文档](./docs/) • [更新日志](./logs/CHANGELOG.md)
+[在线演示](https://fantasylincen.github.io/Minecraft2D) • [文档](./docs/) • [更新日志](./logs/CHANGELOG.md)
 
 </div>
 
@@ -49,11 +49,11 @@
 
 ```bash
 # 克隆项目
-git clone https://github.com/your-username/MCv2.git
-cd MCv2
+git clone https://github.com/fantasylincen/Minecraft2D.git
+cd Minecraft2D
 
 # 进入游戏目录
-cd mcv2-game
+cd minecraft2d-game
 
 # 安装依赖
 npm install
@@ -101,8 +101,8 @@ npm run build
 ## 🏗️ 项目架构
 
 ```
-MCv2/
-├── mcv2-game/                 # 游戏主体
+Minecraft2D/
+├── minecraft2d-game/                 # 游戏主体
 │   ├── src/
 │   │   ├── camera/           # 摄像机系统
 │   │   ├── config/           # 游戏配置
@@ -216,9 +216,9 @@ open http://localhost:5173/test-inventory-integration.html
 
 ## 📞 联系方式
 
-- 项目主页: [GitHub Repository](https://github.com/your-username/MCv2)
-- 问题反馈: [Issues](https://github.com/your-username/MCv2/issues)
-- 讨论交流: [Discussions](https://github.com/your-username/MCv2/discussions)
+- 项目主页: [GitHub Repository](https://github.com/fantasylincen/Minecraft2D)
+- 问题反馈: [Issues](https://github.com/fantasylincen/Minecraft2D/issues)
+- 讨论交流: [Discussions](https://github.com/fantasylincen/Minecraft2D/discussions)
 
 ---
 
@@ -226,6 +226,6 @@ open http://localhost:5173/test-inventory-integration.html
 
 **🌟 如果这个项目对你有帮助，请给个Star支持一下！**
 
-Made with ❤️ by MCv2 Development Team
+Made with ❤️ by Minecraft2D Development Team
 
 </div>

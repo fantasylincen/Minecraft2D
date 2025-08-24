@@ -32,16 +32,16 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: './mcv2-game/package-lock.json'
+          cache-dependency-path: './minecraft2d-game/package-lock.json'
           
       - name: Install dependencies
         run: |
-          cd mcv2-game
+          cd minecraft2d-game
           npm ci
           
       - name: Build project
         run: |
-          cd mcv2-game
+          cd minecraft2d-game
           npm run build
           
       - name: Setup Pages
@@ -50,7 +50,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./mcv2-game/dist
+          path: ./minecraft2d-game/dist
 
   # 部署作业
   deploy:

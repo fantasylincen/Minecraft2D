@@ -1,13 +1,13 @@
 {
-  "name": "mcv2-game",
+  "name": "minecraft2d-game",
   "version": "1.0.0",
-  "description": "MCv2 - 基于React和Vite构建的2D Minecraft风格沙盒游戏",
+  "description": "Minecraft2D - 基于React和Vite构建的2D Minecraft风格沙盒游戏",
   "private": false,
   "type": "module",
-  "homepage": "https://your-username.github.io/MCv2",
+  "homepage": "https://fantasylincen.github.io/Minecraft2D",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/MCv2.git"
+    "url": "https://github.com/fantasylincen/Minecraft2D.git"
   },
   "keywords": [
     "minecraft",
@@ -21,10 +21,10 @@
     "inventory-system",
     "terrain-generation"
   ],
-  "author": "MCv2 Development Team",
+  "author": "Minecraft2D Development Team",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/your-username/MCv2/issues"
+    "url": "https://github.com/fantasylincen/Minecraft2D/issues"
   },
   "scripts": {
     "dev": "vite",
