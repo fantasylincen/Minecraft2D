@@ -130,7 +130,7 @@ function checkCollision(playerPos, blockPos) {
 
 ```bash
 # 进入游戏目录
-cd mcv2-game
+cd minecraft2d-game
 
 # 安装依赖
 npm install
