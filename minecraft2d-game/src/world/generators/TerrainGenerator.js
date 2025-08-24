@@ -23,29 +23,29 @@ export class TerrainGenerator {
     this.params = {
       baseHeight: 100,        // 基础海平面高度
       continental: {
-        scale: 0.0001,        // 大陆尺度
-        amplitude: 150,       // 大陆振幅
+        scale: 0.00005,       // 减小大陆尺度，增加大陆规模 (从0.0001改为0.00005)
+        amplitude: 180,       // 增加大陆振幅 (从150改为180)
         octaves: 2,
         persistence: 0.6,
         lacunarity: 2.0
       },
       regional: {
-        scale: 0.0008,         // 增加区域尺度 (从0.001改为0.0008)
-        amplitude: 60,         // 区域振幅 (从80改为60)
+        scale: 0.0005,        // 调整区域尺度 (从0.0008改为0.0005)
+        amplitude: 70,        // 调整区域振幅 (从60改为70)
         octaves: 4,
         persistence: 0.5,
         lacunarity: 2.0
       },
       local: {
-        scale: 0.008,          // 大幅增加局部尺度 (从0.01改为0.008)
-        amplitude: 35,         // 增加局部振幅 (从20改为35)
+        scale: 0.01,          // 调整局部尺度 (从0.008改为0.01)
+        amplitude: 25,        // 减小局部振幅 (从35改为25)
         octaves: 3,
         persistence: 0.4,
         lacunarity: 2.0
       },
       roughness: {
-        scale: 0.05,          // 粗糙度尺度
-        amplitude: 8,         // 增加粗糙度振幅 (从5改为8)
+        scale: 0.03,          // 调整粗糙度尺度 (从0.05改为0.03)
+        amplitude: 12,        // 增加粗糙度振幅 (从8改为12)
         octaves: 2,
         persistence: 0.3,
         lacunarity: 2.0
@@ -156,11 +156,11 @@ export class TerrainGenerator {
         
       case BIOME_TYPES.PLAINS:
         // 平原：温和起伏，但不过度平均化
-        height *= 0.9; // 从0.8改为0.9，减少平均化程度
+        height *= 0.95; // 从0.9改为0.95，减少平均化程度
         // 添加小丘陵效果
         const hillNoise = this.detailNoise.sample(absoluteX * 0.003, 50);
-        if (hillNoise > 0.4) {
-          height += (hillNoise - 0.4) * 25; // 添加小幅度高度变化
+        if (hillNoise > 0.3) { // 从0.4改为0.3，增加丘陵生成概率
+          height += (hillNoise - 0.3) * 30; // 从25改为30，增加丘陵高度
         }
         break;
     }
@@ -254,18 +254,18 @@ export class TerrainGenerator {
     const grassNoise = this.detailNoise.sample(absoluteX * 0.2, 50);
     const flowerNoise = this.detailNoise.sample(absoluteX * 0.15, 100);
     
-    // 树木 - 降低阈值增加生成概率
-    if (vegetationNoise > 0.6 && Math.random() < biomeConfig.vegetation.trees) {
+    // 树木 - 调整阈值增加生成概率
+    if (vegetationNoise > 0.5 && Math.random() < biomeConfig.vegetation.trees) { // 从0.6改为0.5
       features.hasTree = true;
     }
     
-    // 草 - 降低阈值增加生成概率
-    if (grassNoise > 0.2 && Math.random() < biomeConfig.vegetation.grass) {
+    // 草 - 调整阈值增加生成概率
+    if (grassNoise > 0.1 && Math.random() < biomeConfig.vegetation.grass) { // 从0.2改为0.1
       features.hasGrass = true;
     }
     
-    // 花朵 - 降低阈值增加生成概率
-    if (flowerNoise > 0.4 && Math.random() < biomeConfig.vegetation.flowers) {
+    // 花朵 - 调整阈值增加生成概率
+    if (flowerNoise > 0.3 && Math.random() < biomeConfig.vegetation.flowers) { // 从0.4改为0.3
       features.hasFlower = true;
     }
     

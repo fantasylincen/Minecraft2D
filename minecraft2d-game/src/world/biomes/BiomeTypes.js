@@ -83,14 +83,15 @@ export const BIOME_CONFIG = {
       local: 0.4
     },
     vegetation: {
-      trees: 0.3,
-      grass: 0.6,
-      flowers: 0.15
+      trees: 0.4,      // 从0.3增加到0.4
+      grass: 0.7,      // 从0.6增加到0.7
+      flowers: 0.2     // 从0.15增加到0.2
     },
     ores: {
       coal: { frequency: 0.1, threshold: 0.65 },
       iron: { frequency: 0.08, threshold: 0.75 },
-      gold: { frequency: 0.03, threshold: 0.8 }
+      gold: { frequency: 0.03, threshold: 0.8 },
+      emerald: { frequency: 0.01, threshold: 0.95 }  // 添加绿宝石
     }
   },
   
@@ -169,13 +170,14 @@ export const BIOME_CONFIG = {
       local: 0.15
     },
     vegetation: {
-      trees: 0.25,
-      grass: 0.8,
-      flowers: 0.05
+      trees: 0.3,      // 从0.25增加到0.3
+      grass: 0.9,      // 从0.8增加到0.9
+      flowers: 0.1     // 从0.05增加到0.1
     },
     ores: {
       coal: { frequency: 0.06, threshold: 0.7 },
-      iron: { frequency: 0.04, threshold: 0.8 }
+      iron: { frequency: 0.04, threshold: 0.8 },
+      lapis: { frequency: 0.02, threshold: 0.85 }  // 添加青金石
     }
   },
   

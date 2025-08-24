@@ -429,4 +429,73 @@ export class OreGenerator {
       features: ['depth-scaling', 'rarity-system', 'realistic-distribution']
     };
   }
+  
+  /**
+   * 获取生物群系对应的矿物配置
+   * @param {string} biome - 生物群系名称
+   * @returns {Object} 矿物配置
+   */
+  getOreConfigForBiome(biome) {
+    return {
+      coal: {
+        minDepth: 50,
+        maxDepth: 300,
+        frequency: 0.08,
+        veinFrequency: 0.04,
+        threshold: 0.6,
+        veinThreshold: 0.3
+      },
+      iron: {
+        minDepth: 30,
+        maxDepth: 250,
+        frequency: 0.06,
+        veinFrequency: 0.03,
+        threshold: 0.7,
+        veinThreshold: 0.4
+      },
+      gold: {
+        minDepth: 10,
+        maxDepth: 100,
+        frequency: 0.04,
+        veinFrequency: 0.02,
+        threshold: 0.8,
+        veinThreshold: 0.6
+      },
+      diamond: {
+        minDepth: 5,
+        maxDepth: 50,
+        frequency: 0.02,
+        veinFrequency: 0.01,
+        threshold: 0.9,
+        veinThreshold: 0.8
+      },
+      // 新增：绿宝石矿石（稀有矿物）
+      emerald: {
+        minDepth: 15,
+        maxDepth: 80,
+        frequency: 0.015,
+        veinFrequency: 0.008,
+        threshold: 0.92,
+        veinThreshold: 0.85
+      },
+      // 新增：红石矿石
+      redstone: {
+        minDepth: 20,
+        maxDepth: 150,
+        frequency: 0.05,
+        veinFrequency: 0.025,
+        threshold: 0.65,
+        veinThreshold: 0.5
+      },
+      // 新增：青金石矿石
+      lapis: {
+        minDepth: 25,
+        maxDepth: 120,
+        frequency: 0.03,
+        veinFrequency: 0.015,
+        threshold: 0.75,
+        veinThreshold: 0.6
+      }
+    };
+  }
 }

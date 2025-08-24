@@ -635,6 +635,75 @@ export class VegetationGenerator {
   }
   
   /**
+   * 生成植被
+   * @param {number[][]} chunk - 区块数组
+   * @param {number} x - X坐标
+   * @param {number} surfaceY - 地表Y坐标
+   * @param {number} worldX - 世界X坐标
+   * @param {Object} biomeConfig - 生物群系配置
+   */
+  generateVegetationAt(chunk, x, surfaceY, worldX, biomeConfig) {
+    const treeChance = (this.treeNoise.sample(worldX * 0.1, 0) + 1) / 2;
+    const grassChance = (this.vegetationNoise.sample(worldX * 0.2, 0) + 1) / 2;
+    const flowerChance = (this.vegetationNoise.sample(worldX * 0.15, 100) + 1) / 2;
+    
+    // 大幅增加植被生成概率
+    const treeDensity = Math.min(biomeConfig.vegetation.trees * 3.0, 1.0); // 从2.0增加到3.0
+    const grassDensity = Math.min(biomeConfig.vegetation.grass * 3.0, 1.0); // 从2.2增加到3.0
+    const flowerDensity = Math.min(biomeConfig.vegetation.flowers * 3.5, 0.8); // 从2.5增加到3.5
+    
+    // 生成树木
+    if (treeChance > 0.2 && treeDensity > Math.random()) { // 从0.3降低到0.2
+      this.generateTree(chunk, x, surfaceY + 1);
+    }
+    // 生成草
+    else if (grassChance > 0.01 && grassDensity > Math.random()) { // 从0.02降低到0.01
+      if (surfaceY + 1 < chunk.length) {
+        // 随机选择草的类型
+        const grassTypes = ['grass', 'tallgrass', 'fern'];
+        const selectedGrass = grassTypes[Math.floor(Math.random() * grassTypes.length)];
+        chunk[surfaceY + 1][x] = blockConfig.getBlock(selectedGrass).id;
+      }
+    }
+    // 生成花朵
+    else if (flowerChance > 0.05 && flowerDensity > Math.random()) { // 从0.1降低到0.05
+      if (surfaceY + 1 < chunk.length) {
+        // 随机选择花朵类型
+        const flowerTypes = ['flower', 'rose', 'dandelion', 'poppy', 'blue_orchid', 'allium', 'azure_bluet', 'red_tulip', 'orange_tulip', 'white_tulip', 'pink_tulip', 'oxeye_daisy'];
+        const selectedFlower = flowerTypes[Math.floor(Math.random() * flowerTypes.length)];
+        const flowerBlock = blockConfig.getBlock(selectedFlower);
+        if (flowerBlock) {
+          chunk[surfaceY + 1][x] = flowerBlock.id;
+        } else {
+          // 如果特定花朵不存在，使用默认花朵
+          chunk[surfaceY + 1][x] = blockConfig.getBlock('flower').id;
+        }
+      }
+    }
+    // 添加额外的植被生成机会
+    else if (Math.random() < 0.2) { // 从0.1增加到0.2
+      if (surfaceY + 1 < chunk.length) {
+        // 随机选择植被类型
+        const vegetationTypes = ['grass', 'tallgrass', 'fern', 'flower', 'rose', 'dandelion', 'dead_bush'];
+        const selectedVegetation = vegetationTypes[Math.floor(Math.random() * vegetationTypes.length)];
+        const vegetationBlock = blockConfig.getBlock(selectedVegetation);
+        if (vegetationBlock) {
+          chunk[surfaceY + 1][x] = vegetationBlock.id;
+        }
+      }
+    }
+    // 添加额外的草生成机会
+    else if (Math.random() < 0.15) { // 15%的概率生成额外的草
+      if (surfaceY + 1 < chunk.length) {
+        // 随机选择草的类型
+        const grassTypes = ['grass', 'tallgrass', 'fern'];
+        const selectedGrass = grassTypes[Math.floor(Math.random() * grassTypes.length)];
+        chunk[surfaceY + 1][x] = blockConfig.getBlock(selectedGrass).id;
+      }
+    }
+  }
+  
+  /**
    * 获取植被生成统计
    * @returns {Object} 统计信息
    */

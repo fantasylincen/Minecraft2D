@@ -499,83 +499,136 @@ export class BlockConfig {
         hardness: 0.4,
         dimension: 'nether'
       },
+      // 添加更多装饰性方块以增加多样性
       {
         id: 44,
-        name: 'soul_sand',
-        displayName: '灵魂沙',
-        solid: true,
-        transparent: false,
-        color: '#4A3728',
+        name: 'rose',
+        displayName: '玫瑰',
+        solid: false,
+        transparent: true,
+        color: '#FF0000',
         breakable: true,
-        hardness: 0.5,
-        dimension: 'nether',
-        slowing: true
+        hardness: 0.1
       },
       {
         id: 45,
-        name: 'end_stone',
-        displayName: '末地石',
-        solid: true,
-        transparent: false,
-        color: '#FFFACD',
+        name: 'dandelion',
+        displayName: '蒲公英',
+        solid: false,
+        transparent: true,
+        color: '#FFFF00',
         breakable: true,
-        hardness: 3.0,
-        dimension: 'end'
+        hardness: 0.1
       },
       {
         id: 46,
-        name: 'mycelium',
-        displayName: '菌丝',
-        solid: true,
-        transparent: false,
-        color: '#674C47',
+        name: 'dead_bush',
+        displayName: '枯死的灌木',
+        solid: false,
+        transparent: true,
+        color: '#8B4513',
         breakable: true,
-        hardness: 0.6,
-        special: 'mushroom_growth'
+        hardness: 0.1
       },
       {
         id: 47,
-        name: 'podzol',
-        displayName: '灰化土',
-        solid: true,
-        transparent: false,
-        color: '#8B4513',
+        name: 'fern',
+        displayName: '蕨类植物',
+        solid: false,
+        transparent: true,
+        color: '#228B22',
         breakable: true,
-        hardness: 0.5,
-        special: 'tree_growth'
+        hardness: 0.1
       },
       {
         id: 48,
-        name: 'coarse_dirt',
-        displayName: '砂土',
-        solid: true,
-        transparent: false,
-        color: '#A0522D',
+        name: 'poppy',
+        displayName: '罂粟花',
+        solid: false,
+        transparent: true,
+        color: '#FF0000',
         breakable: true,
-        hardness: 0.5
+        hardness: 0.1
       },
       {
         id: 49,
-        name: 'prismarine',
-        displayName: '海晶石',
-        solid: true,
-        transparent: false,
-        color: '#40E0D0',
+        name: 'blue_orchid',
+        displayName: '兰花',
+        solid: false,
+        transparent: true,
+        color: '#1E90FF',
         breakable: true,
-        hardness: 1.5,
-        underwater: true
+        hardness: 0.1
       },
       {
         id: 50,
-        name: 'sea_lantern',
-        displayName: '海晶灯',
-        solid: true,
-        transparent: false,
-        color: '#E0FFFF',
+        name: 'allium',
+        displayName: '绒球葱',
+        solid: false,
+        transparent: true,
+        color: '#9370DB',
         breakable: true,
-        hardness: 0.3,
-        lightLevel: 15,
-        underwater: true
+        hardness: 0.1
+      },
+      {
+        id: 51,
+        name: 'azure_bluet',
+        displayName: '蓝花美耳草',
+        solid: false,
+        transparent: true,
+        color: '#F0F8FF',
+        breakable: true,
+        hardness: 0.1
+      },
+      {
+        id: 52,
+        name: 'red_tulip',
+        displayName: '红色郁金香',
+        solid: false,
+        transparent: true,
+        color: '#FF0000',
+        breakable: true,
+        hardness: 0.1
+      },
+      {
+        id: 53,
+        name: 'orange_tulip',
+        displayName: '橙色郁金香',
+        solid: false,
+        transparent: true,
+        color: '#FFA500',
+        breakable: true,
+        hardness: 0.1
+      },
+      {
+        id: 54,
+        name: 'white_tulip',
+        displayName: '白色郁金香',
+        solid: false,
+        transparent: true,
+        color: '#FFFFFF',
+        breakable: true,
+        hardness: 0.1
+      },
+      {
+        id: 55,
+        name: 'pink_tulip',
+        displayName: '粉色郁金香',
+        solid: false,
+        transparent: true,
+        color: '#FFC0CB',
+        breakable: true,
+        hardness: 0.1
+      },
+      {
+        id: 56,
+        name: 'oxeye_daisy',
+        displayName: '滨菊',
+        solid: false,
+        transparent: true,
+        color: '#FFFFFF',
+        breakable: true,
+        hardness: 0.1
       }
     ];
     
