@@ -1,0 +1,340 @@
+/* 物品栏UI样式 */
+
+/* 物品槽位基础样式 */
+.item-slot {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border: 2px solid #8B8B8B;
+  background: #373737;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.item-slot:hover {
+  border-color: #FFFFFF;
+  background: #4A4A4A;
+}
+
+.item-slot.selected {
+  border-color: #FFFFFF;
+  background: #5A5A5A;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+/* 物品图标 */
+.item-icon {
+  font-size: 24px;
+  line-height: 1;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* 物品数量 */
+.item-count {
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #FFFFFF;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  min-width: 12px;
+  text-align: center;
+}
+
+/* 耐久度条 */
+.durability-bar {
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+  right: 2px;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 1px;
+}
+
+.durability-fill {
+  height: 100%;
+  background: linear-gradient(to right, #ff4444, #ffff44, #44ff44);
+  border-radius: 1px;
+  transition: width 0.3s ease;
+}
+
+/* 物品提示框 */
+.item-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(16, 16, 16, 0.95);
+  border: 1px solid #404040;
+  border-radius: 4px;
+  padding: 8px;
+  min-width: 150px;
+  max-width: 250px;
+  z-index: 1000;
+  font-size: 12px;
+  color: #FFFFFF;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.tooltip-title {
+  font-weight: bold;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.tooltip-description {
+  color: #CCCCCC;
+  margin-bottom: 4px;
+  font-style: italic;
+}
+
+.tooltip-durability {
+  color: #FFFF55;
+  margin-bottom: 2px;
+}
+
+.tooltip-rarity {
+  color: #AAAAAA;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+/* 快捷栏样式 */
+.hotbar {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 8px;
+  border-radius: 8px;
+  border: 2px solid #555555;
+  z-index: 100;
+}
+
+.hotbar-slot {
+  /* 继承 .item-slot 样式 */
+}
+
+.hotbar-selection-hint {
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: #CCCCCC;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* 背包界面样式 */
+.inventory-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.inventory-panel {
+  background: #2D2D2D;
+  border: 2px solid #555555;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
+  min-width: 500px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.inventory-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #1A1A1A;
+  border-bottom: 1px solid #555555;
+}
+
+.inventory-header h3 {
+  margin: 0;
+  color: #FFFFFF;
+  font-size: 18px;
+}
+
+.close-button {
+  background: #555555;
+  border: none;
+  color: #FFFFFF;
+  font-size: 20px;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.close-button:hover {
+  background: #777777;
+}
+
+.inventory-content {
+  padding: 16px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.inventory-label {
+  color: #CCCCCC;
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+/* 主背包网格 */
+.main-inventory {
+  margin-bottom: 24px;
+}
+
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 4px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+
+.inventory-slot {
+  /* 继承 .item-slot 样式 */
+}
+
+/* 背包中的快捷栏 */
+.hotbar-in-inventory {
+  /* 样式同 main-inventory */
+}
+
+.hotbar-grid {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 4px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+
+.inventory-footer {
+  padding: 12px 16px;
+  background: #1A1A1A;
+  border-top: 1px solid #555555;
+}
+
+.inventory-stats {
+  display: flex;
+  justify-content: space-between;
+  color: #CCCCCC;
+  font-size: 12px;
+}
+
+/* 游戏中的快捷栏位置 */
+.game-hotbar {
+  /* 确保快捷栏在游戏中正确显示 */
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .inventory-panel {
+    min-width: 95vw;
+    margin: 10px;
+  }
+  
+  .inventory-grid,
+  .hotbar-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  
+  .item-slot {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .item-icon {
+    font-size: 20px;
+  }
+  
+  .item-count {
+    font-size: 10px;
+  }
+}
+
+/* 拖拽状态样式（预留） */
+.item-slot.dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+
+.item-slot.drag-over {
+  border-color: #55FF55;
+  background: #2A4A2A;
+}
+
+/* 动画效果 */
+@keyframes item-added {
+  0% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.item-slot.item-added {
+  animation: item-added 0.3s ease;
+}
+
+/* 空槽位提示 */
+.item-slot.empty:hover::after {
+  content: '+';
+  position: absolute;
+  color: #888888;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+/* 稀有度边框效果 */
+.item-slot.rarity-uncommon {
+  border-color: #55ff55;
+}
+
+.item-slot.rarity-rare {
+  border-color: #5555ff;
+}
+
+.item-slot.rarity-epic {
+  border-color: #aa00aa;
+}
+
+.item-slot.rarity-legendary {
+  border-color: #ffaa00;
+  box-shadow: 0 0 12px rgba(255, 170, 0, 0.6);
+}

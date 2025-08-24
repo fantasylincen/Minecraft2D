@@ -4,6 +4,8 @@
  */
 
 import { blockConfig } from '../config/BlockConfig.js';
+import { Inventory } from './Inventory.js';
+import { itemConfig } from '../config/ItemConfig.js';
 
 export class Player {
   constructor(worldConfig) {
@@ -96,6 +98,12 @@ export class Player {
     
     // 游戏引用
     this.terrainGenerator = null;
+    
+    // 物品栏系统
+    this.inventory = new Inventory();
+    
+    // 给玩家一些初始物品用于测试
+    this.initializeStartingItems();
     
     // 初始化摔伤高度为3倍跳跃高度 (TODO #26)
     // 跳跃高度大约为 jumpForce^2 / (2 * gravity) 像素
@@ -956,7 +964,8 @@ export class Player {
         onGround: this.physics.onGround
       },
       appearance: { ...this.appearance },
-      flyMode: { ...this.flyMode }
+      flyMode: { ...this.flyMode },
+      inventory: this.inventory.toSaveData()
     };
   }
   
@@ -981,5 +990,111 @@ export class Player {
     if (data.flyMode) {
       this.flyMode = { ...this.flyMode, ...data.flyMode };
     }
+    if (data.inventory) {
+      this.inventory.fromSaveData(data.inventory);
+    }
+  }
+  
+  /**
+   * 初始化起始物品
+   */
+  initializeStartingItems() {
+    // 给玩家一些起始物品用于测试
+    this.inventory.addItem('pickaxe_wood', 1);
+    this.inventory.addItem('block_dirt', 64);
+    this.inventory.addItem('block_stone', 32);
+    this.inventory.addItem('block_grass', 16);
+    this.inventory.addItem('apple', 5);
+    
+    console.log('🎒 玩家物品栏初始化完成');
+    this.inventory.debugPrint();
+  }
+  
+  /**
+   * 获取当前手持物品
+   */
+  getHeldItem() {
+    return this.inventory.getHeldItem();
+  }
+  
+  /**
+   * 设置选中的快捷栏槽位
+   */
+  setSelectedHotbarSlot(index) {
+    this.inventory.setSelectedHotbarSlot(index);
+  }
+  
+  /**
+   * 获取物品栏系统
+   */
+  getInventory() {
+    return this.inventory;
+  }
+  
+  /**
+   * 向物品栏添加物品
+   */
+  addItemToInventory(itemId, count = 1, durability = null) {
+    const remaining = this.inventory.addItem(itemId, count, durability);
+    if (remaining > 0) {
+      console.log(`⚠️ 物品栏已满，无法添加 ${remaining} 个 ${itemId}`);
+    }
+    return remaining;
+  }
+  
+  /**
+   * 从物品栏移除物品
+   */
+  removeItemFromInventory(itemId, count = 1) {
+    return this.inventory.removeItem(itemId, count);
+  }
+  
+  /**
+   * 检查物品栏中是否有指定物品
+   */
+  hasItemInInventory(itemId, count = 1) {
+    return this.inventory.hasItem(itemId, count);
+  }
+  
+  /**
+   * 消耗手持物品的耐久度
+   */
+  damageHeldItem(damage = 1) {
+    const heldItem = this.getHeldItem();
+    if (heldItem && !heldItem.isEmpty() && heldItem.durability !== null) {
+      heldItem.durability -= damage;
+      
+      // 如果耐久度用完，移除物品
+      if (heldItem.durability <= 0) {
+        heldItem.clear();
+        console.log('🔨 工具损坏!');
+        return true; // 工具损坏
+      }
+    }
+    return false; // 工具没有损坏
+  }
+  
+  /**
+   * 检查手持物品是否可以挖掘指定方块
+   */
+  canMineBlockWithHeldItem(blockId) {
+    const heldItem = this.getHeldItem();
+    if (!heldItem || heldItem.isEmpty()) {
+      return false; // 空手不能挖掘
+    }
+    
+    const itemDef = heldItem.getItemDefinition();
+    if (!itemDef || !itemDef.type.startsWith('tool_')) {
+      return false; // 不是工具
+    }
+    
+    // 获取方块类型
+    const blockInfo = blockConfig.getBlockInfo(blockId);
+    if (!blockInfo) {
+      return false;
+    }
+    
+    // 检查工具是否可以挖掘这种方块类型
+    return itemConfig.canToolMineBlock(heldItem.itemId, blockInfo.type);
   }
 }

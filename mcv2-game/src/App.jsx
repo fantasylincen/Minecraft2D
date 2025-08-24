@@ -12,6 +12,7 @@ import { StorageManager } from './storage/StorageManager.js';
 import { ConfigPanel } from './ui/ConfigPanel.js';
 import DebugConsole from './ui/DebugConsole.jsx';
 import { gameConfig } from './config/GameConfig.js';
+import { InventoryController } from './ui/InventoryUI.jsx';
 
 function App() {
   const canvasRef = useRef(null);
@@ -767,6 +768,14 @@ function App() {
           onToggleVisible={toggleDebugInfo}
           onSaveGame={saveGame}
         />
+        
+        {/* 物品栏UI */}
+        {gameEngineRef.current && gameEngineRef.current.systems.player && (
+          <InventoryController 
+            inventory={gameEngineRef.current.systems.player.getInventory()}
+            gameEngine={gameEngineRef.current}
+          />
+        )}
       </div>
     </div>
   );
