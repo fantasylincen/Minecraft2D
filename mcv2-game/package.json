@@ -1,8 +1,31 @@
 {
   "name": "mcv2-game",
-  "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "MCv2 - 基于React和Vite构建的2D Minecraft风格沙盒游戏",
+  "private": false,
   "type": "module",
+  "homepage": "https://your-username.github.io/MCv2",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/MCv2.git"
+  },
+  "keywords": [
+    "minecraft",
+    "2d-game",
+    "sandbox",
+    "react",
+    "vite",
+    "canvas",
+    "javascript",
+    "game-engine",
+    "inventory-system",
+    "terrain-generation"
+  ],
+  "author": "MCv2 Development Team",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/your-username/MCv2/issues"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
