@@ -16,28 +16,6 @@ export const BIOME_TYPES = {
 
 // 生物群系配置
 export const BIOME_CONFIG = {
-  [BIOME_TYPES.OCEAN]: {
-    name: '海洋',
-    temperature: 0.5,
-    humidity: 0.9,
-    elevation: -0.3,
-    color: '#0066CC',
-    blocks: {
-      surface: 'water',
-      subsurface: 'sand',
-      deep: 'stone'
-    },
-    heightModifiers: {
-      continental: 0.3,
-      regional: 0.2,
-      local: 0.1
-    },
-    ores: {
-      coal: { frequency: 0.03, threshold: 0.8 },
-      iron: { frequency: 0.02, threshold: 0.85 }
-    }
-  },
-  
   [BIOME_TYPES.PLAINS]: {
     name: '平原',
     temperature: 0.6,
@@ -92,7 +70,8 @@ export const BIOME_CONFIG = {
       iron: { frequency: 0.08, threshold: 0.75 },
       gold: { frequency: 0.03, threshold: 0.8 },
       emerald: { frequency: 0.01, threshold: 0.95 }  // 添加绿宝石
-    }
+    },
+    ambientSounds: ['birds-chirping'] // 添加环境音效
   },
   
   [BIOME_TYPES.DESERT]: {
@@ -121,7 +100,8 @@ export const BIOME_CONFIG = {
       iron: { frequency: 0.05, threshold: 0.8 },
       gold: { frequency: 0.04, threshold: 0.75 },
       diamond: { frequency: 0.015, threshold: 0.9 }
-    }
+    },
+    ambientSounds: ['wind-blowing'] // 添加环境音效
   },
   
   [BIOME_TYPES.MOUNTAINS]: {
@@ -150,7 +130,8 @@ export const BIOME_CONFIG = {
       iron: { frequency: 0.1, threshold: 0.6 },
       gold: { frequency: 0.06, threshold: 0.7 },
       diamond: { frequency: 0.025, threshold: 0.85 }
-    }
+    },
+    ambientSounds: ['wind-mountain'] // 添加环境音效
   },
   
   [BIOME_TYPES.SWAMP]: {
@@ -178,7 +159,8 @@ export const BIOME_CONFIG = {
       coal: { frequency: 0.06, threshold: 0.7 },
       iron: { frequency: 0.04, threshold: 0.8 },
       lapis: { frequency: 0.02, threshold: 0.85 }  // 添加青金石
-    }
+    },
+    ambientSounds: ['frogs-croaking'] // 添加环境音效
   },
   
   [BIOME_TYPES.TUNDRA]: {
@@ -198,59 +180,77 @@ export const BIOME_CONFIG = {
       local: 0.4
     },
     vegetation: {
-      trees: 0.02,
-      grass: 0.1,
-      flowers: 0.01
+      trees: 0.05,
+      grass: 0.3,
+      flowers: 0.02
     },
     ores: {
-      coal: { frequency: 0.05, threshold: 0.75 },
-      iron: { frequency: 0.07, threshold: 0.7 },
-      gold: { frequency: 0.03, threshold: 0.8 }
-    }
+      coal: { frequency: 0.08, threshold: 0.65 },
+      iron: { frequency: 0.06, threshold: 0.75 },
+      lapis: { frequency: 0.01, threshold: 0.9 }
+    },
+    ambientSounds: ['wind-howling'] // 添加环境音效
+  },
+  
+  [BIOME_TYPES.OCEAN]: {
+    name: '海洋',
+    temperature: 0.5,
+    humidity: 0.9,
+    elevation: -0.3,
+    color: '#0066CC',
+    blocks: {
+      surface: 'water',
+      subsurface: 'sand',
+      deep: 'stone'
+    },
+    heightModifiers: {
+      continental: 0.3,
+      regional: 0.2,
+      local: 0.1
+    },
+    ores: {
+      coal: { frequency: 0.03, threshold: 0.8 },
+      iron: { frequency: 0.02, threshold: 0.85 }
+    },
+    ambientSounds: ['ocean-waves'] // 添加环境音效
   }
 };
 
 /**
- * 根据环境参数确定生物群系类型
- * @param {number} temperature - 温度 (-1 到 1)
- * @param {number} humidity - 湿度 (-1 到 1)
- * @param {number} elevation - 海拔 (-1 到 1)
+ * 确定生物群系类型
+ * @param {number} temperature - 温度值 (-1 到 1)
+ * @param {number} humidity - 湿度值 (-1 到 1)
+ * @param {number} elevation - 海拔值 (-1 到 1)
  * @returns {string} 生物群系类型
  */
 export function determineBiome(temperature, humidity, elevation) {
-  // 海洋 - 低海拔
-  if (elevation < -0.2) {
-    return BIOME_TYPES.OCEAN;
-  }
+  // 海洋
+  if (elevation < -0.2) return BIOME_TYPES.OCEAN;
   
-  // 苔原 - 极低温度
-  if (temperature < -0.3) {
-    return BIOME_TYPES.TUNDRA;
-  }
+  // 苔原
+  if (temperature < -0.3) return BIOME_TYPES.TUNDRA;
   
-  // 沙漠 - 低湿度，高温度
-  if (humidity < -0.3 && temperature > 0.2) {
-    return BIOME_TYPES.DESERT;
-  }
+  // 沙漠
+  if (humidity < -0.3) return BIOME_TYPES.DESERT;
   
-  // 山地 - 高海拔
-  if (elevation > 0.4) {
-    return BIOME_TYPES.MOUNTAINS;
-  }
+  // 山地
+  if (elevation > 0.4) return BIOME_TYPES.MOUNTAINS;
   
-  // 森林 - 高湿度，适中温度
-  if (humidity > 0.3 && temperature > 0.0 && temperature < 0.8) {
-    return BIOME_TYPES.FOREST;
-  }
+  // 森林
+  if (humidity > 0.3 && temperature > 0.0) return BIOME_TYPES.FOREST;
   
-  // 沼泽 - 极高湿度，低海拔
-  if (humidity > 0.6 && elevation < 0.1 && temperature > 0.5) {
-    return BIOME_TYPES.SWAMP;
-  }
+  // 沼泽
+  if (humidity > 0.6 && elevation < 0.1) return BIOME_TYPES.SWAMP;
   
-  // 默认平原
+  // 默认为平原
   return BIOME_TYPES.PLAINS;
 }
+
+export default {
+  BIOME_TYPES,
+  BIOME_CONFIG,
+  determineBiome
+};
 
 /**
  * 获取生物群系配置

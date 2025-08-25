@@ -30,6 +30,18 @@ export class Renderer {
       timeOfDay: 0.5,           // 时间（0-1，0.5为正午）
       cloudOffset: 0,           // 云朵偏移
       cloudSpeed: 10,           // 云朵移动速度
+      currentBiome: 'plains',   // 当前生物群系 (新增)
+      biomeEffects: {           // 生物群系特效 (新增)
+        heatHaze: false,        // 热浪效果 (沙漠)
+        fog: false,             // 雾效果 (沼泽)
+        snow: false,            // 雪花效果 (苔原)
+        birdSounds: false       // 鸟叫声 (森林)
+      },
+      weather: {                // 天气效果 (新增)
+        type: 'clear',          // 天气类型 (clear, rain, snow)
+        intensity: 0            // 天气强度 (0-1)
+      },
+      season: 'spring'          // 当前季节 (新增)
     };
     
     // 性能统计
@@ -46,6 +58,9 @@ export class Renderer {
     this.camera = null;
     this.terrainGenerator = null;
     this.player = null;
+    
+    // 粒子系统 (新增)
+    this.particles = [];
     
     console.log('🎨 Renderer 初始化完成');
   }
@@ -77,6 +92,15 @@ export class Renderer {
     
     // 渲染云朵
     this.renderClouds();
+    
+    // 渲染生物群系环境效果
+    this.renderBiomeEffects();
+    
+    // 渲染天气效果
+    this.renderWeather();
+    
+    // 渲染季节效果
+    this.renderSeasonEffects();
     
     // 渲染地形
     this.renderTerrain();
@@ -775,6 +799,226 @@ export class Renderer {
   }
   
   /**
+   * 渲染生物群系环境效果
+   */
+  renderBiomeEffects() {
+    // 根据当前生物群系渲染特殊效果
+    if (this.environment.biomeEffects.heatHaze) {
+      this.renderHeatHaze();
+    }
+    
+    if (this.environment.biomeEffects.fog) {
+      this.renderFog();
+    }
+    
+    if (this.environment.biomeEffects.snow) {
+      this.renderSnow();
+    }
+    
+    // 更新粒子系统
+    this.updateParticles();
+    this.renderParticles();
+  }
+  
+  /**
+   * 渲染热浪效果 (沙漠)
+   */
+  renderHeatHaze() {
+    // 简单的热浪效果实现
+    // 这里可以添加更复杂的热浪效果，比如使用Canvas的变形功能
+    // 目前实现一个简单的透明度变化效果
+    const time = Date.now() / 1000;
+    const alpha = 0.1 + Math.sin(time * 2) * 0.05;
+    
+    this.ctx.globalAlpha = alpha;
+    this.ctx.fillStyle = '#FFA500'; // 橙色
+    this.ctx.fillRect(0, this.canvas.height * 0.7, this.canvas.width, this.canvas.height * 0.3);
+    this.ctx.globalAlpha = 1.0;
+    this.stats.drawCalls++;
+  }
+  
+  /**
+   * 渲染雾效果 (沼泽)
+   */
+  renderFog() {
+    // 渐变雾效果
+    const gradient = this.ctx.createLinearGradient(0, this.canvas.height * 0.3, 0, this.canvas.height);
+    gradient.addColorStop(0, 'rgba(47, 79, 47, 0)'); // 透明
+    gradient.addColorStop(1, 'rgba(47, 79, 47, 0.4)'); // 半透明绿色
+    
+    this.ctx.fillStyle = gradient;
+    this.ctx.fillRect(0, this.canvas.height * 0.3, this.canvas.width, this.canvas.height * 0.7);
+    this.stats.drawCalls++;
+  }
+  
+  /**
+   * 渲染雪效果 (苔原)
+   */
+  renderSnow() {
+    // 简单的雪花效果
+    // 这里可以实现更复杂的雪花粒子系统
+    for (let i = 0; i < 50; i++) {
+      const x = (Math.random() * this.canvas.width + this.environment.cloudOffset * 0.1) % this.canvas.width;
+      const y = (Math.random() * this.canvas.height) % this.canvas.height;
+      const size = Math.random() * 3 + 1;
+      
+      this.ctx.fillStyle = '#FFFFFF';
+      this.ctx.beginPath();
+      this.ctx.arc(x, y, size, 0, Math.PI * 2);
+      this.ctx.fill();
+    }
+    this.stats.drawCalls++;
+  }
+  
+  /**
+   * 更新粒子系统
+   */
+  updateParticles() {
+    // 更新现有粒子
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const particle = this.particles[i];
+      particle.x += particle.vx;
+      particle.y += particle.vy;
+      particle.life -= 1;
+      
+      // 移除生命周期结束的粒子
+      if (particle.life <= 0) {
+        this.particles.splice(i, 1);
+      }
+    }
+    
+    // 添加新粒子（根据当前生物群系）
+    if (this.environment.biomeEffects.heatHaze && Math.random() < 0.3) {
+      this.addHeatParticle();
+    }
+    
+    if (this.environment.biomeEffects.snow && Math.random() < 0.5) {
+      this.addSnowParticle();
+    }
+  }
+  
+  /**
+   * 添加热浪粒子
+   */
+  addHeatParticle() {
+    const particle = {
+      x: Math.random() * this.canvas.width,
+      y: this.canvas.height * 0.8 + Math.random() * this.canvas.height * 0.2,
+      vx: (Math.random() - 0.5) * 2,
+      vy: -Math.random() * 2,
+      life: 30 + Math.random() * 30,
+      size: Math.random() * 2 + 1,
+      color: 'rgba(255, 165, 0, 0.3)'
+    };
+    this.particles.push(particle);
+  }
+  
+  /**
+   * 添加雪花粒子
+   */
+  addSnowParticle() {
+    const particle = {
+      x: Math.random() * this.canvas.width,
+      y: 0,
+      vx: (Math.random() - 0.5) * 1,
+      vy: Math.random() * 2 + 1,
+      life: 100 + Math.random() * 100,
+      size: Math.random() * 3 + 1,
+      color: '#FFFFFF'
+    };
+    this.particles.push(particle);
+  }
+  
+  /**
+   * 渲染粒子
+   */
+  renderParticles() {
+    this.particles.forEach(particle => {
+      this.ctx.fillStyle = particle.color;
+      this.ctx.beginPath();
+      this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+      this.ctx.fill();
+    });
+    if (this.particles.length > 0) {
+      this.stats.drawCalls++;
+    }
+  }
+  
+  /**
+   * 设置当前生物群系
+   * @param {string} biome - 生物群系类型
+   */
+  setCurrentBiome(biome) {
+    this.environment.currentBiome = biome;
+    
+    // 根据生物群系设置特效
+    this.environment.biomeEffects.heatHaze = biome === 'desert';
+    this.environment.biomeEffects.fog = biome === 'swamp';
+    this.environment.biomeEffects.snow = biome === 'tundra';
+    this.environment.biomeEffects.birdSounds = biome === 'forest';
+  }
+  
+  /**
+   * 设置季节
+   * @param {string} season - 季节名称
+   */
+  setSeason(season) {
+    this.environment.season = season;
+  }
+  
+  /**
+   * 渲染季节效果
+   */
+  renderSeasonEffects() {
+    switch (this.environment.season) {
+      case 'spring':
+        this.renderSpringEffects();
+        break;
+      case 'summer':
+        this.renderSummerEffects();
+        break;
+      case 'autumn':
+        this.renderAutumnEffects();
+        break;
+      case 'winter':
+        this.renderWinterEffects();
+        break;
+    }
+  }
+  
+  /**
+   * 渲染春季效果
+   */
+  renderSpringEffects() {
+    // 春季可以添加花朵飘落效果或者更绿的色调
+    // 这里可以实现更复杂的春季效果
+  }
+  
+  /**
+   * 渲染夏季效果
+   */
+  renderSummerEffects() {
+    // 夏季可以添加热浪效果或者更亮的色调
+    // 这里可以实现更复杂的夏季效果
+  }
+  
+  /**
+   * 渲染秋季效果
+   */
+  renderAutumnEffects() {
+    // 秋季可以添加落叶效果或者橙色色调
+    // 这里可以实现更复杂的秋季效果
+  }
+  
+  /**
+   * 渲染冬季效果
+   */
+  renderWinterEffects() {
+    // 冬季可以添加雪花效果或者蓝色色调
+    // 这里可以实现更复杂的冬季效果
+  }
+  
+  /**
    * 计算光照级别 (TODO #17, #29)
    * Author: Minecraft2D Development Team
    * @param {number} worldY - 世界 Y 坐标
@@ -921,5 +1165,128 @@ export class Renderer {
     b = Math.max(0, Math.min(255, b));
     
     return `rgb(${r}, ${g}, ${b})`;
+  }
+  
+  /**
+   * 设置天气
+   * @param {string} type - 天气类型
+   * @param {number} intensity - 天气强度
+   */
+  setWeather(type, intensity) {
+    this.environment.weather.type = type;
+    this.environment.weather.intensity = intensity;
+  }
+  
+  /**
+   * 渲染天气效果
+   */
+  renderWeather() {
+    switch (this.environment.weather.type) {
+      case 'rain':
+        this.renderRain();
+        break;
+      case 'snow':
+        this.renderSnowWeather();
+        break;
+      case 'storm':
+        this.renderStorm();
+        break;
+      // clear天气不需要特殊渲染
+    }
+  }
+  
+  /**
+   * 渲染雨天效果
+   */
+  renderRain() {
+    if (this.environment.weather.intensity <= 0) return;
+    
+    const rainCount = Math.floor(200 * this.environment.weather.intensity);
+    const rainAlpha = 0.6 * this.environment.weather.intensity;
+    
+    this.ctx.strokeStyle = `rgba(100, 100, 255, ${rainAlpha})`;
+    this.ctx.lineWidth = 1;
+    
+    for (let i = 0; i < rainCount; i++) {
+      const x = (Math.random() * this.canvas.width + this.environment.cloudOffset * 0.5) % this.canvas.width;
+      const y = Math.random() * this.canvas.height;
+      const length = 10 + Math.random() * 10;
+      const speed = 5 + Math.random() * 5;
+      
+      // 雨滴效果
+      this.ctx.beginPath();
+      this.ctx.moveTo(x, y);
+      this.ctx.lineTo(x - 2, y + length);
+      this.ctx.stroke();
+    }
+    
+    this.stats.drawCalls++;
+  }
+  
+  /**
+   * 渲染雪天效果
+   */
+  renderSnowWeather() {
+    if (this.environment.weather.intensity <= 0) return;
+    
+    const snowCount = Math.floor(150 * this.environment.weather.intensity);
+    const snowAlpha = 0.8 * this.environment.weather.intensity;
+    
+    this.ctx.fillStyle = `rgba(255, 255, 255, ${snowAlpha})`;
+    
+    for (let i = 0; i < snowCount; i++) {
+      const x = (Math.random() * this.canvas.width + this.environment.cloudOffset * 0.2) % this.canvas.width;
+      const y = Math.random() * this.canvas.height;
+      const size = 1 + Math.random() * 3;
+      
+      // 雪花效果
+      this.ctx.beginPath();
+      this.ctx.arc(x, y, size, 0, Math.PI * 2);
+      this.ctx.fill();
+    }
+    
+    this.stats.drawCalls++;
+  }
+  
+  /**
+   * 渲染暴风雨效果
+   */
+  renderStorm() {
+    if (this.environment.weather.intensity <= 0) return;
+    
+    // 渲染雨天效果
+    this.renderRain();
+    
+    // 渲染闪电效果
+    if (Math.random() < 0.01 * this.environment.weather.intensity) {
+      this.renderLightning();
+    }
+  }
+  
+  /**
+   * 渲染闪电效果
+   */
+  renderLightning() {
+    // 简单的闪电效果
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    
+    // 闪电位置
+    const startX = Math.random() * this.canvas.width;
+    let currentX = startX;
+    let currentY = 0;
+    
+    // 绘制闪电路径
+    this.ctx.beginPath();
+    this.ctx.moveTo(currentX, currentY);
+    
+    while (currentY < this.canvas.height) {
+      currentX += (Math.random() - 0.5) * 100;
+      currentY += 20 + Math.random() * 30;
+      this.ctx.lineTo(currentX, currentY);
+    }
+    
+    this.ctx.lineWidth = 2;
+    this.ctx.stroke();
+    this.stats.drawCalls++;
   }
 }

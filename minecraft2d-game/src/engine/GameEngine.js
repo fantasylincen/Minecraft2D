@@ -4,6 +4,8 @@
  */
 
 import { EntityManager } from '../entities/EntityManager.js';
+import { AudioManager } from '../audio/AudioManager.js';
+import { FarmingSystem } from '../world/FarmingSystem.js';
 
 export class GameEngine {
   constructor(canvas) {
@@ -32,6 +34,28 @@ export class GameEngine {
       eternalDay: false        // 永久白日模式 (新增)
     };
     
+    // 季节系统 (新增)
+    this.seasonSystem = {
+      currentSeason: 'spring', // 当前季节 (spring, summer, autumn, winter)
+      dayOfYear: 0,            // 一年中的第几天 (0-364)
+      seasonDuration: 91,      // 每个季节的天数 (大约)
+      seasonEnabled: true      // 季节系统是否启用
+    };
+    
+    // 天气系统 (新增)
+    this.weatherSystem = {
+      currentWeather: 'clear', // 当前天气 (clear, rain, snow, storm)
+      targetWeather: 'clear',  // 目标天气 (用于平滑过渡)
+      weatherIntensity: 0,     // 当前天气强度 (0-1)
+      targetIntensity: 0,      // 目标天气强度 (0-1)
+      weatherDuration: 0,      // 当前天气持续时间
+      weatherChangeTimer: 0,   // 天气变化计时器
+      maxWeatherDuration: 300, // 最大天气持续时间（秒）
+      minWeatherDuration: 60,  // 最小天气持续时间（秒）
+      weatherEnabled: true,    // 天气系统是否启用
+      transitionSpeed: 0.1     // 天气过渡速度
+    };
+    
     // 子系统
     this.systems = {
       terrainGenerator: null,
@@ -40,7 +64,8 @@ export class GameEngine {
       renderer: null,
       storageManager: null,
       inputHandler: null,
-      entityManager: null      // 实体管理器
+      entityManager: null,     // 实体管理器
+      audioManager: null       // 音频管理器 (新增)
     };
     
     // 游戏世界配置
@@ -52,6 +77,12 @@ export class GameEngine {
     
     // 实体管理器
     this.entityManager = new EntityManager(this.worldConfig);
+    
+    // 音频管理器 (新增)
+    this.audioManager = new AudioManager();
+    
+    // 农作物系统 (新增)
+    this.farmingSystem = new FarmingSystem();
     
     // 绑定方法
     this.gameLoop = this.gameLoop.bind(this);
@@ -271,6 +302,8 @@ export class GameEngine {
   
   /**
    * 注册子系统
+   * @param {string} name - 子系统名称
+   * @param {Object} system - 子系统实例
    */
   registerSystem(name, system) {
     if (this.systems.hasOwnProperty(name)) {
@@ -285,6 +318,21 @@ export class GameEngine {
       // 特殊处理：当注册地形生成器时，设置实体管理器的地形生成器引用
       if (name === 'terrainGenerator' && this.entityManager) {
         this.entityManager.setTerrainGenerator(system);
+      }
+      
+      // 特殊处理：当注册实体管理器时，设置游戏引擎引用
+      if (name === 'entityManager') {
+        system.setGameEngine(this);
+      }
+      
+      // 特殊处理：当注册地形生成器时，将季节系统传递给它
+      if (name === 'terrainGenerator' && this.seasonSystem) {
+        system.setSeasonSystem(this.seasonSystem);
+      }
+      
+      // 特殊处理：将季节系统传递给农作物系统
+      if (this.seasonSystem && this.farmingSystem) {
+        this.farmingSystem.setSeasonSystem(this.seasonSystem);
       }
     } else {
       console.warn(`⚠️  未知的子系统: ${name}`);
@@ -365,6 +413,17 @@ export class GameEngine {
     // 更新时间系统 (TODO #17)
     this.updateTimeSystem(deltaTime);
     
+    // 更新季节系统
+    this.updateSeasonSystem(deltaTime);
+    
+    // 更新天气系统
+    this.updateWeatherSystem(deltaTime);
+    
+    // 更新农作物系统
+    if (this.farmingSystem) {
+      this.farmingSystem.update(deltaTime * 1000); // 转换为毫秒
+    }
+    
     // 更新各个子系统
     if (this.systems.player) {
       this.systems.player.update(deltaTime, this.keys);
@@ -383,9 +442,310 @@ export class GameEngine {
       this.entityManager.update(deltaTime);
     }
     
+    // 更新生物群系环境效果
+    this.updateBiomeEffects();
+    
+    // 更新音频管理器
+    if (this.audioManager) {
+      // 音频管理器的更新逻辑可以在这里添加
+    }
+    
     // 同步时间到渲染器 (TODO #17)
     if (this.systems.renderer) {
       this.systems.renderer.setTimeOfDay(this.timeSystem.timeOfDay);
+    }
+  }
+  
+  /**
+   * 更新季节系统
+   */
+  updateSeasonSystem(deltaTime) {
+    if (!this.seasonSystem.seasonEnabled) return;
+    
+    // 根据时间系统更新一年中的天数
+    this.seasonSystem.dayOfYear += (deltaTime * this.timeSystem.timeSpeed) / this.timeSystem.dayDuration;
+    
+    // 循环天数 (0-364)
+    this.seasonSystem.dayOfYear = this.seasonSystem.dayOfYear % 365;
+    
+    // 根据一年中的天数计算当前季节
+    this.seasonSystem.currentSeason = this.calculateSeason(this.seasonSystem.dayOfYear);
+    
+    // 同步季节到渲染器
+    if (this.systems.renderer) {
+      this.systems.renderer.setSeason(this.seasonSystem.currentSeason);
+    }
+  }
+  
+  /**
+   * 计算当前季节
+   * @param {number} dayOfYear - 一年中的第几天 (0-364)
+   * @returns {string} 季节名称
+   */
+  calculateSeason(dayOfYear) {
+    if (dayOfYear < 80 || dayOfYear >= 355) {
+      return 'winter'; // 冬季 (第0-80天和第355-364天)
+    } else if (dayOfYear < 172) {
+      return 'spring'; // 春季 (第80-172天)
+    } else if (dayOfYear < 266) {
+      return 'summer'; // 夏季 (第172-266天)
+    } else {
+      return 'autumn'; // 秋季 (第266-355天)
+    }
+  }
+  
+  /**
+   * 更新天气系统
+   */
+  updateWeatherSystem(deltaTime) {
+    if (!this.weatherSystem.weatherEnabled) return;
+    
+    // 更新天气持续时间
+    this.weatherSystem.weatherDuration += deltaTime;
+    this.weatherSystem.weatherChangeTimer += deltaTime;
+    
+    // 检查是否需要改变天气
+    if (this.weatherSystem.weatherChangeTimer >= 30) { // 每30秒检查一次天气变化
+      this.checkWeatherChange();
+      this.weatherSystem.weatherChangeTimer = 0;
+    }
+    
+    // 更新天气强度和平滑过渡
+    this.updateWeatherTransition(deltaTime);
+    
+    // 根据时间系统更新天气强度
+    this.updateWeatherIntensity();
+    
+    // 同步天气到渲染器
+    if (this.systems.renderer) {
+      this.systems.renderer.setWeather(
+        this.weatherSystem.currentWeather, 
+        this.weatherSystem.weatherIntensity
+      );
+    }
+  }
+  
+  /**
+   * 更新天气过渡
+   */
+  updateWeatherTransition(deltaTime) {
+    // 平滑过渡到目标强度
+    if (this.weatherSystem.weatherIntensity < this.weatherSystem.targetIntensity) {
+      this.weatherSystem.weatherIntensity = Math.min(
+        this.weatherSystem.weatherIntensity + this.weatherSystem.transitionSpeed * deltaTime,
+        this.weatherSystem.targetIntensity
+      );
+    } else if (this.weatherSystem.weatherIntensity > this.weatherSystem.targetIntensity) {
+      this.weatherSystem.weatherIntensity = Math.max(
+        this.weatherSystem.weatherIntensity - this.weatherSystem.transitionSpeed * deltaTime,
+        this.weatherSystem.targetIntensity
+      );
+    }
+    
+    // 检查是否需要切换到目标天气
+    if (Math.abs(this.weatherSystem.weatherIntensity - this.weatherSystem.targetIntensity) < 0.01 && 
+        this.weatherSystem.currentWeather !== this.weatherSystem.targetWeather) {
+      this.weatherSystem.currentWeather = this.weatherSystem.targetWeather;
+    }
+  }
+  
+  /**
+   * 检查天气变化
+   */
+  checkWeatherChange() {
+    // 根据当前时间和季节决定天气变化概率
+    const timePhase = this.getTimePhase();
+    const timeOfDay = this.timeSystem.timeOfDay;
+    
+    // 基础天气变化概率
+    let changeProbability = 0.1;
+    
+    // 根据时间阶段调整概率
+    if (timePhase === '夜晚') {
+      changeProbability *= 1.5; // 夜晚更容易变化
+    }
+    
+    // 根据当前天气调整概率
+    if (this.weatherSystem.currentWeather !== 'clear') {
+      changeProbability *= 0.7; // 已经在下雨或下雪时，变化概率降低
+    }
+    
+    // 随机决定是否改变天气
+    if (Math.random() < changeProbability) {
+      this.changeWeather();
+    }
+  }
+  
+  /**
+   * 改变天气
+   */
+  changeWeather() {
+    // 重置天气持续时间
+    this.weatherSystem.weatherDuration = 0;
+    
+    // 根据当前季节和温度决定天气类型
+    const season = this.getCurrentSeason();
+    const temperature = this.getCurrentTemperature();
+    
+    // 天气类型权重
+    let weatherWeights = {
+      clear: 0.6,
+      rain: 0.3,
+      snow: 0.1
+    };
+    
+    // 根据季节调整权重
+    switch (season) {
+      case 'winter':
+        weatherWeights.clear = 0.5;
+        weatherWeights.rain = 0.2;
+        weatherWeights.snow = 0.3;
+        break;
+      case 'summer':
+        weatherWeights.clear = 0.7;
+        weatherWeights.rain = 0.25;
+        weatherWeights.snow = 0.05;
+        break;
+      case 'spring':
+      case 'autumn':
+        weatherWeights.clear = 0.55;
+        weatherWeights.rain = 0.35;
+        weatherWeights.snow = 0.1;
+        break;
+    }
+    
+    // 根据温度调整权重
+    if (temperature < 0) {
+      // 寒冷时更可能下雪
+      weatherWeights.snow += 0.2;
+      weatherWeights.rain -= 0.1;
+      weatherWeights.clear -= 0.1;
+    } else if (temperature > 25) {
+      // 炎热时更可能是晴天
+      weatherWeights.clear += 0.1;
+      weatherWeights.rain -= 0.05;
+      weatherWeights.snow -= 0.05;
+    }
+    
+    // 标准化权重
+    const totalWeight = weatherWeights.clear + weatherWeights.rain + weatherWeights.snow;
+    weatherWeights.clear /= totalWeight;
+    weatherWeights.rain /= totalWeight;
+    weatherWeights.snow /= totalWeight;
+    
+    // 根据权重选择天气
+    const rand = Math.random();
+    let newWeather;
+    if (rand < weatherWeights.clear) {
+      newWeather = 'clear';
+    } else if (rand < weatherWeights.clear + weatherWeights.rain) {
+      newWeather = 'rain';
+    } else {
+      newWeather = 'snow';
+    }
+    
+    // 设置目标天气和强度
+    this.weatherSystem.targetWeather = newWeather;
+    this.weatherSystem.targetIntensity = newWeather === 'clear' ? 0 : 0.7 + Math.random() * 0.3;
+    
+    console.log(`🌤️ 天气将变化为: ${newWeather}`);
+  }
+  
+  /**
+   * 更新天气强度
+   */
+  updateWeatherIntensity() {
+    // 根据天气持续时间和时间阶段计算强度
+    const timeInWeather = this.weatherSystem.weatherDuration;
+    const maxDuration = this.weatherSystem.maxWeatherDuration;
+    
+    // 简单的强度曲线：开始时逐渐增强，结束前逐渐减弱
+    if (timeInWeather < 30) {
+      // 前30秒逐渐增强
+      this.weatherSystem.weatherIntensity = timeInWeather / 30;
+    } else if (timeInWeather > maxDuration - 30) {
+      // 最后30秒逐渐减弱
+      this.weatherSystem.weatherIntensity = (maxDuration - timeInWeather) / 30;
+    } else {
+      // 中间时段保持较高强度
+      this.weatherSystem.weatherIntensity = Math.min(1.0, 0.7 + Math.random() * 0.3);
+    }
+  }
+  
+  /**
+   * 获取当前季节
+   */
+  getCurrentSeason() {
+    // 简单的季节计算：根据时间系统的时间
+    const dayOfYear = (this.timeSystem.timeOfDay * 365) % 365;
+    
+    if (dayOfYear < 80 || dayOfYear >= 355) {
+      return 'winter'; // 冬季
+    } else if (dayOfYear < 172) {
+      return 'spring'; // 春季
+    } else if (dayOfYear < 266) {
+      return 'summer'; // 夏季
+    } else {
+      return 'autumn'; // 秋季
+    }
+  }
+  
+  /**
+   * 获取当前温度
+   */
+  getCurrentTemperature() {
+    // 简单的温度计算：根据季节和时间
+    const season = this.getCurrentSeason();
+    const timePhase = this.getTimePhase();
+    
+    let baseTemp = 20; // 基础温度
+    
+    // 根据季节调整基础温度
+    switch (season) {
+      case 'winter':
+        baseTemp = 0;
+        break;
+      case 'spring':
+        baseTemp = 15;
+        break;
+      case 'summer':
+        baseTemp = 30;
+        break;
+      case 'autumn':
+        baseTemp = 10;
+        break;
+    }
+    
+    // 根据时间调整温度
+    if (timePhase === '夜晚') {
+      baseTemp -= 5;
+    } else if (timePhase === '黎明' || timePhase === '黄昏') {
+      baseTemp -= 2;
+    }
+    
+    // 添加随机变化
+    return baseTemp + (Math.random() * 10 - 5);
+  }
+  
+  /**
+   * 更新生物群系环境效果
+   */
+  updateBiomeEffects() {
+    // 检查玩家当前位置的生物群系
+    if (this.systems.player && this.systems.terrainGenerator && this.systems.renderer) {
+      const playerPos = this.systems.player.getPosition();
+      const worldX = Math.floor(playerPos.x / this.worldConfig.BLOCK_SIZE);
+      
+      // 获取当前位置的生物群系
+      const biome = this.systems.terrainGenerator.worldGenerator.biomeGenerator.generateBiome(worldX, 0);
+      
+      // 更新渲染器中的生物群系
+      this.systems.renderer.setCurrentBiome(biome);
+      
+      // 更新音频管理器中的生物群系
+      if (this.audioManager) {
+        this.audioManager.setCurrentBiome(biome);
+      }
     }
   }
   
@@ -619,5 +979,54 @@ export class GameEngine {
    */
   isEternalDay() {
     return this.timeSystem.eternalDay || false;
+  }
+  
+  /**
+   * 设置天气
+   * @param {string} weather - 天气类型 (clear, rain, snow)
+   */
+  setWeather(weather) {
+    this.weatherSystem.currentWeather = weather;
+    this.weatherSystem.weatherDuration = 0;
+    console.log(`🌤️ 天气设置为: ${weather}`);
+  }
+  
+  /**
+   * 切换天气系统状态
+   */
+  toggleWeatherSystem() {
+    this.weatherSystem.weatherEnabled = !this.weatherSystem.weatherEnabled;
+    console.log(`🌤️ 天气系统: ${this.weatherSystem.weatherEnabled ? '启用' : '禁用'}`);
+  }
+  
+  /**
+   * 获取天气信息
+   */
+  getWeatherInfo() {
+    return {
+      currentWeather: this.weatherSystem.currentWeather,
+      weatherIntensity: this.weatherSystem.weatherIntensity,
+      weatherDuration: this.weatherSystem.weatherDuration,
+      weatherEnabled: this.weatherSystem.weatherEnabled
+    };
+  }
+  
+  /**
+   * 切换季节系统状态
+   */
+  toggleSeasonSystem() {
+    this.seasonSystem.seasonEnabled = !this.seasonSystem.seasonEnabled;
+    console.log(`🌸 季节系统: ${this.seasonSystem.seasonEnabled ? '启用' : '禁用'}`);
+  }
+  
+  /**
+   * 获取季节信息
+   */
+  getSeasonInfo() {
+    return {
+      currentSeason: this.seasonSystem.currentSeason,
+      dayOfYear: this.seasonSystem.dayOfYear,
+      seasonEnabled: this.seasonSystem.seasonEnabled
+    };
   }
 }

@@ -56,12 +56,14 @@ body {
   align-items: center;
   padding: 0 20px;
   pointer-events: auto;
+  z-index: 120; /* 确保在游戏UI之上 */
 }
 
 .game-title {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0; /* 允许标题收缩 */
 }
 
 .game-title h2 {
@@ -69,6 +71,10 @@ body {
   font-size: 24px;
   font-weight: bold;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px; /* 限制标题最大宽度 */
 }
 
 .version {
@@ -78,6 +84,7 @@ body {
   border-radius: 4px;
   font-size: 12px;
   border: 1px solid #4CAF50;
+  flex-shrink: 0; /* 防止版本号被压缩 */
 }
 
 .game-stats {
@@ -85,6 +92,9 @@ body {
   gap: 8px; /* 缩小间隙，使布局更紧密 */
   font-family: 'Courier New', monospace;
   align-items: center; /* 垂直居中对齐 */
+  flex-wrap: wrap; /* 允许换行 */
+  justify-content: flex-end; /* 右对齐 */
+  max-width: 100%; /* 限制最大宽度 */
 }
 
 /* 第31项：状态信息采用单行显示，文本框宽度固定，字号自适应宽度 */
@@ -104,6 +114,7 @@ body {
   font-size: 12px; /* 默认字号 */
   line-height: 1.2;
   transition: all 0.2s ease; /* 平滑过渡效果 */
+  flex-shrink: 1; /* 允许收缩 */
 }
 
 /* 针对不同内容长度的字号自适应 */
@@ -140,6 +151,143 @@ body {
   z-index: 10;
 }
 
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .top-bar {
+    height: 50px;
+    padding: 0 15px;
+  }
+  
+  .game-title h2 {
+    font-size: 20px;
+    max-width: 200px;
+  }
+  
+  .version {
+    font-size: 10px;
+    padding: 1px 6px;
+  }
+  
+  .game-stats {
+    gap: 6px;
+  }
+  
+  .game-stats span {
+    min-width: 60px;
+    max-width: 100px;
+    width: 80px;
+    font-size: 11px;
+    padding: 4px 6px;
+  }
+  
+  .game-stats span:nth-child(3) { /* 位置信息 */
+    width: 120px;
+    font-size: 10px;
+  }
+  
+  .game-stats span:nth-child(5) { /* 飞行状态 */
+    width: 100px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .top-bar {
+    flex-direction: column;
+    height: auto;
+    padding: 10px;
+    gap: 10px;
+  }
+  
+  .game-title {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .game-title h2 {
+    font-size: 18px;
+    max-width: none;
+  }
+  
+  .game-stats {
+    gap: 6px; /* 缩小间隙 */
+    flex-wrap: nowrap; /* 不允许换行，保持单行显示 */
+    justify-content: flex-end; /* 右对齐 */
+    overflow-x: auto; /* 水平滚动 */
+    width: 100%;
+    padding: 5px 0;
+  }
+  
+  .game-stats::-webkit-scrollbar {
+    height: 4px;
+  }
+  
+  .game-stats::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+  }
+  
+  .game-stats::-webkit-scrollbar-thumb {
+    background: rgba(76, 175, 80, 0.5);
+    border-radius: 2px;
+  }
+  
+  .game-stats span {
+    min-width: 60px; /* 小屏幕下的最小宽度 */
+    width: 70px; /* 小屏幕下的固定宽度 */
+    max-width: 80px;
+    font-size: 10px; /* 小屏幕下的字号 */
+    padding: 4px 6px;
+  }
+  
+  .game-stats span:nth-child(3) { /* 位置信息 */
+    width: 100px;
+    font-size: 9px;
+  }
+  
+  .game-stats span:nth-child(5) { /* 飞行状态 */
+    width: 90px;
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 480px) {
+  .top-bar {
+    padding: 5px;
+  }
+  
+  .game-title h2 {
+    font-size: 16px;
+  }
+  
+  .version {
+    font-size: 8px;
+    padding: 1px 4px;
+  }
+  
+  .game-stats {
+    gap: 4px;
+  }
+  
+  .game-stats span {
+    font-size: 8px; /* 更小的字号 */
+    padding: 2px 4px; /* 更小的内边距 */
+    min-width: 45px;
+    width: 50px; /* 更小的固定宽度 */
+    max-width: 60px;
+  }
+  
+  .game-stats span:nth-child(3) { /* 位置信息 */
+    width: 80px;
+    font-size: 7px;
+  }
+  
+  .game-stats span:nth-child(5) { /* 飞行状态 */
+    width: 70px;
+    font-size: 7px;
+  }
+}
+
 /* 左下角控制区域 */
 .left-control-area {
   position: absolute;
@@ -150,6 +298,7 @@ body {
   gap: 10px;
   pointer-events: auto;
   z-index: 140;
+  max-width: calc(100vw - 40px); /* 限制最大宽度 */
 }
 
 /* 控制面板 - 移动到左下角，改为2排布局 (TODO #25) */
@@ -159,6 +308,11 @@ body {
   gap: 8px;
   width: fit-content; /* 宽度跟随内容 */
   max-width: 350px; /* 保持最大宽度限制 */
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 /* 第一排按钮容器 */
@@ -192,6 +346,7 @@ body {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* 添加统一的阴影 */
   white-space: nowrap; /* 防止文字换行 */
   min-width: fit-content; /* 宽度跟随内容 */
+  flex-shrink: 1; /* 允许收缩 */
 }
 
 .control-panel button:hover {
@@ -202,6 +357,70 @@ body {
 
 .control-panel button:active {
   transform: translateY(0);
+}
+
+/* 响应式设计优化 */
+@media (max-width: 1200px) {
+  .left-control-area {
+    bottom: 15px;
+    left: 15px;
+  }
+  
+  .control-panel {
+    max-width: 300px;
+    padding: 8px;
+  }
+  
+  .control-panel button {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 768px) {
+  .left-control-area {
+    bottom: 10px;
+    left: 10px;
+    max-width: calc(100vw - 20px);
+  }
+  
+  .control-panel {
+    max-width: calc(100vw - 40px);
+    padding: 8px;
+  }
+  
+  .control-panel-row1,
+  .control-panel-row2 {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  
+  .control-panel button {
+    padding: 5px 8px;
+    font-size: 11px;
+    min-width: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .left-control-area {
+    bottom: 5px;
+    left: 5px;
+  }
+  
+  .control-panel {
+    padding: 6px;
+  }
+  
+  .control-panel button {
+    padding: 4px 6px;
+    font-size: 10px;
+  }
+  
+  .control-panel-row1,
+  .control-panel-row2 {
+    gap: 4px;
+  }
 }
 
 /* 控制说明 */
@@ -216,6 +435,12 @@ body {
   transition: all 0.3s ease; /* 添加平滑过渡效果 */
   box-shadow: 0 4px 20px rgba(0,0,0,0.3); /* 添加阴影效果 */
   margin-top: 10px; /* 与控制面板的间距 */
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 140; /* 稍低于调试控制台 */
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
 .controls-help:hover {
@@ -228,12 +453,16 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
+  flex-shrink: 0; /* 防止头部被压缩 */
 }
 
 .controls-help-header h3 {
   color: #4CAF50;
   margin: 0;
   font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .controls-help-toggle {
@@ -250,6 +479,7 @@ body {
   justify-content: center;
   transition: all 0.2s ease;
   padding: 0;
+  flex-shrink: 0; /* 防止关闭按钮被压缩 */
 }
 
 .controls-help-toggle:hover {
@@ -266,17 +496,117 @@ body {
 
 .controls-help ul {
   list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .controls-help li {
   margin-bottom: 6px;
   font-size: 14px;
   line-height: 1.4;
+  word-break: break-word; /* 允许长单词换行 */
 }
 
 .controls-help strong {
   color: #FFC107;
   font-weight: 600;
+}
+
+/* 响应式设计优化 */
+@media (max-width: 1200px) {
+  .controls-help {
+    max-width: 320px;
+    padding: 13px;
+    bottom: 15px;
+    left: 15px;
+  }
+  
+  .controls-help-header h3 {
+    font-size: 15px;
+  }
+  
+  .controls-help-toggle {
+    width: 18px;
+    height: 18px;
+    font-size: 9px;
+  }
+  
+  .controls-help h3 {
+    font-size: 15px;
+    margin-bottom: 8px;
+  }
+  
+  .controls-help li {
+    font-size: 13px;
+    margin-bottom: 5px;
+  }
+}
+
+@media (max-width: 768px) {
+  .controls-help {
+    position: relative;
+    margin: 20px auto;
+    bottom: auto;
+    left: auto;
+    max-width: calc(100vw - 40px);
+    padding: 12px;
+  }
+  
+  .controls-help-header h3 {
+    font-size: 14px;
+  }
+  
+  .controls-help-toggle {
+    width: 16px;
+    height: 16px;
+    font-size: 8px;
+  }
+  
+  .controls-help h3 {
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+  
+  .controls-help li {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .controls-help {
+    max-width: calc(100vw - 20px);
+    padding: 10px;
+    margin: 15px auto;
+  }
+  
+  .controls-help-header {
+    margin-bottom: 8px;
+  }
+  
+  .controls-help-header h3 {
+    font-size: 13px;
+  }
+  
+  .controls-help-toggle {
+    width: 14px;
+    height: 14px;
+    font-size: 7px;
+  }
+  
+  .controls-help h3 {
+    font-size: 13px;
+    margin-bottom: 5px;
+  }
+  
+  .controls-help li {
+    font-size: 11px;
+    margin-bottom: 3px;
+  }
+  
+  .controls-help strong {
+    font-weight: 500;
+  }
 }
 
 /* 显示控制说明按钮样式 - 与其他按钮保持统一风格 (TODO #26) */
@@ -518,6 +848,13 @@ body {
   .controls-help {
     max-width: calc(100vw - 40px);
   }
+  
+  /* 界面控制面板在小屏幕上的适配 */
+  .ui-control-panel {
+    width: calc(100vw - 40px);
+    max-height: 70vh;
+    overflow-y: auto;
+  }
 }
 
 @media (max-width: 480px) {
@@ -536,6 +873,106 @@ body {
     min-width: 50px;
     width: 60px; /* 更小的固定宽度 */
     max-width: 70px;
+  }
+  
+  /* 在超小屏幕上进一步优化控制面板 */
+  .control-panel-row1,
+  .control-panel-row2 {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  
+  .control-panel button {
+    padding: 5px 8px;
+    font-size: 11px;
+    min-width: auto;
+  }
+  
+  /* 顶部状态栏在超小屏幕上的优化 */
+  .top-bar {
+    padding: 5px;
+  }
+  
+  .game-title h2 {
+    font-size: 16px;
+  }
+  
+  .version {
+    font-size: 10px;
+    padding: 1px 4px;
+  }
+}
+
+/* 中等屏幕适配 (平板设备) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .top-bar {
+    padding: 0 15px;
+  }
+  
+  .game-stats span {
+    min-width: 70px;
+    width: 80px;
+    max-width: 100px;
+    font-size: 11px;
+    padding: 5px 6px;
+  }
+  
+  .control-panel button {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+  
+  .left-control-area {
+    bottom: 15px;
+    left: 15px;
+  }
+}
+
+/* 大屏幕适配 (桌面显示器) */
+@media (min-width: 1920px) {
+  .top-bar {
+    height: 70px;
+    padding: 0 30px;
+  }
+  
+  .game-title h2 {
+    font-size: 28px;
+  }
+  
+  .version {
+    font-size: 14px;
+    padding: 3px 10px;
+  }
+  
+  .game-stats span {
+    min-width: 90px;
+    width: 110px;
+    max-width: 140px;
+    font-size: 14px;
+    padding: 8px 10px;
+  }
+  
+  .control-panel button {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+  
+  .left-control-area {
+    bottom: 25px;
+    left: 25px;
+  }
+  
+  .controls-help {
+    max-width: 400px;
+    padding: 20px;
+  }
+  
+  .controls-help-header h3 {
+    font-size: 18px;
+  }
+  
+  .controls-help li {
+    font-size: 16px;
   }
 }
 
@@ -581,6 +1018,8 @@ body {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   pointer-events: auto;
   z-index: 150;
+  max-width: calc(100vw - 40px); /* 限制最大宽度 */
+  max-height: 70vh; /* 限制最大高度 */
 }
 
 /* 开关控件样式 */
@@ -646,12 +1085,16 @@ body {
   background: rgba(76, 175, 80, 0.2);
   border-bottom: 1px solid rgba(76, 175, 80, 0.3);
   border-radius: 8px 8px 0 0;
+  flex-shrink: 0; /* 防止头部被压缩 */
 }
 
 .debug-console-title {
   color: #4CAF50;
   font-weight: bold;
   font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .debug-console-close {
@@ -668,6 +1111,7 @@ body {
   justify-content: center;
   transition: all 0.2s ease;
   padding: 0;
+  flex-shrink: 0; /* 防止关闭按钮被压缩 */
 }
 
 .debug-console-close:hover {
@@ -681,6 +1125,7 @@ body {
   overflow-y: auto;
   padding: 8px;
   max-height: 220px;
+  font-size: 11px;
 }
 
 .debug-console-logs::-webkit-scrollbar {
@@ -750,12 +1195,14 @@ body {
   background: rgba(0, 0, 0, 0.3);
   border-top: 1px solid rgba(76, 175, 80, 0.3);
   border-radius: 0 0 8px 8px;
+  flex-shrink: 0; /* 防止输入容器被压缩 */
 }
 
 .debug-console-prompt {
   color: #4CAF50;
   margin-right: 8px;
   font-weight: bold;
+  flex-shrink: 0; /* 防止提示符被压缩 */
 }
 
 .debug-console-input {
@@ -767,10 +1214,128 @@ body {
   font-size: 12px;
   outline: none;
   padding: 4px;
+  min-width: 0; /* 允许输入框收缩 */
 }
 
 .debug-console-input::placeholder {
   color: #666;
+}
+
+/* 响应式设计优化 */
+@media (max-width: 1200px) {
+  .debug-console {
+    width: 350px;
+    height: 280px;
+    right: 15px;
+    bottom: 15px;
+  }
+  
+  .debug-console-title {
+    font-size: 13px;
+  }
+  
+  .debug-console-logs {
+    max-height: 180px;
+    font-size: 10px;
+  }
+  
+  .debug-console-input {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 768px) {
+  .debug-console {
+    width: calc(100vw - 40px);
+    height: 250px;
+    bottom: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+  
+  .debug-console-header {
+    padding: 6px 10px;
+  }
+  
+  .debug-console-title {
+    font-size: 12px;
+  }
+  
+  .debug-console-close {
+    width: 18px;
+    height: 18px;
+    font-size: 9px;
+  }
+  
+  .debug-console-logs {
+    max-height: 150px;
+    font-size: 9px;
+    padding: 6px;
+  }
+  
+  .debug-console-input-container {
+    padding: 6px;
+  }
+  
+  .debug-console-prompt {
+    font-size: 11px;
+    margin-right: 6px;
+  }
+  
+  .debug-console-input {
+    font-size: 10px;
+    padding: 3px;
+  }
+}
+
+@media (max-width: 480px) {
+  .debug-console {
+    height: 200px;
+    bottom: 5px;
+    right: 5px;
+    left: 5px;
+    font-size: 11px;
+  }
+  
+  .debug-console-header {
+    padding: 5px 8px;
+  }
+  
+  .debug-console-title {
+    font-size: 11px;
+  }
+  
+  .debug-console-close {
+    width: 16px;
+    height: 16px;
+    font-size: 8px;
+  }
+  
+  .debug-console-logs {
+    max-height: 120px;
+    font-size: 8px;
+    padding: 4px;
+  }
+  
+  .debug-log-timestamp {
+    font-size: 7px;
+    margin-right: 4px;
+  }
+  
+  .debug-console-input-container {
+    padding: 4px;
+  }
+  
+  .debug-console-prompt {
+    font-size: 10px;
+    margin-right: 4px;
+  }
+  
+  .debug-console-input {
+    font-size: 9px;
+    padding: 2px;
+  }
 }
 
 /* 在调试信息显示时调整布局 */
@@ -806,6 +1371,8 @@ body {
   transition: all 0.3s ease;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   z-index: 160;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
 .ui-control-panel-header {
@@ -813,12 +1380,16 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
+  flex-shrink: 0; /* 防止头部被压缩 */
 }
 
 .ui-control-panel-header h3 {
   color: #9c27b0;
   margin: 0;
   font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ui-control-panel-close {
@@ -835,6 +1406,7 @@ body {
   justify-content: center;
   transition: all 0.2s ease;
   padding: 0;
+  flex-shrink: 0; /* 防止关闭按钮被压缩 */
 }
 
 .ui-control-panel-close:hover {
@@ -847,12 +1419,15 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  max-height: calc(70vh - 60px); /* 限制内容区域最大高度 */
+  overflow-y: auto;
 }
 
 .ui-control-item {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap; /* 允许换行 */
 }
 
 .ui-control-item label {
@@ -862,12 +1437,15 @@ body {
   color: #fff;
   font-size: 13px;
   cursor: pointer;
+  flex: 1; /* 占据剩余空间 */
+  min-width: 0; /* 允许收缩 */
 }
 
 .ui-control-item input[type="checkbox"] {
   width: 16px;
   height: 16px;
   cursor: pointer;
+  flex-shrink: 0; /* 防止复选框被压缩 */
 }
 
 .ui-control-item button {
@@ -881,6 +1459,7 @@ body {
   transition: all 0.2s ease;
   width: 100%;
   margin-top: 4px;
+  flex: 1 1 100%; /* 独占一行 */
 }
 
 .ui-control-item button:hover {
@@ -888,36 +1467,136 @@ body {
   transform: translateY(-1px);
 }
 
-/* 小屏幕适配 */
+/* 响应式设计优化 */
+@media (max-width: 1200px) {
+  .ui-control-panel {
+    width: 230px;
+    padding: 12px;
+    bottom: 15px;
+    right: 15px;
+  }
+  
+  .ui-control-panel-header h3 {
+    font-size: 15px;
+  }
+  
+  .ui-control-panel-close {
+    width: 18px;
+    height: 18px;
+    font-size: 9px;
+  }
+  
+  .ui-control-panel-content {
+    gap: 6px;
+  }
+  
+  .ui-control-item {
+    gap: 6px;
+  }
+  
+  .ui-control-item label {
+    font-size: 12px;
+  }
+  
+  .ui-control-item input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+  }
+  
+  .ui-control-item button {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+}
+
 @media (max-width: 768px) {
-  .debug-console {
+  .ui-control-panel {
     width: calc(100vw - 40px);
-    height: 250px;
+    max-height: 70vh;
     bottom: 10px;
     right: 10px;
     left: 10px;
+    margin: 0 auto;
   }
   
-  .controls-help {
-    position: relative;
-    margin: 20px auto;
-    bottom: auto;
-    left: auto;
-    max-width: calc(100vw - 40px);
+  .ui-control-panel-header h3 {
+    font-size: 14px;
+  }
+  
+  .ui-control-panel-close {
+    width: 16px;
+    height: 16px;
+    font-size: 8px;
+  }
+  
+  .ui-control-panel-content {
+    gap: 5px;
+  }
+  
+  .ui-control-item {
+    gap: 5px;
+  }
+  
+  .ui-control-item label {
+    font-size: 11px;
+  }
+  
+  .ui-control-item input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .ui-control-item button {
+    padding: 4px 8px;
+    font-size: 10px;
+    margin-top: 3px;
   }
 }
 
 @media (max-width: 480px) {
-  .debug-console {
-    height: 200px;
-    font-size: 11px;
+  .ui-control-panel {
+    width: calc(100vw - 20px);
+    padding: 10px;
+    bottom: 5px;
+    right: 5px;
+    left: 5px;
+    max-height: 65vh;
   }
   
-  .debug-console-title {
-    font-size: 12px;
+  .ui-control-panel-header {
+    margin-bottom: 8px;
   }
   
-  .debug-console-input {
-    font-size: 11px;
+  .ui-control-panel-header h3 {
+    font-size: 13px;
+  }
+  
+  .ui-control-panel-close {
+    width: 14px;
+    height: 14px;
+    font-size: 7px;
+  }
+  
+  .ui-control-panel-content {
+    gap: 4px;
+  }
+  
+  .ui-control-item {
+    gap: 4px;
+  }
+  
+  .ui-control-item label {
+    font-size: 10px;
+  }
+  
+  .ui-control-item input[type="checkbox"] {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .ui-control-item button {
+    padding: 3px 6px;
+    font-size: 9px;
+    margin-top: 2px;
   }
 }

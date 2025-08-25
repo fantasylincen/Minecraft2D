@@ -1,0 +1,27 @@
+[2025-08-24T18:50:21.007Z] JavaScript Error: Uncaught TypeError: this.renderBiomeEffects is not a function
+    文件: http://localhost:5173/Minecraft2D/src/renderer/Renderer.js
+    位置: 92:10
+    URL: http://localhost:5173/Minecraft2D/
+    UserAgent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0
+    Stack: TypeError: this.renderBiomeEffects is not a function
+    at Renderer.render (http://localhost:5173/Minecraft2D/src/renderer/Renderer.js:92:10)
+    at GameEngine.render (http://localhost:5173/Minecraft2D/src/engine/GameEngine.js:400:29)
+    at GameEngine.gameLoop (http://localhost:5173/Minecraft2D/src/engine/GameEngine.js:355:10)
+[2025-08-24T18:50:25.910Z] JavaScript Error: Uncaught TypeError: this.renderBiomeEffects is not a function
+    文件: http://localhost:5173/Minecraft2D/src/renderer/Renderer.js
+    位置: 92:10
+    URL: http://localhost:5173/Minecraft2D/
+    UserAgent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0
+    Stack: TypeError: this.renderBiomeEffects is not a function
+    at Renderer.render (http://localhost:5173/Minecraft2D/src/renderer/Renderer.js:92:10)
+    at GameEngine.render (http://localhost:5173/Minecraft2D/src/engine/GameEngine.js:400:29)
+    at GameEngine.gameLoop (http://localhost:5173/Minecraft2D/src/engine/GameEngine.js:355:10)
+[2025-08-24T18:50:31.095Z] JavaScript Error: Uncaught TypeError: this.renderBiomeEffects is not a function
+    文件: http://localhost:5173/Minecraft2D/src/renderer/Renderer.js
+    位置: 92:10
+    URL: http://localhost:5173/Minecraft2D/
+    UserAgent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0
+    Stack: TypeError: this.renderBiomeEffects is not a function
+    at Renderer.render (http://localhost:5173/Minecraft2D/src/renderer/Renderer.js:92:10)
+    at GameEngine.render (http://localhost:5173/Minecraft2D/src/engine/GameEngine.js:400:29)
+    at GameEngine.gameLoop (http://localhost:5173/Minecraft2D/src/engine/GameEngine.js:355:10)

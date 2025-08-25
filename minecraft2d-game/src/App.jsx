@@ -12,6 +12,7 @@ import DebugConsole from './ui/DebugConsole.jsx';
 import { GameConfig, gameConfig } from './config/GameConfig.js';
 import { ConfigPanel } from './ui/ConfigPanel.js';
 import errorLogger from './utils/ErrorLogger.js';
+import './ui/UIAnimations.css';
 
 function App() {
   const canvasRef = useRef(null);
@@ -39,7 +40,57 @@ function App() {
     healthBar: true,
     topBar: true
   });
+  // 添加主题状态管理
+  const [uiTheme, setUiTheme] = useState({
+    theme: 'default',
+    primaryColor: '#4CAF50',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    textColor: '#ffffff',
+    borderColor: 'rgba(255,255,255,0.3)'
+  });
+  // 添加UI动画控制状态
+  const [uiAnimations, setUiAnimations] = useState({
+    topBar: 'slideInBottom',
+    controlPanel: 'slideInLeft',
+    debugConsole: 'slideInRight',
+    healthBar: 'fadeIn',
+    inventory: 'fadeIn'
+  });
   const [showUiControlPanel, setShowUiControlPanel] = useState(false);
+  
+  // UI动画控制函数
+  const triggerUiAnimation = (element, animation) => {
+    setUiAnimations(prev => ({
+      ...prev,
+      [element]: animation
+    }));
+    
+    // 动画结束后重置状态
+    if (animation === 'fadeOut') {
+      setTimeout(() => {
+        setUiAnimations(prev => ({
+          ...prev,
+          [element]: 'fadeIn'
+        }));
+      }, 300);
+    }
+  };
+  
+  // 切换UI元素显示/隐藏时触发动画
+  const toggleUiElement = (element) => {
+    setUiVisibility(prev => {
+      const newVisibility = { ...prev, [element]: !prev[element] };
+      
+      // 触发动画
+      if (newVisibility[element]) {
+        triggerUiAnimation(element, 'fadeIn');
+      } else {
+        triggerUiAnimation(element, 'fadeOut');
+      }
+      
+      return newVisibility;
+    });
+  };
   
   useEffect(() => {
     let mounted = true;
@@ -261,6 +312,32 @@ function App() {
         }
       });
       
+      // 添加UI主题配置变更回调
+      configPanel.onUpdate('uiTheme', 'theme', (value) => {
+        updateUiTheme({ theme: value });
+        console.log(`🎨 UI主题更新为: ${value}`);
+      });
+      
+      configPanel.onUpdate('uiTheme', 'primaryColor', (value) => {
+        updateUiTheme({ primaryColor: value });
+        console.log(`🎨 主色调更新为: ${value}`);
+      });
+      
+      configPanel.onUpdate('uiTheme', 'backgroundColor', (value) => {
+        updateUiTheme({ backgroundColor: value });
+        console.log(`🎨 背景颜色更新为: ${value}`);
+      });
+      
+      configPanel.onUpdate('uiTheme', 'textColor', (value) => {
+        updateUiTheme({ textColor: value });
+        console.log(`🎨 文字颜色更新为: ${value}`);
+      });
+      
+      configPanel.onUpdate('uiTheme', 'borderColor', (value) => {
+        updateUiTheme({ borderColor: value });
+        console.log(`🎨 边框颜色更新为: ${value}`);
+      });
+      
       console.log('✅ 配置面板初始化完成');
       
       setGameStatus('running');
@@ -287,6 +364,77 @@ function App() {
         timestamp: new Date().toISOString()
       };
       console.error('错误详情:', errorDetails);
+    }
+  };
+  
+  /**
+   * 更新UI主题
+   */
+  const updateUiTheme = (newTheme) => {
+    setUiTheme(prevTheme => {
+      const updatedTheme = { ...prevTheme, ...newTheme };
+      
+      // 应用主题到CSS变量
+      const root = document.documentElement;
+      root.style.setProperty('--ui-primary-color', updatedTheme.primaryColor);
+      root.style.setProperty('--ui-background-color', updatedTheme.backgroundColor);
+      root.style.setProperty('--ui-text-color', updatedTheme.textColor);
+      root.style.setProperty('--ui-border-color', updatedTheme.borderColor);
+      
+      // 如果是预设主题，应用预设颜色
+      if (updatedTheme.theme !== 'default') {
+        applyPresetTheme(updatedTheme.theme);
+      }
+      
+      return updatedTheme;
+    });
+  };
+  
+  /**
+   * 应用预设主题
+   */
+  const applyPresetTheme = (theme) => {
+    const root = document.documentElement;
+    
+    // 预设主题颜色
+    const themes = {
+      dark: {
+        primary: '#4CAF50',
+        background: 'rgba(0,0,0,0.7)',
+        text: '#ffffff',
+        border: 'rgba(255,255,255,0.3)'
+      },
+      light: {
+        primary: '#4CAF50',
+        background: 'rgba(255,255,255,0.7)',
+        text: '#000000',
+        border: 'rgba(0,0,0,0.3)'
+      },
+      green: {
+        primary: '#4CAF50',
+        background: 'rgba(25, 100, 25, 0.7)',
+        text: '#ffffff',
+        border: 'rgba(100, 200, 100, 0.5)'
+      },
+      blue: {
+        primary: '#2196F3',
+        background: 'rgba(25, 25, 100, 0.7)',
+        text: '#ffffff',
+        border: 'rgba(100, 100, 200, 0.5)'
+      },
+      purple: {
+        primary: '#9C27B0',
+        background: 'rgba(75, 25, 100, 0.7)',
+        text: '#ffffff',
+        border: 'rgba(150, 100, 200, 0.5)'
+      }
+    };
+    
+    if (themes[theme]) {
+      root.style.setProperty('--ui-primary-color', themes[theme].primary);
+      root.style.setProperty('--ui-background-color', themes[theme].background);
+      root.style.setProperty('--ui-text-color', themes[theme].text);
+      root.style.setProperty('--ui-border-color', themes[theme].border);
     }
   };
   
@@ -363,6 +511,12 @@ function App() {
       // 获取时间信息 (TODO #17)
       const timeInfo = gameEngine.getTimeInfo();
       
+      // 获取天气信息
+      const weatherInfo = gameEngine.getWeatherInfo();
+      
+      // 获取季节信息
+      const seasonInfo = gameEngine.getSeasonInfo();
+      
       // 获取实体统计信息
       let entityStats = { total: 0, byType: {} };
       if (gameEngine.entityManager) {
@@ -387,6 +541,12 @@ function App() {
         timeString: timeInfo.timeString,
         timePhase: timeInfo.phase,
         timeOfDay: timeInfo.timeOfDay,
+        // 天气信息
+        weather: weatherInfo.currentWeather,
+        weatherIntensity: weatherInfo.weatherIntensity,
+        // 季节信息
+        season: seasonInfo.currentSeason,
+        dayOfYear: Math.floor(seasonInfo.dayOfYear),
         // 实体信息
         entities: entityStats.total,
         entitiesByType: entityStats.byType
@@ -521,6 +681,24 @@ function App() {
   };
   
   /**
+   * 切换天气系统状态
+   */
+  const toggleWeatherSystem = () => {
+    if (gameEngineRef.current) {
+      gameEngineRef.current.toggleWeatherSystem();
+    }
+  };
+  
+  /**
+   * 切换季节系统状态
+   */
+  const toggleSeasonSystem = () => {
+    if (gameEngineRef.current) {
+      gameEngineRef.current.toggleSeasonSystem();
+    }
+  };
+  
+  /**
    * 切换错误日志查看器显示
    */
   const toggleErrorLog = () => {
@@ -559,6 +737,16 @@ function App() {
       else if (event.key === 't' || event.key === 'T') {
         event.preventDefault();
         toggleTimeSystem();
+      }
+      // W 键切换天气系统
+      else if (event.key === 'w' || event.key === 'W') {
+        event.preventDefault();
+        toggleWeatherSystem();
+      }
+      // S 键切换季节系统
+      else if (event.key === 's' || event.key === 'S') {
+        event.preventDefault();
+        toggleSeasonSystem();
       }
       // , 键降低时间速度 (TODO #17)
       else if (event.key === ',') {
@@ -815,7 +1003,7 @@ function App() {
       <div className="game-ui">
         {/* 血条显示 - 物品栏上方 */}
         {uiVisibility.healthBar && (
-          <HealthBar 
+          <HealthBar className={uiAnimations.healthBar} 
             player={gameEngineRef.current?.systems?.player} 
             gameEngine={gameEngineRef.current} 
           />
@@ -823,7 +1011,7 @@ function App() {
         
         {/* 顶部状态栏 */}
         {uiVisibility.topBar && (
-          <div className="top-bar">
+          <div className={`top-bar ${uiAnimations.topBar}`}>
             <div className="game-title">
               <h2>Minecraft2D - 2D Minecraft</h2>
               <span className="version">v1.0.0</span>
@@ -849,6 +1037,26 @@ function App() {
               <span style={{ color: '#FFD700', fontWeight: 'bold' }}>
                 🕰️ {gameStats.timeString} {gameStats.timePhase}
               </span>
+              {/* 季节信息 */}
+              {gameStats.season && (
+                <span style={{ color: '#90EE90', fontWeight: 'bold' }}>
+                  {gameStats.season === 'spring' ? '🌸' : 
+                   gameStats.season === 'summer' ? '☀️' : 
+                   gameStats.season === 'autumn' ? '🍂' : '❄️'} 
+                  {gameStats.season === 'spring' ? '春季' : 
+                   gameStats.season === 'summer' ? '夏季' : 
+                   gameStats.season === 'autumn' ? '秋季' : '冬季'} 
+                  (第{gameStats.dayOfYear}天)
+                </span>
+              )}
+              {/* 天气信息 */}
+              {gameStats.weather && gameStats.weather !== 'clear' && (
+                <span style={{ color: '#87CEEB', fontWeight: 'bold' }}>
+                  {gameStats.weather === 'rain' ? '🌧️' : gameStats.weather === 'snow' ? '❄️' : '⛈️'} 
+                  {gameStats.weather === 'rain' ? '雨天' : gameStats.weather === 'snow' ? '雪天' : '暴风雨'} 
+                  ({Math.round(gameStats.weatherIntensity * 100)}%)
+                </span>
+              )}
               {/* 实体信息 */}
               <span>
                 👹 实体: {gameStats.entities}
@@ -859,30 +1067,30 @@ function App() {
         
         {/* 左下角控制区域 */}
         {uiVisibility.configPanel && (
-          <div className="left-control-area">
+          <div className={`left-control-area ${uiAnimations.controlPanel}`}>
             {/* 控制面板 - 移动到左下角，2排布局 */}
             <div className="control-panel">
               {/* 第一排: 3个主要功能按钮 */}
               <div className="control-panel-row1">
-                <button onClick={toggleDebugInfo}>
+                <button onClick={toggleDebugInfo} className="ui-button-hover ui-button-active">
                   {debugInfo ? '隐藏调试信息' : '显示调试信息'}
                 </button>
-                <button onClick={saveGame}>保存游戏</button>
-                <button onClick={regenerateWorld}>重新生成世界</button>
+                <button onClick={saveGame} className="ui-button-hover ui-button-active">保存游戏</button>
+                <button onClick={regenerateWorld} className="ui-button-hover ui-button-active">重新生成世界</button>
               </div>
               
               {/* 第二排: 配置和控制说明按钮 */}
               <div className="control-panel-row2">
                 <button 
                   onClick={toggleConfigPanel}
-                  className="config-panel-btn"
+                  className="config-panel-btn ui-button-hover ui-button-active"
                 >
                   ⚙️ 游戏配置
                 </button>
                 
                 {/* 控制说明按钮（始终显示，但改为切换按钮） */}
                 <button 
-                  className="show-controls-btn"
+                  className="show-controls-btn ui-button-hover ui-button-active"
                   onClick={toggleControlsHelp}
                   title={showControlsHelp ? '隐藏控制说明 (H键)' : '显示控制说明 (H键)'}
                 >
@@ -891,7 +1099,7 @@ function App() {
                 
                 {/* 错误日志按钮 */}
                 <button 
-                  className="error-log-btn"
+                  className="error-log-btn ui-button-hover ui-button-active"
                   onClick={toggleErrorLog}
                   title="查看客户端错误日志"
                 >
@@ -900,7 +1108,7 @@ function App() {
                 
                 {/* 界面元素控制按钮 */}
                 <button 
-                  className="ui-control-btn"
+                  className="ui-control-btn ui-button-hover ui-button-active"
                   onClick={toggleUiControlPanel}
                   title="界面元素控制面板"
                 >
@@ -913,11 +1121,11 @@ function App() {
         
         {/* 界面控制面板 */}
         {showUiControlPanel && (
-          <div className="ui-control-panel">
+          <div className={`ui-control-panel ${uiAnimations.controlPanel}`}>
             <div className="ui-control-panel-header">
               <h3>界面元素控制</h3>
               <button 
-                className="ui-control-panel-close"
+                className="ui-control-panel-close ui-button-hover ui-button-active"
                 onClick={toggleUiControlPanel}
                 title="关闭控制面板"
               >
@@ -1027,6 +1235,7 @@ function App() {
                     healthBar: true,
                     topBar: true
                   })}
+                  className="ui-button-hover ui-button-active"
                 >
                   显示所有界面元素
                 </button>
@@ -1034,6 +1243,7 @@ function App() {
               <div className="ui-control-item">
                 <button 
                   onClick={resetUiVisibility}
+                  className="ui-button-hover ui-button-active"
                 >
                   恢复默认设置
                 </button>
@@ -1044,11 +1254,11 @@ function App() {
         
         {/* 控制说明 */}
         {uiVisibility.controlsHelp && showControlsHelp && (
-          <div className="controls-help">
+          <div className={`controls-help ${uiAnimations.controlPanel}`}>
             <div className="controls-help-header">
               <h3>控制说明:</h3>
               <button 
-                className="controls-help-toggle"
+                className="controls-help-toggle ui-button-hover ui-button-active"
                 onClick={toggleControlsHelp}
                 title="隐藏控制说明 (H键)"
               >
@@ -1066,6 +1276,8 @@ function App() {
               <li><strong>F2:</strong> 打开/关闭配置面板</li>
               <li><strong>H键:</strong> 显示/隐藏控制说明</li>
               <li><strong>T键:</strong> 切换时间系统开关</li>
+              <li><strong>W键:</strong> 切换天气系统开关</li>
+              <li><strong>S键:</strong> 切换季节系统开关</li>
               <li><strong>,/.键:</strong> 减慢/加快时间流逝速度</li>
               <li><strong>&lt;/&gt;键:</strong> 向前/向后调节时间</li>
               <li><strong>[/]:</strong> 降低/提高帧率</li>
@@ -1080,7 +1292,7 @@ function App() {
 
         {/* 调试控制台 */}
         {uiVisibility.debugConsole && (
-          <DebugConsole 
+          <DebugConsole className={uiAnimations.debugConsole} 
             gameEngine={gameEngineRef.current}
             isVisible={showDebugConsole}
             onToggleVisible={toggleDebugInfo}
@@ -1089,11 +1301,11 @@ function App() {
         )}
         
         {/* 错误日志查看器 */}
-        {uiVisibility.errorLog && showErrorLog && <ErrorLogViewer />}
+        {uiVisibility.errorLog && showErrorLog && <ErrorLogViewer className={uiAnimations.errorLog} />}
         
         {/* 物品栏UI */}
         {uiVisibility.inventory && gameEngineRef.current && gameEngineRef.current.systems.player && (
-          <InventoryController 
+          <InventoryController className={uiAnimations.inventory} 
             inventory={gameEngineRef.current.systems.player.getInventory()}
             gameEngine={gameEngineRef.current}
           />

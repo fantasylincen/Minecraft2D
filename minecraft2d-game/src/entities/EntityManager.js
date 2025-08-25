@@ -10,6 +10,7 @@ export class EntityManager {
     this.worldConfig = worldConfig;
     this.entities = [];
     this.player = null;
+    this.gameEngine = null; // 添加对游戏引擎的引用，用于获取季节信息
     
     // 怪物生成配置
     this.spawnConfig = {
@@ -30,6 +31,13 @@ export class EntityManager {
    */
   setPlayer(player) {
     this.player = player;
+  }
+  
+  /**
+   * 设置游戏引擎引用
+   */
+  setGameEngine(gameEngine) {
+    this.gameEngine = gameEngine;
   }
   
   /**
@@ -55,6 +63,11 @@ export class EntityManager {
     // 为新实体设置地形生成器
     if (this.terrainGenerator && typeof entity.setTerrainGenerator === 'function') {
       entity.setTerrainGenerator(this.terrainGenerator);
+    }
+    
+    // 为新实体设置游戏引擎引用（如果实体支持）
+    if (this.gameEngine && typeof entity.setGameEngine === 'function') {
+      entity.setGameEngine(this.gameEngine);
     }
     
     console.log(`➕ 添加实体: ${entity.type}, 总数: ${this.entities.length}`);
@@ -109,12 +122,15 @@ export class EntityManager {
   }
   
   /**
-   * 生成怪物
+   * 生成怪物 - 考虑季节影响
    */
   spawnMobs() {
-    if (!this.player) return;
+    if (!this.player || !this.gameEngine) return;
     
     const playerPos = this.player.getPosition();
+    
+    // 获取当前季节
+    const currentSeason = this.gameEngine.getCurrentSeason();
     
     // 生成僵尸
     if (this.spawnConfig.zombie.enabled) {
@@ -122,8 +138,30 @@ export class EntityManager {
       
       // 检查是否达到最大数量
       if (zombieCount < this.spawnConfig.zombie.maxCount) {
-        // 根据生成概率决定是否生成
-        if (Math.random() < this.spawnConfig.zombie.spawnRate) {
+        // 根据生成概率决定是否生成，并考虑季节影响
+        let spawnRate = this.spawnConfig.zombie.spawnRate;
+        
+        // 根据季节调整生成率
+        switch (currentSeason) {
+          case 'spring':
+            // 春季：生物活动增加
+            spawnRate *= 1.2;
+            break;
+          case 'summer':
+            // 夏季：生物活动最活跃
+            spawnRate *= 1.5;
+            break;
+          case 'autumn':
+            // 秋季：生物活动适中
+            spawnRate *= 1.1;
+            break;
+          case 'winter':
+            // 冬季：生物活动减少
+            spawnRate *= 0.6;
+            break;
+        }
+        
+        if (Math.random() < spawnRate) {
           // 计算生成位置（在玩家附近但不要太近）
           const angle = Math.random() * Math.PI * 2;
           const minDist = this.spawnConfig.zombie.minDistance;

@@ -21,6 +21,9 @@ export class WorldGenerator {
     this.oreGenerator = new OreGenerator(seed);
     this.vegetationGenerator = new VegetationGenerator(seed);
     
+    // 季节系统引用
+    this.seasonSystem = null;
+    
     // 世界配置
     this.worldConfig = null;
     
@@ -62,6 +65,18 @@ export class WorldGenerator {
    */
   setWorldConfig(worldConfig) {
     this.worldConfig = worldConfig;
+  }
+  
+  /**
+   * 设置季节系统
+   * @param {Object} seasonSystem - 季节系统引用
+   */
+  setSeasonSystem(seasonSystem) {
+    this.seasonSystem = seasonSystem;
+    // 将季节系统传递给植被生成器
+    if (this.vegetationGenerator) {
+      this.vegetationGenerator.setSeasonSystem(seasonSystem);
+    }
   }
   
   /**

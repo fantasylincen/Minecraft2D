@@ -629,6 +629,161 @@ export class BlockConfig {
         color: '#FFFFFF',
         breakable: true,
         hardness: 0.1
+      },
+      // 农作物系统方块
+      {
+        id: 57,
+        name: 'farmland',
+        displayName: '耕地',
+        solid: true,
+        transparent: false,
+        color: '#6B4C3B',
+        breakable: true,
+        hardness: 0.6,
+        special: 'farming'
+      },
+      {
+        id: 58,
+        name: 'wheat_seeds',
+        displayName: '小麦种子',
+        solid: false,
+        transparent: true,
+        color: '#D2B48C',
+        breakable: true,
+        hardness: 0.1
+      },
+      {
+        id: 59,
+        name: 'wheat',
+        displayName: '小麦',
+        solid: false,
+        transparent: true,
+        color: '#F5DEB3',
+        breakable: true,
+        hardness: 0.2,
+        special: 'crop'
+      },
+      {
+        id: 60,
+        name: 'carrot',
+        displayName: '胡萝卜',
+        solid: false,
+        transparent: true,
+        color: '#FFA500',
+        breakable: true,
+        hardness: 0.2,
+        special: 'crop'
+      },
+      {
+        id: 61,
+        name: 'potato',
+        displayName: '土豆',
+        solid: false,
+        transparent: true,
+        color: '#D2B48C',
+        breakable: true,
+        hardness: 0.2,
+        special: 'crop'
+      },
+      {
+        id: 62,
+        name: 'beetroot',
+        displayName: '甜菜根',
+        solid: false,
+        transparent: true,
+        color: '#8B0000',
+        breakable: true,
+        hardness: 0.2,
+        special: 'crop'
+      },
+      // 农作物生长阶段方块
+      {
+        id: 63,
+        name: 'wheat_stage1',
+        displayName: '小麦(发芽)',
+        solid: false,
+        transparent: true,
+        color: '#9ACD32',
+        breakable: true,
+        hardness: 0.1,
+        special: 'crop_stage'
+      },
+      {
+        id: 64,
+        name: 'wheat_stage2',
+        displayName: '小麦(成长)',
+        solid: false,
+        transparent: true,
+        color: '#ADFF2F',
+        breakable: true,
+        hardness: 0.1,
+        special: 'crop_stage'
+      },
+      {
+        id: 65,
+        name: 'carrot_stage1',
+        displayName: '胡萝卜(发芽)',
+        solid: false,
+        transparent: true,
+        color: '#FFD700',
+        breakable: true,
+        hardness: 0.1,
+        special: 'crop_stage'
+      },
+      {
+        id: 66,
+        name: 'carrot_stage2',
+        displayName: '胡萝卜(成长)',
+        solid: false,
+        transparent: true,
+        color: '#FFA500',
+        breakable: true,
+        hardness: 0.1,
+        special: 'crop_stage'
+      },
+      {
+        id: 67,
+        name: 'potato_stage1',
+        displayName: '土豆(发芽)',
+        solid: false,
+        transparent: true,
+        color: '#D2B48C',
+        breakable: true,
+        hardness: 0.1,
+        special: 'crop_stage'
+      },
+      {
+        id: 68,
+        name: 'potato_stage2',
+        displayName: '土豆(成长)',
+        solid: false,
+        transparent: true,
+        color: '#DEB887',
+        breakable: true,
+        hardness: 0.1,
+        special: 'crop_stage'
+      },
+      {
+        id: 69,
+        name: 'beetroot_stage1',
+        displayName: '甜菜根(发芽)',
+        solid: false,
+        transparent: true,
+        color: '#DC143C',
+        breakable: true,
+        hardness: 0.1,
+        special: 'crop_stage'
+      },
+      {
+        id: 70,
+        name: 'beetroot_stage2',
+        displayName: '甜菜根(成长)',
+        solid: false,
+        transparent: true,
+        color: '#8B0000',
+        breakable: true,
+        hardness: 0.1,
+        special: 'crop_stage'
       }
     ];
     

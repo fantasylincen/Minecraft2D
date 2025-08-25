@@ -14,6 +14,9 @@ export class TerrainGenerator {
     this.worldGenerator = new WorldGenerator();
     this.worldGenerator.setWorldConfig(worldConfig);
     
+    // 季节系统引用
+    this.seasonSystem = null;
+    
     // 世界数据存储
     this.chunks = new Map(); // 区块数据
     this.loadedChunks = new Set(); // 已加载的区块
@@ -42,6 +45,18 @@ export class TerrainGenerator {
    */
   update(deltaTime) {
     // 暂时为空，后续可添加动态生成逻辑
+  }
+  
+  /**
+   * 设置季节系统
+   * @param {Object} seasonSystem - 季节系统引用
+   */
+  setSeasonSystem(seasonSystem) {
+    this.seasonSystem = seasonSystem;
+    // 将季节系统传递给世界生成器
+    if (this.worldGenerator) {
+      this.worldGenerator.setSeasonSystem(seasonSystem);
+    }
   }
   
   /**

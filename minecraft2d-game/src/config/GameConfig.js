@@ -327,6 +327,40 @@ export class GameConfig {
         }
       }
     });
+    
+    // UI主题配置 (新增)
+    this.configs.set('uiTheme', {
+      category: 'UI主题系统',
+      displayName: 'UI主题配置',
+      settings: {
+        theme: {
+          value: 'default',
+          options: ['default', 'dark', 'light', 'green', 'blue', 'purple'],
+          description: '选择UI主题样式',
+          displayName: '主题样式'
+        },
+        primaryColor: {
+          value: '#4CAF50',
+          description: '主色调（用于重要按钮和标题）',
+          displayName: '主色调'
+        },
+        backgroundColor: {
+          value: 'rgba(0,0,0,0.7)',
+          description: '背景颜色（用于面板和信息框）',
+          displayName: '背景颜色'
+        },
+        textColor: {
+          value: '#ffffff',
+          description: '文字颜色',
+          displayName: '文字颜色'
+        },
+        borderColor: {
+          value: 'rgba(255,255,255,0.3)',
+          description: '边框颜色',
+          displayName: '边框颜色'
+        }
+      }
+    });
   }
   
   /**
