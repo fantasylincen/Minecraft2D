@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配方匹配算法测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .log {
+            background: #000;
+            color: #00ff00;
+            border-radius: 4px;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success { color: #4CAF50; }
+        .error { color: #f44336; }
+        .info { color: #2196F3; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>配方匹配算法测试</h1>
+        
+        <div class="test-section">
+            <h2>测试控制</h2>
+            <button onclick="runRecipeMatchingTest()">运行配方匹配测试</button>
+            <button onclick="clearLog()">清空日志</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>测试日志</h2>
+            <div id="log" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        // 日志函数
+        function log(message, type = 'info') {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info';
+            logElement.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        // 清空日志
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+        
+        // 模拟配方类
+        class Recipe {
+            constructor(id, name, ingredients, result) {
+                this.id = id;
+                this.name = name;
+                this.ingredients = ingredients;
+                this.result = result;
+            }
+            
+            matches(materials) {
+                // 创建材料需求映射
+                const requiredMap = new Map();
+                this.ingredients.forEach(ingredient => {
+                    const key = ingredient.itemId;
+                    const count = requiredMap.get(key) || 0;
+                    requiredMap.set(key, count + ingredient.count);
+                });
+                
+                // 创建可用材料映射
+                const availableMap = new Map();
+                materials.forEach(material => {
+                    if (material && material.itemId) {
+                        const key = material.itemId;
+                        const count = availableMap.get(key) || 0;
+                        availableMap.set(key, count + (material.count || 1));
+                    }
+                });
+                
+                // 检查是否满足所有需求
+                for (const [itemId, requiredCount] of requiredMap) {
+                    const availableCount = availableMap.get(itemId) || 0;
+                    if (availableCount < requiredCount) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            }
+        }
+        
+        // 运行配方匹配测试
+        function runRecipeMatchingTest() {
+            log('🧪 开始配方匹配算法测试...', 'info');
+            
+            try {
+                // 创建测试配方
+                const planksRecipe = new Recipe(
+                    'planks_from_wood',
+                    '木板',
+                    [{ itemId: 'wood_item', count: 1 }],
+                    { itemId: 'planks_item', count: 4 }
+                );
+                
+                const sticksRecipe = new Recipe(
+                    'sticks_from_planks',
+                    '木棍',
+                    [{ itemId: 'planks_item', count: 2 }],
+                    { itemId: 'sticks_item', count: 4 }
+                );
+                
+                const craftingTableRecipe = new Recipe(
+                    'crafting_table_from_planks',
+                    '制作台',
+                    [{ itemId: 'planks_item', count: 4 }],
+                    { itemId: 'crafting_table_item', count: 1 }
+                );
+                
+                log('✅ 配方创建成功', 'success');
+                
+                // 测试1: 匹配木板配方
+                log('\n--- 测试1: 匹配木板配方 ---', 'info');
+                const materials1 = [
+                    { itemId: 'wood_item', count: 1 }
+                ];
+                
+                const matches1 = planksRecipe.matches(materials1);
+                if (matches1) {
+                    log('✅ 木板配方匹配成功', 'success');
+                } else {
+                    log('❌ 木板配方匹配失败', 'error');
+                    return;
+                }
+                
+                // 测试2: 匹配木棍配方
+                log('\n--- 测试2: 匹配木棍配方 ---', 'info');
+                const materials2 = [
+                    { itemId: 'planks_item', count: 2 }
+                ];
+                
+                const matches2 = sticksRecipe.matches(materials2);
+                if (matches2) {
+                    log('✅ 木棍配方匹配成功', 'success');
+                } else {
+                    log('❌ 木棍配方匹配失败', 'error');
+                    return;
+                }
+                
+                // 测试3: 匹配制作台配方
+                log('\n--- 测试3: 匹配制作台配方 ---', 'info');
+                const materials3 = [
+                    { itemId: 'planks_item', count: 4 }
+                ];
+                
+                const matches3 = craftingTableRecipe.matches(materials3);
+                if (matches3) {
+                    log('✅ 制作台配方匹配成功', 'success');
+                } else {
+                    log('❌ 制作台配方匹配失败', 'error');
+                    return;
+                }
+                
+                // 测试4: 材料不足的情况
+                log('\n--- 测试4: 材料不足的情况 ---', 'info');
+                const materials4 = [
+                    { itemId: 'planks_item', count: 1 }
+                ];
+                
+                const matches4 = craftingTableRecipe.matches(materials4);
+                if (!matches4) {
+                    log('✅ 材料不足时正确识别不匹配', 'success');
+                } else {
+                    log('❌ 材料不足时错误识别为匹配', 'error');
+                    return;
+                }
+                
+                // 测试5: 多种材料的配方
+                log('\n--- 测试5: 多种材料的配方 ---', 'info');
+                const swordRecipe = new Recipe(
+                    'wooden_sword',
+                    '木剑',
+                    [
+                        { itemId: 'planks_item', count: 2 },
+                        { itemId: 'sticks_item', count: 1 }
+                    ],
+                    { itemId: 'wooden_sword_item', count: 1 }
+                );
+                
+                const materials5 = [
+                    { itemId: 'planks_item', count: 2 },
+                    { itemId: 'sticks_item', count: 1 }
+                ];
+                
+                const matches5 = swordRecipe.matches(materials5);
+                if (matches5) {
+                    log('✅ 多种材料配方匹配成功', 'success');
+                } else {
+                    log('❌ 多种材料配方匹配失败', 'error');
+                    return;
+                }
+                
+                // 测试6: 材料数量不足的情况
+                log('\n--- 测试6: 材料数量不足的情况 ---', 'info');
+                const materials6 = [
+                    { itemId: 'planks_item', count: 1 },
+                    { itemId: 'sticks_item', count: 1 }
+                ];
+                
+                const matches6 = swordRecipe.matches(materials6);
+                if (!matches6) {
+                    log('✅ 材料数量不足时正确识别不匹配', 'success');
+                } else {
+                    log('❌ 材料数量不足时错误识别为匹配', 'error');
+                    return;
+                }
+                
+                log('\n🎉 所有配方匹配算法测试通过!', 'success');
+                
+            } catch (error) {
+                log(`❌ 配方匹配算法测试失败: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>

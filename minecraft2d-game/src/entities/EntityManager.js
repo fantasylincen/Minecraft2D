@@ -4,6 +4,9 @@
  */
 
 import { Zombie } from './Zombie.js';
+import { Cow } from './Cow.js';
+import { Pig } from './Pig.js';
+import { Chicken } from './Chicken.js';
 
 export class EntityManager {
   constructor(worldConfig) {
@@ -20,6 +23,28 @@ export class EntityManager {
         maxCount: 20,        // 最大数量
         spawnDistance: 1000, // 生成距离玩家的范围 (像素)
         minDistance: 100     // 最小生成距离 (像素)
+      },
+      // 被动生物生成配置
+      cow: {
+        enabled: true,
+        spawnRate: 0.0008,   // 生成概率
+        maxCount: 15,        // 最大数量
+        spawnDistance: 800,  // 生成距离玩家的范围 (像素)
+        minDistance: 150     // 最小生成距离 (像素)
+      },
+      pig: {
+        enabled: true,
+        spawnRate: 0.0008,   // 生成概率
+        maxCount: 15,        // 最大数量
+        spawnDistance: 800,  // 生成距离玩家的范围 (像素)
+        minDistance: 150     // 最小生成距离 (像素)
+      },
+      chicken: {
+        enabled: true,
+        spawnRate: 0.001,    // 生成概率
+        maxCount: 20,        // 最大数量
+        spawnDistance: 800,  // 生成距离玩家的范围 (像素)
+        minDistance: 150     // 最小生成距离 (像素)
       }
     };
     
@@ -68,6 +93,11 @@ export class EntityManager {
     // 为新实体设置游戏引擎引用（如果实体支持）
     if (this.gameEngine && typeof entity.setGameEngine === 'function') {
       entity.setGameEngine(this.gameEngine);
+    }
+    
+    // 为新实体设置实体管理器引用（如果实体支持）
+    if (typeof entity.setEntityManager === 'function') {
+      entity.setEntityManager(this);
     }
     
     console.log(`➕ 添加实体: ${entity.type}, 总数: ${this.entities.length}`);
@@ -177,6 +207,144 @@ export class EntityManager {
         }
       }
     }
+    
+    // 生成牛
+    if (this.spawnConfig.cow.enabled) {
+      const cowCount = this.entities.filter(e => e.type === 'cow').length;
+      
+      // 检查是否达到最大数量
+      if (cowCount < this.spawnConfig.cow.maxCount) {
+        // 根据生成概率决定是否生成，并考虑季节影响
+        let spawnRate = this.spawnConfig.cow.spawnRate;
+        
+        // 根据季节调整生成率
+        switch (currentSeason) {
+          case 'spring':
+            // 春季：生物活动增加
+            spawnRate *= 1.3;
+            break;
+          case 'summer':
+            // 夏季：生物活动最活跃
+            spawnRate *= 1.5;
+            break;
+          case 'autumn':
+            // 秋季：生物活动适中
+            spawnRate *= 1.1;
+            break;
+          case 'winter':
+            // 冬季：生物活动减少
+            spawnRate *= 0.5;
+            break;
+        }
+        
+        if (Math.random() < spawnRate) {
+          // 计算生成位置（在玩家附近但不要太近）
+          const angle = Math.random() * Math.PI * 2;
+          const minDist = this.spawnConfig.cow.minDistance;
+          const maxDist = this.spawnConfig.cow.spawnDistance;
+          const distance = minDist + Math.random() * (maxDist - minDist);
+          
+          const spawnX = playerPos.x + Math.cos(angle) * distance;
+          const spawnY = playerPos.y + Math.sin(angle) * distance;
+          
+          // 创建牛
+          const cow = new Cow(this.worldConfig, spawnX, spawnY);
+          this.addEntity(cow);
+        }
+      }
+    }
+    
+    // 生成猪
+    if (this.spawnConfig.pig.enabled) {
+      const pigCount = this.entities.filter(e => e.type === 'pig').length;
+      
+      // 检查是否达到最大数量
+      if (pigCount < this.spawnConfig.pig.maxCount) {
+        // 根据生成概率决定是否生成，并考虑季节影响
+        let spawnRate = this.spawnConfig.pig.spawnRate;
+        
+        // 根据季节调整生成率
+        switch (currentSeason) {
+          case 'spring':
+            // 春季：生物活动增加
+            spawnRate *= 1.3;
+            break;
+          case 'summer':
+            // 夏季：生物活动最活跃
+            spawnRate *= 1.5;
+            break;
+          case 'autumn':
+            // 秋季：生物活动适中
+            spawnRate *= 1.1;
+            break;
+          case 'winter':
+            // 冬季：生物活动减少
+            spawnRate *= 0.5;
+            break;
+        }
+        
+        if (Math.random() < spawnRate) {
+          // 计算生成位置（在玩家附近但不要太近）
+          const angle = Math.random() * Math.PI * 2;
+          const minDist = this.spawnConfig.pig.minDistance;
+          const maxDist = this.spawnConfig.pig.spawnDistance;
+          const distance = minDist + Math.random() * (maxDist - minDist);
+          
+          const spawnX = playerPos.x + Math.cos(angle) * distance;
+          const spawnY = playerPos.y + Math.sin(angle) * distance;
+          
+          // 创建猪
+          const pig = new Pig(this.worldConfig, spawnX, spawnY);
+          this.addEntity(pig);
+        }
+      }
+    }
+    
+    // 生成鸡
+    if (this.spawnConfig.chicken.enabled) {
+      const chickenCount = this.entities.filter(e => e.type === 'chicken').length;
+      
+      // 检查是否达到最大数量
+      if (chickenCount < this.spawnConfig.chicken.maxCount) {
+        // 根据生成概率决定是否生成，并考虑季节影响
+        let spawnRate = this.spawnConfig.chicken.spawnRate;
+        
+        // 根据季节调整生成率
+        switch (currentSeason) {
+          case 'spring':
+            // 春季：生物活动增加
+            spawnRate *= 1.4;
+            break;
+          case 'summer':
+            // 夏季：生物活动最活跃
+            spawnRate *= 1.6;
+            break;
+          case 'autumn':
+            // 秋季：生物活动适中
+            spawnRate *= 1.2;
+            break;
+          case 'winter':
+            // 冬季：生物活动减少
+            spawnRate *= 0.4;
+            break;
+        }
+        
+        if (Math.random() < spawnRate) {
+          // 计算生成位置（在玩家附近但不要太近）
+          const angle = Math.random() * Math.PI * 2;
+          const minDist = this.spawnConfig.chicken.minDistance;
+          const maxDist = this.spawnConfig.chicken.spawnDistance;
+          const distance = minDist + Math.random() * (maxDist - minDist);
+          
+          const spawnX = playerPos.x + Math.cos(angle) * distance;
+          const spawnY = playerPos.y + Math.sin(angle) * distance;
+          
+          // 创建鸡
+          const chicken = new Chicken(this.worldConfig, spawnX, spawnY);
+          this.addEntity(chicken);
+        }
+      }
+    }
   }
   
   /**
@@ -219,5 +387,25 @@ export class EntityManager {
     });
     
     return stats;
+  }
+  
+  /**
+   * 喂食实体（用于触发繁殖）
+   */
+  feedEntity(entity, item) {
+    // 检查实体是否为被动生物
+    if (entity && entity.passive && entity.passive.breedItem) {
+      // 检查物品是否为该生物的繁殖物品
+      if (item && item.id === entity.passive.breedItem) {
+        // 检查是否可以进入恋爱模式
+        if (entity.canEnterLoveMode()) {
+          // 进入恋爱模式
+          entity.enterLoveMode();
+          console.log(`💕 ${entity.type} 进入了恋爱模式`);
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

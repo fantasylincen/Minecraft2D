@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>被动生物系统测试</title>
+</head>
+<body>
+    <h1>被动生物系统测试</h1>
+    <p>打开浏览器控制台查看测试结果</p>
+    
+    <script type="module">
+        // 动态导入所需的模块
+        import { EntityManager } from './src/entities/EntityManager.js';
+        import { Cow } from './src/entities/Cow.js';
+        import { Pig } from './src/entities/Pig.js';
+        import { Chicken } from './src/entities/Chicken.js';
+        
+        // 创建测试用的世界配置
+        const worldConfig = {
+            WORLD_HEIGHT: 512,
+            CHUNK_SIZE: 16,
+            BLOCK_SIZE: 16
+        };
+        
+        // 创建实体管理器
+        const entityManager = new EntityManager(worldConfig);
+        
+        console.log('🧪 开始测试被动生物系统...');
+        
+        // 测试创建牛
+        const cow = new Cow(worldConfig, 100, 100);
+        console.log('✅ 牛创建成功:', cow.type, cow.position);
+        
+        // 测试创建猪
+        const pig = new Pig(worldConfig, 150, 100);
+        console.log('✅ 猪创建成功:', pig.type, pig.position);
+        
+        // 测试创建鸡
+        const chicken = new Chicken(worldConfig, 200, 100);
+        console.log('✅ 鸡创建成功:', chicken.type, chicken.position);
+        
+        // 测试添加实体到管理器
+        entityManager.addEntity(cow);
+        entityManager.addEntity(pig);
+        entityManager.addEntity(chicken);
+        
+        console.log('✅ 实体添加到管理器成功');
+        
+        // 测试获取实体
+        const cows = entityManager.getEntitiesByType('cow');
+        const pigs = entityManager.getEntitiesByType('pig');
+        const chickens = entityManager.getEntitiesByType('chicken');
+        
+        console.log('📊 实体统计:');
+        console.log('  牛数量:', cows.length);
+        console.log('  猪数量:', pigs.length);
+        console.log('  鸡数量:', chickens.length);
+        
+        // 测试更新实体
+        entityManager.update(0.016); // 模拟16ms的一帧
+        console.log('✅ 实体更新测试成功');
+        
+        console.log('🎉 被动生物系统测试完成!');
+    </script>
+</body>
+</html>

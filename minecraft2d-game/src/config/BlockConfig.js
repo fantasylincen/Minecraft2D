@@ -185,17 +185,27 @@ export class BlockConfig {
       },
       {
         id: 16,
-        name: 'cactus',
-        displayName: '仙人掌',
+        name: 'crafting_table',
+        displayName: '制作台',
         solid: true,
         transparent: false,
-        color: '#228B22',
+        color: '#8B4513',
         breakable: true,
-        hardness: 0.5,
-        damage: 1  // 接触伤害
+        hardness: 2.0,
+        drops: ['crafting_table_item']
       },
       {
         id: 17,
+        name: 'mushroom',
+        displayName: '蘑菇',
+        solid: false,
+        transparent: true,
+        color: '#8B4513',
+        breakable: true,
+        hardness: 0.1
+      },
+      {
+        id: 18,
         name: 'vine',
         displayName: '藤蔓',
         solid: false,
@@ -205,7 +215,7 @@ export class BlockConfig {
         hardness: 0.2
       },
       {
-        id: 18,
+        id: 19,
         name: 'ice',
         displayName: '冰块',
         solid: true,
@@ -217,7 +227,7 @@ export class BlockConfig {
       },
       // 新增的我的世界基础方块
       {
-        id: 19,
+        id: 20,
         name: 'cobblestone',
         displayName: '圆石',
         solid: true,
@@ -228,7 +238,7 @@ export class BlockConfig {
         blastResistance: 6.0
       },
       {
-        id: 20,
+        id: 21,
         name: 'bedrock',
         displayName: '基岩',
         solid: true,
@@ -239,7 +249,7 @@ export class BlockConfig {
         blastResistance: 3600000.0
       },
       {
-        id: 21,
+        id: 22,
         name: 'oak_planks',
         displayName: '橡木木板',
         solid: true,
@@ -250,7 +260,7 @@ export class BlockConfig {
         flammable: true
       },
       {
-        id: 22,
+        id: 23,
         name: 'oak_log',
         displayName: '橡木原木',
         solid: true,
@@ -262,7 +272,7 @@ export class BlockConfig {
         drops: ['oak_log']
       },
       {
-        id: 23,
+        id: 24,
         name: 'birch_log',
         displayName: '白桦原木',
         solid: true,
@@ -273,7 +283,7 @@ export class BlockConfig {
         flammable: true
       },
       {
-        id: 24,
+        id: 25,
         name: 'spruce_log',
         displayName: '云杉原木',
         solid: true,
@@ -284,7 +294,7 @@ export class BlockConfig {
         flammable: true
       },
       {
-        id: 25,
+        id: 26,
         name: 'oak_leaves',
         displayName: '橡木树叶',
         solid: true,
@@ -296,7 +306,7 @@ export class BlockConfig {
         decayable: true
       },
       {
-        id: 26,
+        id: 27,
         name: 'birch_leaves',
         displayName: '白桦树叶',
         solid: true,
@@ -308,7 +318,7 @@ export class BlockConfig {
         decayable: true
       },
       {
-        id: 27,
+        id: 28,
         name: 'spruce_leaves',
         displayName: '云杉树叶',
         solid: true,
@@ -320,7 +330,7 @@ export class BlockConfig {
         decayable: true
       },
       {
-        id: 28,
+        id: 29,
         name: 'clay',
         displayName: '粘土',
         solid: true,
@@ -331,7 +341,7 @@ export class BlockConfig {
         drops: ['clay_ball']
       },
       {
-        id: 29,
+        id: 30,
         name: 'snow',
         displayName: '雪块',
         solid: true,
@@ -342,7 +352,7 @@ export class BlockConfig {
         requiresTool: false
       },
       {
-        id: 30,
+        id: 31,
         name: 'snow_layer',
         displayName: '雪层',
         solid: false,
@@ -353,7 +363,7 @@ export class BlockConfig {
         partial: true
       },
       {
-        id: 31,
+        id: 32,
         name: 'obsidian',
         displayName: '黑曜石',
         solid: true,
@@ -365,7 +375,7 @@ export class BlockConfig {
         requiresTool: true
       },
       {
-        id: 32,
+        id: 33,
         name: 'lava',
         displayName: '岩浆',
         solid: false,
@@ -377,7 +387,7 @@ export class BlockConfig {
         lightLevel: 15
       },
       {
-        id: 33,
+        id: 34,
         name: 'sandstone',
         displayName: '砂岩',
         solid: true,
@@ -388,7 +398,7 @@ export class BlockConfig {
         blastResistance: 0.8
       },
       {
-        id: 34,
+        id: 35,
         name: 'red_sand',
         displayName: '红沙',
         solid: true,
@@ -399,7 +409,7 @@ export class BlockConfig {
         gravity: true
       },
       {
-        id: 35,
+        id: 36,
         name: 'red_sandstone',
         displayName: '红砂岩',
         solid: true,
@@ -410,7 +420,7 @@ export class BlockConfig {
         blastResistance: 0.8
       },
       {
-        id: 36,
+        id: 37,
         name: 'granite',
         displayName: '花岗岩',
         solid: true,
@@ -421,7 +431,7 @@ export class BlockConfig {
         blastResistance: 6.0
       },
       {
-        id: 37,
+        id: 38,
         name: 'diorite',
         displayName: '闪长岩',
         solid: true,
@@ -432,7 +442,7 @@ export class BlockConfig {
         blastResistance: 6.0
       },
       {
-        id: 38,
+        id: 39,
         name: 'andesite',
         displayName: '安山岩',
         solid: true,
@@ -443,7 +453,7 @@ export class BlockConfig {
         blastResistance: 6.0
       },
       {
-        id: 39,
+        id: 40,
         name: 'mossy_cobblestone',
         displayName: '苔石',
         solid: true,
@@ -454,7 +464,7 @@ export class BlockConfig {
         blastResistance: 6.0
       },
       {
-        id: 40,
+        id: 41,
         name: 'emerald_ore',
         displayName: '绿宝石矿石',
         solid: true,
@@ -466,7 +476,7 @@ export class BlockConfig {
         requiresTool: true
       },
       {
-        id: 41,
+        id: 42,
         name: 'redstone_ore',
         displayName: '红石矿石',
         solid: true,
@@ -478,7 +488,7 @@ export class BlockConfig {
         lightLevel: 9
       },
       {
-        id: 42,
+        id: 43,
         name: 'lapis_ore',
         displayName: '青金石矿石',
         solid: true,
@@ -489,7 +499,7 @@ export class BlockConfig {
         drops: ['lapis_lazuli']
       },
       {
-        id: 43,
+        id: 44,
         name: 'netherrack',
         displayName: '下界岩',
         solid: true,
@@ -501,7 +511,7 @@ export class BlockConfig {
       },
       // 添加更多装饰性方块以增加多样性
       {
-        id: 44,
+        id: 45,
         name: 'rose',
         displayName: '玫瑰',
         solid: false,
@@ -511,7 +521,7 @@ export class BlockConfig {
         hardness: 0.1
       },
       {
-        id: 45,
+        id: 46,
         name: 'dandelion',
         displayName: '蒲公英',
         solid: false,
@@ -521,7 +531,7 @@ export class BlockConfig {
         hardness: 0.1
       },
       {
-        id: 46,
+        id: 47,
         name: 'dead_bush',
         displayName: '枯死的灌木',
         solid: false,
@@ -531,7 +541,7 @@ export class BlockConfig {
         hardness: 0.1
       },
       {
-        id: 47,
+        id: 48,
         name: 'fern',
         displayName: '蕨类植物',
         solid: false,
@@ -541,7 +551,7 @@ export class BlockConfig {
         hardness: 0.1
       },
       {
-        id: 48,
+        id: 49,
         name: 'poppy',
         displayName: '罂粟花',
         solid: false,
@@ -551,7 +561,7 @@ export class BlockConfig {
         hardness: 0.1
       },
       {
-        id: 49,
+        id: 50,
         name: 'blue_orchid',
         displayName: '兰花',
         solid: false,
@@ -561,7 +571,7 @@ export class BlockConfig {
         hardness: 0.1
       },
       {
-        id: 50,
+        id: 51,
         name: 'allium',
         displayName: '绒球葱',
         solid: false,
@@ -571,7 +581,7 @@ export class BlockConfig {
         hardness: 0.1
       },
       {
-        id: 51,
+        id: 52,
         name: 'azure_bluet',
         displayName: '蓝花美耳草',
         solid: false,
@@ -581,7 +591,7 @@ export class BlockConfig {
         hardness: 0.1
       },
       {
-        id: 52,
+        id: 53,
         name: 'red_tulip',
         displayName: '红色郁金香',
         solid: false,
@@ -591,7 +601,7 @@ export class BlockConfig {
         hardness: 0.1
       },
       {
-        id: 53,
+        id: 54,
         name: 'orange_tulip',
         displayName: '橙色郁金香',
         solid: false,
@@ -601,7 +611,7 @@ export class BlockConfig {
         hardness: 0.1
       },
       {
-        id: 54,
+        id: 55,
         name: 'white_tulip',
         displayName: '白色郁金香',
         solid: false,
@@ -611,7 +621,7 @@ export class BlockConfig {
         hardness: 0.1
       },
       {
-        id: 55,
+        id: 56,
         name: 'pink_tulip',
         displayName: '粉色郁金香',
         solid: false,
@@ -621,7 +631,7 @@ export class BlockConfig {
         hardness: 0.1
       },
       {
-        id: 56,
+        id: 57,
         name: 'oxeye_daisy',
         displayName: '滨菊',
         solid: false,
@@ -632,7 +642,7 @@ export class BlockConfig {
       },
       // 农作物系统方块
       {
-        id: 57,
+        id: 58,
         name: 'farmland',
         displayName: '耕地',
         solid: true,
@@ -643,7 +653,7 @@ export class BlockConfig {
         special: 'farming'
       },
       {
-        id: 58,
+        id: 59,
         name: 'wheat_seeds',
         displayName: '小麦种子',
         solid: false,
@@ -653,7 +663,7 @@ export class BlockConfig {
         hardness: 0.1
       },
       {
-        id: 59,
+        id: 60,
         name: 'wheat',
         displayName: '小麦',
         solid: false,
@@ -664,7 +674,7 @@ export class BlockConfig {
         special: 'crop'
       },
       {
-        id: 60,
+        id: 61,
         name: 'carrot',
         displayName: '胡萝卜',
         solid: false,
@@ -675,7 +685,7 @@ export class BlockConfig {
         special: 'crop'
       },
       {
-        id: 61,
+        id: 62,
         name: 'potato',
         displayName: '土豆',
         solid: false,
@@ -686,7 +696,7 @@ export class BlockConfig {
         special: 'crop'
       },
       {
-        id: 62,
+        id: 63,
         name: 'beetroot',
         displayName: '甜菜根',
         solid: false,
@@ -698,7 +708,7 @@ export class BlockConfig {
       },
       // 农作物生长阶段方块
       {
-        id: 63,
+        id: 64,
         name: 'wheat_stage1',
         displayName: '小麦(发芽)',
         solid: false,
@@ -709,7 +719,7 @@ export class BlockConfig {
         special: 'crop_stage'
       },
       {
-        id: 64,
+        id: 65,
         name: 'wheat_stage2',
         displayName: '小麦(成长)',
         solid: false,
@@ -720,7 +730,7 @@ export class BlockConfig {
         special: 'crop_stage'
       },
       {
-        id: 65,
+        id: 66,
         name: 'carrot_stage1',
         displayName: '胡萝卜(发芽)',
         solid: false,
@@ -731,7 +741,7 @@ export class BlockConfig {
         special: 'crop_stage'
       },
       {
-        id: 66,
+        id: 67,
         name: 'carrot_stage2',
         displayName: '胡萝卜(成长)',
         solid: false,
@@ -742,7 +752,7 @@ export class BlockConfig {
         special: 'crop_stage'
       },
       {
-        id: 67,
+        id: 68,
         name: 'potato_stage1',
         displayName: '土豆(发芽)',
         solid: false,
@@ -753,7 +763,7 @@ export class BlockConfig {
         special: 'crop_stage'
       },
       {
-        id: 68,
+        id: 69,
         name: 'potato_stage2',
         displayName: '土豆(成长)',
         solid: false,
@@ -764,7 +774,7 @@ export class BlockConfig {
         special: 'crop_stage'
       },
       {
-        id: 69,
+        id: 70,
         name: 'beetroot_stage1',
         displayName: '甜菜根(发芽)',
         solid: false,
@@ -775,7 +785,7 @@ export class BlockConfig {
         special: 'crop_stage'
       },
       {
-        id: 70,
+        id: 71,
         name: 'beetroot_stage2',
         displayName: '甜菜根(成长)',
         solid: false,
@@ -784,6 +794,19 @@ export class BlockConfig {
         breakable: true,
         hardness: 0.1,
         special: 'crop_stage'
+      },
+      // 容器方块
+      {
+        id: 72,
+        name: 'chest',
+        displayName: '箱子',
+        solid: true,
+        transparent: false,
+        color: '#8B4513',
+        breakable: true,
+        hardness: 2.5,
+        special: 'container',
+        drops: ['chest_item']
       }
     ];
     

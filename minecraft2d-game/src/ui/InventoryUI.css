@@ -1,486 +1,268 @@
 /* 物品栏UI样式 */
 
-/* 物品槽位基础样式 */
-.item-slot {
-  position: relative;
-  width: 48px;
-  height: 48px;
-  border: 2px solid #8B8B8B;
-  background: #373737;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-sizing: border-box;
-}
-
-.item-slot:hover {
-  border-color: #FFFFFF;
-  background: #4A4A4A;
-}
-
-.item-slot.selected {
-  border-color: #FFFFFF;
-  background: #5A5A5A;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
-}
-
-/* 物品图标 */
-.item-icon {
-  font-size: 24px;
-  line-height: 1;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-}
-
-/* 物品数量 */
-.item-count {
-  position: absolute;
-  bottom: 2px;
-  right: 4px;
-  font-size: 12px;
-  font-weight: bold;
-  color: #FFFFFF;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-  min-width: 12px;
-  text-align: center;
-}
-
-/* 耐久度条 */
-.durability-bar {
-  position: absolute;
-  bottom: 2px;
-  left: 2px;
-  right: 2px;
-  height: 3px;
-  background: rgba(0, 0, 0, 0.6);
-  border-radius: 1px;
-}
-
-.durability-fill {
-  height: 100%;
-  background: linear-gradient(to right, #ff4444, #ffff44, #44ff44);
-  border-radius: 1px;
-  transition: width 0.3s ease;
-}
-
-/* 物品提示框 */
-.item-tooltip {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(16, 16, 16, 0.95);
-  border: 1px solid #404040;
-  border-radius: 4px;
-  padding: 8px;
-  min-width: 150px;
-  max-width: 250px;
-  z-index: 1000;
-  font-size: 12px;
-  color: #FFFFFF;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
-  pointer-events: none;
-}
-
-.tooltip-title {
-  font-weight: bold;
-  margin-bottom: 4px;
-  font-size: 14px;
-}
-
-.tooltip-description {
-  color: #CCCCCC;
-  margin-bottom: 4px;
-  font-style: italic;
-}
-
-.tooltip-durability {
-  color: #FFFF55;
-  margin-bottom: 2px;
-}
-
-.tooltip-rarity {
-  color: #AAAAAA;
-  font-size: 11px;
-  text-transform: uppercase;
-}
-
-/* 快捷栏样式 */
-.hotbar {
+.inventory-ui {
   position: fixed;
-  bottom: 20px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 4px;
-  background: rgba(0, 0, 0, 0.7);
-  padding: 8px;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid #444;
   border-radius: 8px;
-  border: 2px solid #555555;
-  z-index: 100;
-}
-
-.hotbar-slot {
-  /* 继承 .item-slot 样式 */
-}
-
-.hotbar-selection-hint {
-  position: absolute;
-  bottom: -25px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 12px;
-  color: #CCCCCC;
-  text-align: center;
-  white-space: nowrap;
-}
-
-/* 背包界面样式 */
-.inventory-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 20px;
+  min-width: 400px;
+  max-width: 600px;
   z-index: 1000;
-}
-
-.inventory-panel {
-  background: #2D2D2D;
-  border: 2px solid #555555;
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
-  min-width: 500px;
-  max-width: 90vw;
-  max-height: 90vh;
-  overflow: hidden;
-  width: fit-content; /* 允许面板根据内容调整宽度 */
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
 .inventory-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  background: #1A1A1A;
-  border-bottom: 1px solid #555555;
-  flex-shrink: 0; /* 防止头部被压缩 */
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #444;
 }
 
-.inventory-header h3 {
+.inventory-header h2 {
   margin: 0;
-  color: #FFFFFF;
-  font-size: 18px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: #4CAF50;
+  font-size: 24px;
 }
 
 .close-button {
-  background: #555555;
+  background: none;
   border: none;
-  color: #FFFFFF;
-  font-size: 20px;
-  width: 32px;
-  height: 32px;
-  border-radius: 4px;
+  color: #fff;
+  font-size: 24px;
   cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s ease;
-  flex-shrink: 0; /* 防止关闭按钮被压缩 */
+  border-radius: 50%;
+  transition: background-color 0.2s;
 }
 
 .close-button:hover {
-  background: #777777;
-}
-
-.inventory-content {
-  padding: 16px;
-  max-height: 60vh;
-  overflow-y: auto;
-  flex: 1; /* 占据剩余空间 */
-}
-
-.inventory-label {
-  color: #CCCCCC;
-  font-size: 14px;
-  font-weight: bold;
-  margin-bottom: 8px;
-  text-transform: uppercase;
-}
-
-/* 主背包网格 */
-.main-inventory {
-  margin-bottom: 24px;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .inventory-grid {
   display: grid;
   grid-template-columns: repeat(9, 1fr);
-  gap: 4px;
-  padding: 8px;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 4px;
+  gap: 8px;
+  margin-bottom: 20px;
 }
 
 .inventory-slot {
-  /* 继承 .item-slot 样式 */
-}
-
-/* 背包中的快捷栏 */
-.hotbar-in-inventory {
-  /* 样式同 main-inventory */
-}
-
-.hotbar-grid {
-  display: grid;
-  grid-template-columns: repeat(9, 1fr);
-  gap: 4px;
-  padding: 8px;
-  background: rgba(0, 0, 0, 0.3);
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid #555;
   border-radius: 4px;
-}
-
-.inventory-footer {
-  padding: 12px 16px;
-  background: #1A1A1A;
-  border-top: 1px solid #555555;
-  flex-shrink: 0; /* 防止底部被压缩 */
-}
-
-.inventory-stats {
   display: flex;
-  justify-content: space-between;
-  color: #CCCCCC;
-  font-size: 12px;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-/* 游戏中的快捷栏位置 */
-.game-hotbar {
-  /* 确保快捷栏在游戏中正确显示 */
+.inventory-slot:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #4CAF50;
+}
+
+.inventory-slot.selected {
+  border-color: #FFD700;
+  background: rgba(255, 215, 0, 0.2);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.inventory-slot.drag-over {
+  border-color: #4CAF50;
+  background: rgba(76, 175, 80, 0.3);
+}
+
+.inventory-item-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+  color: white;
+}
+
+.item-count {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 0 4px;
+  border-radius: 4px;
+  min-width: 16px;
+  text-align: center;
+}
+
+/* 制作台UI特定样式 */
+.crafting-table-ui {
+  min-width: 500px;
+  max-width: 700px;
+}
+
+.crafting-content {
+  display: flex;
+  gap: 20px;
+}
+
+.crafting-grid {
+  flex: 1;
+}
+
+.crafting-grid h3,
+.result-slot-container h3,
+.player-inventory h3 {
+  margin: 0 0 10px 0;
+  color: #4CAF50;
+  font-size: 16px;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.result-slot-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.result-slot {
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid #555;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.craft-button {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.craft-button:hover {
+  background: #45a049;
+}
+
+.craft-button:disabled {
+  background: #666;
+  cursor: not-allowed;
+}
+
+.player-inventory {
+  flex: 2;
 }
 
 /* 响应式设计 */
-@media (max-width: 1200px) {
-  .inventory-panel {
-    min-width: 450px;
-  }
-  
-  .inventory-header h3 {
-    font-size: 16px;
-  }
-  
-  .close-button {
-    width: 28px;
-    height: 28px;
-    font-size: 18px;
-  }
-  
-  .inventory-content {
-    padding: 14px;
-  }
-  
-  .inventory-label {
-    font-size: 13px;
-  }
-  
-  .inventory-grid,
-  .hotbar-grid {
-    gap: 3px;
-    padding: 6px;
-  }
-  
-  .inventory-stats {
-    font-size: 11px;
-  }
-}
-
 @media (max-width: 768px) {
-  .inventory-panel {
-    min-width: 95vw;
-    margin: 10px;
-    max-height: 85vh;
+  .inventory-ui {
+    min-width: 300px;
+    max-width: 90vw;
+    padding: 15px;
   }
   
-  .inventory-header {
-    padding: 10px 14px;
+  .inventory-grid {
+    grid-template-columns: repeat(9, 1fr);
+    gap: 4px;
   }
   
-  .inventory-header h3 {
-    font-size: 15px;
+  .inventory-slot {
+    width: 30px;
+    height: 30px;
   }
   
-  .close-button {
-    width: 26px;
-    height: 26px;
-    font-size: 16px;
-  }
-  
-  .inventory-content {
-    padding: 12px;
-    max-height: 55vh;
-  }
-  
-  .inventory-label {
+  .inventory-item-icon {
+    width: 24px;
+    height: 24px;
     font-size: 12px;
-    margin-bottom: 6px;
-  }
-  
-  .inventory-grid,
-  .hotbar-grid {
-    grid-template-columns: repeat(6, 1fr);
-    gap: 3px;
-    padding: 6px;
-  }
-  
-  .item-slot {
-    width: 40px;
-    height: 40px;
-  }
-  
-  .item-icon {
-    font-size: 20px;
   }
   
   .item-count {
     font-size: 10px;
+    min-width: 14px;
   }
   
-  .inventory-footer {
-    padding: 10px 14px;
+  .crafting-table-ui {
+    min-width: 300px;
+    max-width: 90vw;
   }
   
-  .inventory-stats {
-    font-size: 10px;
+  .crafting-content {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .grid-container {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  
+  .result-slot {
+    width: 50px;
+    height: 50px;
   }
 }
 
 @media (max-width: 480px) {
-  .inventory-panel {
-    min-width: 98vw;
-    margin: 5px;
-    max-height: 80vh;
-  }
-  
-  .inventory-header {
-    padding: 8px 12px;
-  }
-  
-  .inventory-header h3 {
-    font-size: 14px;
-  }
-  
-  .close-button {
-    width: 24px;
-    height: 24px;
-    font-size: 14px;
-  }
-  
-  .inventory-content {
+  .inventory-ui {
     padding: 10px;
-    max-height: 50vh;
   }
   
-  .inventory-label {
-    font-size: 11px;
-    margin-bottom: 4px;
+  .inventory-header h2 {
+    font-size: 20px;
   }
   
-  .inventory-grid,
-  .hotbar-grid {
-    grid-template-columns: repeat(5, 1fr);
-    gap: 2px;
-    padding: 4px;
+  .inventory-grid {
+    grid-template-columns: repeat(9, 1fr);
+    gap: 3px;
   }
   
-  .item-slot {
-    width: 35px;
-    height: 35px;
+  .inventory-slot {
+    width: 25px;
+    height: 25px;
   }
   
-  .item-icon {
-    font-size: 18px;
+  .inventory-item-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
   }
   
   .item-count {
-    font-size: 9px;
-    bottom: 1px;
-    right: 2px;
+    font-size: 8px;
+    min-width: 12px;
   }
-  
-  .durability-bar {
-    bottom: 1px;
-    left: 1px;
-    right: 1px;
-    height: 2px;
-  }
-  
-  .inventory-footer {
-    padding: 8px 12px;
-  }
-  
-  .inventory-stats {
-    font-size: 9px;
-  }
-}
-
-/* 拖拽状态样式（预留） */
-.item-slot.dragging {
-  opacity: 0.5;
-  transform: scale(0.95);
-}
-
-.item-slot.drag-over {
-  border-color: #55FF55;
-  background: #2A4A2A;
-}
-
-/* 动画效果 */
-@keyframes item-added {
-  0% {
-    transform: scale(1.2);
-    opacity: 0.7;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.item-slot.item-added {
-  animation: item-added 0.3s ease;
-}
-
-/* 空槽位提示 */
-.item-slot.empty:hover::after {
-  content: '+';
-  position: absolute;
-  color: #888888;
-  font-size: 20px;
-  font-weight: bold;
-}
-
-/* 稀有度边框效果 */
-.item-slot.rarity-uncommon {
-  border-color: #55ff55;
-}
-
-.item-slot.rarity-rare {
-  border-color: #5555ff;
-}
-
-.item-slot.rarity-epic {
-  border-color: #aa00aa;
-}
-
-.item-slot.rarity-legendary {
-  border-color: #ffaa00;
-  box-shadow: 0 0 12px rgba(255, 170, 0, 0.6);
 }

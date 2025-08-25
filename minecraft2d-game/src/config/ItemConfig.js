@@ -264,6 +264,118 @@ export const itemDefinitions = {
     description: '香喷喷的面包',
     foodValue: 5,
     saturation: 6.0
+  },
+  
+  // 容器类物品
+  'chest_item': {
+    id: 'chest_item',
+    name: '箱子',
+    type: ItemType.BLOCK,
+    blockId: 71, // 对应 BlockConfig 中的箱子方块ID
+    maxStack: 1,
+    rarity: ItemRarity.UNCOMMON,
+    description: '可以存储物品的箱子'
+  },
+  
+  // 新增：制作台物品 (制作台系统 - 方块实现)
+  {
+    id: 'crafting_table_item',
+    name: 'crafting_table',
+    displayName: '制作台',
+    type: ItemType.BLOCK,
+    blockId: blockConfig.getBlock('crafting_table').id,
+    maxStack: 64,
+    durability: null
+  },
+  // 新增：木板物品 (合成配方系统 - 数据结构)
+  {
+    id: 'planks_item',
+    name: 'planks',
+    displayName: '木板',
+    type: ItemType.MATERIAL,
+    maxStack: 64,
+    durability: null
+  },
+  // 新增：木棍物品 (合成配方系统 - 数据结构)
+  {
+    id: 'sticks_item',
+    name: 'sticks',
+    displayName: '木棍',
+    type: ItemType.MATERIAL,
+    maxStack: 64,
+    durability: null
+  },
+  // 新增：木镐物品 (合成配方系统 - 数据结构)
+  {
+    id: 'wooden_pickaxe_item',
+    name: 'wooden_pickaxe',
+    displayName: '木镐',
+    type: ItemType.TOOL,
+    maxStack: 1,
+    durability: 60
+  },
+  // 新增：木剑物品 (合成配方系统 - 数据结构)
+  {
+    id: 'wooden_sword_item',
+    name: 'wooden_sword',
+    displayName: '木剑',
+    type: ItemType.WEAPON,
+    maxStack: 1,
+    durability: 60
+  },
+  // 新增：石镐物品 (合成配方系统 - 数据结构)
+  {
+    id: 'stone_pickaxe_item',
+    name: 'stone_pickaxe',
+    displayName: '石镐',
+    type: ItemType.TOOL,
+    maxStack: 1,
+    durability: 132
+  },
+  // 新增：石剑物品 (合成配方系统 - 数据结构)
+  {
+    id: 'stone_sword_item',
+    name: 'stone_sword',
+    displayName: '石剑',
+    type: ItemType.WEAPON,
+    maxStack: 1,
+    durability: 132
+  },
+  // 新增：铁镐物品 (合成配方系统 - 数据结构)
+  {
+    id: 'iron_pickaxe_item',
+    name: 'iron_pickaxe',
+    displayName: '铁镐',
+    type: ItemType.TOOL,
+    maxStack: 1,
+    durability: 251
+  },
+  // 新增：铁剑物品 (合成配方系统 - 数据结构)
+  {
+    id: 'iron_sword_item',
+    name: 'iron_sword',
+    displayName: '铁剑',
+    type: ItemType.WEAPON,
+    maxStack: 1,
+    durability: 251
+  },
+  // 新增：钻石镐物品 (合成配方系统 - 数据结构)
+  {
+    id: 'diamond_pickaxe_item',
+    name: 'diamond_pickaxe',
+    displayName: '钻石镐',
+    type: ItemType.TOOL,
+    maxStack: 1,
+    durability: 1562
+  },
+  // 新增：钻石剑物品 (合成配方系统 - 数据结构)
+  {
+    id: 'diamond_sword_item',
+    name: 'diamond_sword',
+    displayName: '钻石剑',
+    type: ItemType.WEAPON,
+    maxStack: 1,
+    durability: 1562
   }
 };
 

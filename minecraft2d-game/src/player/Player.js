@@ -6,7 +6,8 @@
 import { blockConfig } from '../config/BlockConfig.js';
 import { Inventory } from './Inventory.js';
 import { itemConfig, ItemType } from '../config/ItemConfig.js';
-
+import { ContainerManager } from '../blocks/ContainerManager.js';
+import { PlayerAudioController } from '../audio/PlayerAudioController.js';
 
 export class Player {
   constructor(worldConfig) {
@@ -126,7 +127,9 @@ export class Player {
       speedDown: false,     // 降低飞行速度按键
       prevSpeedDown: false, // 上一帧降低速度按键状态
       mine: false,          // 挖掘按键状态
-      prevMine: false       // 上一帧挖掘按键状态
+      prevMine: false,       // 上一帧挖掘按键状态
+      place: false,         // 放置方块按键状态 (新增)
+      prevPlace: false      // 上一帧放置按键状态 (新增)
     };
     
     // 挖掘系统 (TODO #25)
@@ -147,6 +150,7 @@ export class Player {
     
     // 游戏引用
     this.terrainGenerator = null;
+    this.gameEngine = null;  // 新增游戏引擎引用
     
     // 物品栏系统
     this.inventory = new Inventory();
@@ -159,6 +163,12 @@ export class Player {
     const jumpHeight = (this.physics.jumpForce * this.physics.jumpForce) / (2 * this.physics.gravity);
     this.fallDamage.minFallHeight = jumpHeight * 3;
     
+    // 初始化动画控制器
+    this.animationController = null;
+    
+    // 初始化音频控制器 (新增)
+    this.audioController = null;
+    
     console.log('👤 Player 初始化完成');
     console.log(`🟢 跳跃高度: ${jumpHeight.toFixed(1)}像素, 最小摔伤高度: ${this.fallDamage.minFallHeight.toFixed(1)}像素`);
   }
@@ -169,9 +179,39 @@ export class Player {
   setTerrainGenerator(terrainGenerator) {
     this.terrainGenerator = terrainGenerator;
   }
-
+  
+  /**
+   * 设置游戏引擎引用
+   * @param {GameEngine} gameEngine - 游戏引擎
+   */
+  setGameEngine(gameEngine) {
+    this.gameEngine = gameEngine;
+  }
+  
+  /**
+   * 设置动画控制器
+   * @param {PlayerAnimationController} animationController - 动画控制器
+   */
+  setAnimationController(animationController) {
+    this.animationController = animationController;
+  }
+  
+  /**
+   * 设置音频控制器
+   * @param {PlayerAudioController} audioController - 音频控制器
+   */
+  setAudioController(audioController) {
+    this.audioController = audioController;
+  }
+  
   /**
    * 设置鼠标位置
+   */
+  setMousePosition(x, y) {
+    this.mousePosition.x = x;
+    this.mousePosition.y = y;
+  }
+  
    * @param {number} x 鼠标世界坐标X
    * @param {number} y 鼠标世界坐标Y
    */
@@ -280,6 +320,19 @@ export class Player {
     
     // 处理放置方块逻辑 (新增 - 放置方块功能 - 基础实现)
     this.handleBlockPlacement();
+    
+    // 处理容器交互逻辑 (新增)
+    this.handleContainerInteraction();
+    
+    // 更新动画控制器
+    if (this.animationController) {
+      this.animationController.update(deltaTime);
+    }
+    
+    // 更新音频控制器 (新增)
+    if (this.audioController) {
+      this.audioController.update(deltaTime);
+    }
   }
   
   /**
@@ -869,6 +922,34 @@ export class Player {
   render(ctx, camera) {
     const screenPos = camera.worldToScreen(this.position.x, this.position.y);
     
+    // 应用动画偏移
+    let animatedScreenPos = { ...screenPos };
+    let animatedSize = { ...this.size };
+    
+    if (this.animationController) {
+      // 获取动画偏移值
+      const bodyOffsetX = this.animationController.getAnimationValue('bodyOffsetX') || 0;
+      const bodyOffsetY = this.animationController.getAnimationValue('bodyOffsetY') || 0;
+      const bodyScale = this.animationController.getAnimationValue('bodyScale') || 1;
+      
+      animatedScreenPos.x += bodyOffsetX;
+      animatedScreenPos.y += bodyOffsetY;
+      animatedSize.width *= bodyScale;
+      animatedSize.height *= bodyScale;
+      
+      // 获取闪烁效果
+      const flashAlpha = this.animationController.getAnimationValue('flashAlpha');
+      if (flashAlpha > 0) {
+        ctx.fillStyle = `rgba(255, 0, 0, ${flashAlpha})`;
+        ctx.fillRect(
+          animatedScreenPos.x - animatedSize.width / 2,
+          animatedScreenPos.y - animatedSize.height / 2,
+          animatedSize.width,
+          animatedSize.height
+        );
+      }
+    }
+    
     // 玩家主体颜色根据飞行模式和水中状态改变
     let playerColor = this.appearance.color;
     if (this.flyMode.enabled) {
@@ -879,10 +960,10 @@ export class Player {
     
     ctx.fillStyle = playerColor;
     ctx.fillRect(
-      screenPos.x - this.size.width / 2,
-      screenPos.y - this.size.height / 2,
-      this.size.width,
-      this.size.height
+      animatedScreenPos.x - animatedSize.width / 2,
+      animatedScreenPos.y - animatedSize.height / 2,
+      animatedSize.width,
+      animatedSize.height
     );
     
     // 飞行模式特效
@@ -926,18 +1007,27 @@ export class Player {
     const eyeSize = 2;
     const eyeOffsetY = 6;
     
+    // 应用动画效果到眼睛位置
+    let eyeScreenPos = { ...screenPos };
+    if (this.animationController) {
+      const bodyOffsetX = this.animationController.getAnimationValue('bodyOffsetX') || 0;
+      const bodyOffsetY = this.animationController.getAnimationValue('bodyOffsetY') || 0;
+      eyeScreenPos.x += bodyOffsetX;
+      eyeScreenPos.y += bodyOffsetY;
+    }
+    
     // 左眼
     ctx.fillRect(
-      screenPos.x - 3,
-      screenPos.y + eyeOffsetY,
+      eyeScreenPos.x - 3,
+      eyeScreenPos.y + eyeOffsetY,
       eyeSize,
       eyeSize
     );
     
     // 右眼
     ctx.fillRect(
-      screenPos.x + 1,
-      screenPos.y + eyeOffsetY,
+      eyeScreenPos.x + 1,
+      eyeScreenPos.y + eyeOffsetY,
       eyeSize,
       eyeSize
     );
@@ -1016,9 +1106,16 @@ export class Player {
     const rarityColor = this.getItemRarityColor(itemDef.rarity);
     ctx.fillStyle = rarityColor;
     
-    // 在玩家手中位置渲染物品图标（在玩家右手上方）
-    const handX = screenPos.x + 10; // 右手位置
-    const handY = screenPos.y - 5;  // 手的高度
+    // 应用手臂动画
+    let handX = screenPos.x + 10; // 右手位置
+    let handY = screenPos.y - 5;  // 手的高度
+    
+    if (this.animationController) {
+      const handOffsetX = this.animationController.getAnimationValue('handOffsetX') || 0;
+      const handOffsetY = this.animationController.getAnimationValue('handOffsetY') || 0;
+      handX += handOffsetX;
+      handY += handOffsetY;
+    }
     
     ctx.fillText(itemIcon, handX, handY);
     

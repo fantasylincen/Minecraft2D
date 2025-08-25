@@ -19,6 +19,9 @@ export class TerrainGenerator {
     this.detailNoise = new SimplexNoise(seed + 3000);
     this.roughnessNoise = new SimplexNoise(seed + 4000);
     
+    // 容器管理器引用
+    this.containerManager = null;
+    
     // 地形生成参数
     this.params = {
       baseHeight: 100,        // 基础海平面高度

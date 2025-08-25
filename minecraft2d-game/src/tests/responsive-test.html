@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft2D UI 响应式设计测试</title>
+    <link rel="stylesheet" href="../App.css">
+    <link rel="stylesheet" href="../ui/HealthBar.css">
+    <link rel="stylesheet" href="../ui/InventoryUI.css">
+    <link rel="stylesheet" href="../ui/UIAnimations.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .test-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .test-header h1 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+        
+        .device-frame {
+            background: #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        
+        .device-label {
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        
+        .device-screen {
+            background: #000;
+            border: 2px solid #555;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* 模拟游戏UI元素 */
+        .top-bar {
+            position: relative;
+            height: 60px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.4));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            margin-bottom: 20px;
+        }
+        
+        .game-title h2 {
+            color: #4CAF50;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .game-stats {
+            display: flex;
+            gap: 8px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .game-stats span {
+            background: rgba(0,0,0,0.7);
+            padding: 6px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.3);
+            font-size: 12px;
+        }
+        
+        .control-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: fit-content;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            margin-bottom: 20px;
+        }
+        
+        .control-panel-row {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .control-panel button {
+            background: rgba(76, 175, 80, 0.8);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .health-bar-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .status-bars {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .health-bar, .hunger-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #555;
+        }
+        
+        .health-bar-label, .hunger-bar-label {
+            font-size: 14px;
+            font-weight: bold;
+            color: #FFFFFF;
+        }
+        
+        .health-bar-background, .hunger-bar-background {
+            width: 120px;
+            height: 16px;
+            background: #333;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #444;
+        }
+        
+        .health-bar-fill {
+            height: 100%;
+            width: 70%;
+            background: #ff4757;
+            border-radius: 8px;
+        }
+        
+        .hunger-bar-fill {
+            height: 100%;
+            width: 50%;
+            background: #ffa502;
+            border-radius: 8px;
+        }
+        
+        /* 设备尺寸模拟 */
+        .mobile-small .device-screen {
+            width: 360px;
+            height: 640px;
+        }
+        
+        .mobile-medium .device-screen {
+            width: 480px;
+            height: 800px;
+        }
+        
+        .tablet .device-screen {
+            width: 768px;
+            height: 1024px;
+        }
+        
+        .desktop-small .device-screen {
+            width: 1024px;
+            height: 768px;
+        }
+        
+        .desktop-large .device-screen {
+            width: 1200px;
+            height: 800px;
+        }
+        
+        .test-instructions {
+            background: rgba(0,0,0,0.7);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+        
+        .test-instructions h2 {
+            color: #4CAF50;
+            margin-top: 0;
+        }
+        
+        .test-instructions ul {
+            padding-left: 20px;
+        }
+        
+        .test-instructions li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>🎮 Minecraft2D UI 响应式设计测试</h1>
+            <p>验证UI元素在不同屏幕尺寸下的显示效果</p>
+        </div>
+        
+        <!-- 超小屏幕设备 (360px) -->
+        <div class="device-frame mobile-small">
+            <div class="device-label">📱 超小屏幕设备 (360px)</div>
+            <div class="device-screen">
+                <div class="top-bar">
+                    <div class="game-title">
+                        <h2>Minecraft2D</h2>
+                    </div>
+                    <div class="game-stats">
+                        <span>FPS: 60</span>
+                        <span>方块: 1200</span>
+                        <span>位置: (123, 456)</span>
+                    </div>
+                </div>
+                
+                <div class="control-panel">
+                    <div class="control-panel-row">
+                        <button>显示调试</button>
+                        <button>保存游戏</button>
+                    </div>
+                    <div class="control-panel-row">
+                        <button>⚙️ 配置</button>
+                        <button>🎮 控制</button>
+                    </div>
+                </div>
+                
+                <div class="health-bar-container">
+                    <div class="status-bars">
+                        <div class="health-bar">
+                            <div class="health-bar-label">❤️</div>
+                            <div class="health-bar-background">
+                                <div class="health-bar-fill"></div>
+                            </div>
+                            <div class="health-bar-text">70/100</div>
+                        </div>
+                        <div class="hunger-bar">
+                            <div class="hunger-bar-label">🍖</div>
+                            <div class="hunger-bar-background">
+                                <div class="hunger-bar-fill"></div>
+                            </div>
+                            <div class="hunger-bar-text">50/100</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 小屏幕设备 (480px) -->
+        <div class="device-frame mobile-medium">
+            <div class="device-label">📱 小屏幕设备 (480px)</div>
+            <div class="device-screen">
+                <div class="top-bar">
+                    <div class="game-title">
+                        <h2>Minecraft2D</h2>
+                    </div>
+                    <div class="game-stats">
+                        <span>FPS: 60</span>
+                        <span>方块: 1200</span>
+                        <span>位置: (123, 456)</span>
+                    </div>
+                </div>
+                
+                <div class="control-panel">
+                    <div class="control-panel-row">
+                        <button>显示调试</button>
+                        <button>保存游戏</button>
+                        <button>重新生成</button>
+                    </div>
+                    <div class="control-panel-row">
+                        <button>⚙️ 配置</button>
+                        <button>🎮 控制</button>
+                    </div>
+                </div>
+                
+                <div class="health-bar-container">
+                    <div class="status-bars">
+                        <div class="health-bar">
+                            <div class="health-bar-label">❤️</div>
+                            <div class="health-bar-background">
+                                <div class="health-bar-fill"></div>
+                            </div>
+                            <div class="health-bar-text">70/100</div>
+                        </div>
+                        <div class="hunger-bar">
+                            <div class="hunger-bar-label">🍖</div>
+                            <div class="hunger-bar-background">
+                                <div class="hunger-bar-fill"></div>
+                            </div>
+                            <div class="hunger-bar-text">50/100</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 平板设备 (768px) -->
+        <div class="device-frame tablet">
+            <div class="device-label">📱 平板设备 (768px)</div>
+            <div class="device-screen">
+                <div class="top-bar">
+                    <div class="game-title">
+                        <h2>Minecraft2D - 2D Minecraft</h2>
+                    </div>
+                    <div class="game-stats">
+                        <span>FPS: 60</span>
+                        <span>方块: 1200</span>
+                        <span>位置: (123, 456)</span>
+                        <span>❤️ 70/100</span>
+                        <span>🍖 50/100</span>
+                    </div>
+                </div>
+                
+                <div class="control-panel">
+                    <div class="control-panel-row">
+                        <button>显示调试信息</button>
+                        <button>保存游戏</button>
+                        <button>重新生成世界</button>
+                    </div>
+                    <div class="control-panel-row">
+                        <button>⚙️ 游戏配置</button>
+                        <button>🎮 控制说明</button>
+                    </div>
+                </div>
+                
+                <div class="health-bar-container">
+                    <div class="status-bars">
+                        <div class="health-bar">
+                            <div class="health-bar-label">❤️</div>
+                            <div class="health-bar-background">
+                                <div class="health-bar-fill"></div>
+                            </div>
+                            <div class="health-bar-text">70/100</div>
+                        </div>
+                        <div class="hunger-bar">
+                            <div class="hunger-bar-label">🍖</div>
+                            <div class="hunger-bar-background">
+                                <div class="hunger-bar-fill"></div>
+                            </div>
+                            <div class="hunger-bar-text">50/100</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 小桌面设备 (1024px) -->
+        <div class="device-frame desktop-small">
+            <div class="device-label">💻 小桌面设备 (1024px)</div>
+            <div class="device-screen">
+                <div class="top-bar">
+                    <div class="game-title">
+                        <h2>Minecraft2D - 2D Minecraft</h2>
+                    </div>
+                    <div class="game-stats">
+                        <span>FPS: 60</span>
+                        <span>方块: 1200</span>
+                        <span>位置: (123, 456)</span>
+                        <span>❤️ 70/100</span>
+                        <span>🍖 50/100</span>
+                        <span>✈️ 飞行: 100%</span>
+                    </div>
+                </div>
+                
+                <div class="control-panel">
+                    <div class="control-panel-row">
+                        <button>显示调试信息</button>
+                        <button>保存游戏</button>
+                        <button>重新生成世界</button>
+                    </div>
+                    <div class="control-panel-row">
+                        <button>⚙️ 游戏配置</button>
+                        <button>🎮 控制说明</button>
+                    </div>
+                </div>
+                
+                <div class="health-bar-container">
+                    <div class="status-bars">
+                        <div class="health-bar">
+                            <div class="health-bar-label">❤️</div>
+                            <div class="health-bar-background">
+                                <div class="health-bar-fill"></div>
+                            </div>
+                            <div class="health-bar-text">70/100</div>
+                        </div>
+                        <div class="hunger-bar">
+                            <div class="hunger-bar-label">🍖</div>
+                            <div class="hunger-bar-background">
+                                <div class="hunger-bar-fill"></div>
+                            </div>
+                            <div class="hunger-bar-text">50/100</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 大桌面设备 (1200px) -->
+        <div class="device-frame desktop-large">
+            <div class="device-label">💻 大桌面设备 (1200px)</div>
+            <div class="device-screen">
+                <div class="top-bar">
+                    <div class="game-title">
+                        <h2>Minecraft2D - 2D Minecraft</h2>
+                    </div>
+                    <div class="game-stats">
+                        <span>FPS: 60</span>
+                        <span>方块: 1200</span>
+                        <span>位置: (123, 456)</span>
+                        <span>❤️ 70/100</span>
+                        <span>🍖 50/100</span>
+                        <span>✈️ 飞行: 100%</span>
+                        <span>🕰️ 12:00</span>
+                    </div>
+                </div>
+                
+                <div class="control-panel">
+                    <div class="control-panel-row">
+                        <button>显示调试信息</button>
+                        <button>保存游戏</button>
+                        <button>重新生成世界</button>
+                    </div>
+                    <div class="control-panel-row">
+                        <button>⚙️ 游戏配置</button>
+                        <button>🎮 控制说明</button>
+                    </div>
+                </div>
+                
+                <div class="health-bar-container">
+                    <div class="status-bars">
+                        <div class="health-bar">
+                            <div class="health-bar-label">❤️</div>
+                            <div class="health-bar-background">
+                                <div class="health-bar-fill"></div>
+                            </div>
+                            <div class="health-bar-text">70/100</div>
+                        </div>
+                        <div class="hunger-bar">
+                            <div class="hunger-bar-label">🍖</div>
+                            <div class="hunger-bar-background">
+                                <div class="hunger-bar-fill"></div>
+                            </div>
+                            <div class="hunger-bar-text">50/100</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-instructions">
+            <h2>📋 测试说明</h2>
+            <ul>
+                <li>检查不同屏幕尺寸下顶部状态栏的显示效果</li>
+                <li>验证控制面板按钮在各尺寸下的布局和尺寸</li>
+                <li>确认血条和饥饿值在不同屏幕下的适配</li>
+                <li>观察UI元素在不同断点下的响应式变化</li>
+                <li>确保所有元素在各自屏幕尺寸下都能正常显示且不重叠</li>
+            </ul>
+            <p>✅ 如果所有设备模拟显示正常，则响应式设计测试通过</p>
+        </div>
+    </div>
+</body>
+</html>

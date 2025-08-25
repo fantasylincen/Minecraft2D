@@ -7,6 +7,8 @@ import { TerrainGenerator } from './world/TerrainGenerator.js';
 import { StorageManager } from './storage/StorageManager.js';
 import { HealthBar } from './ui/HealthBar.jsx';
 import { InventoryController } from './ui/InventoryUI.jsx';
+import CraftingTableUI from './ui/CraftingTableUI.jsx';
+import FurnaceUI from './ui/FurnaceUI.jsx';
 import { ErrorLogViewer } from './ui/ErrorLogViewer.jsx';
 import DebugConsole from './ui/DebugConsole.jsx';
 import { GameConfig, gameConfig } from './config/GameConfig.js';
@@ -30,6 +32,16 @@ function App() {
   });
   const [showControlsHelp, setShowControlsHelp] = useState(false);
   const [showErrorLog, setShowErrorLog] = useState(false);
+  // 添加制作台界面显示状态
+  const [showCraftingTable, setShowCraftingTable] = useState(false);
+  // 添加当前制作台引用
+  const [currentCraftingTable, setCurrentCraftingTable] = useState(null);
+  // 添加熔炉界面显示状态 (新增)
+  const [showFurnace, setShowFurnace] = useState(false);
+  // 添加当前熔炉引用 (新增)
+  const [currentFurnace, setCurrentFurnace] = useState(null);
+  // 添加玩家背包引用
+  const [playerInventory, setPlayerInventory] = useState(null);
   // 添加状态来控制各个界面元素的显示，默认全部显示
   const [uiVisibility, setUiVisibility] = useState({
     controlsHelp: true,
@@ -98,6 +110,25 @@ function App() {
     // 初始化错误日志记录器
     errorLogger.init();
     
+    // 添加制作台界面打开事件监听器
+    const handleOpenCraftingTable = (event) => {
+      const { craftingTable, playerInventory } = event.detail;
+      setCurrentCraftingTable(craftingTable);
+      setPlayerInventory(playerInventory);
+      setShowCraftingTable(true);
+    };
+    
+    // 添加熔炉界面打开事件监听器 (新增)
+    const handleOpenFurnace = (event) => {
+      const { furnace, playerInventory } = event.detail;
+      setCurrentFurnace(furnace);
+      setPlayerInventory(playerInventory);
+      setShowFurnace(true);
+    };
+    
+    window.addEventListener('openCraftingTable', handleOpenCraftingTable);
+    window.addEventListener('openFurnace', handleOpenFurnace); // 新增
+    
     // 确保Canvas元素已经准备好后再初始化游戏
     const initGame = async () => {
       // 等待DOM完全渲染
@@ -156,6 +187,8 @@ function App() {
       if (gameEngineRef.current) {
         gameEngineRef.current.destroy();
       }
+      window.removeEventListener('openCraftingTable', handleOpenCraftingTable);
+      window.removeEventListener('openFurnace', handleOpenFurnace); // 新增
     };
   }, []);
 
@@ -979,6 +1012,37 @@ function App() {
     setShowUiControlPanel(!showUiControlPanel);
   };
 
+  // 关闭制作台界面
+  const closeCraftingTable = () => {
+    setShowCraftingTable(false);
+    setCurrentCraftingTable(null);
+    setPlayerInventory(null);
+    
+    // 关闭制作台容器
+    if (currentCraftingTable && currentCraftingTable.close) {
+      currentCraftingTable.close();
+    }
+  };
+
+  // 关闭熔炉界面 (新增)
+  const closeFurnace = () => {
+    setShowFurnace(false);
+    setCurrentFurnace(null);
+    setPlayerInventory(null);
+    
+    // 关闭熔炉容器
+    if (currentFurnace && currentFurnace.close) {
+      currentFurnace.close();
+    }
+  };
+
+  // 处理制作操作
+  const handleCraft = (craftingGrid) => {
+    console.log('执行制作操作:', craftingGrid);
+    // 这里应该实现实际的合成逻辑
+    // 暂时只是示例
+  };
+
   return (
     <div className="game-container">
       {/* 游戏画布 */}
@@ -1001,6 +1065,27 @@ function App() {
       
       {/* 游戏UI */}
       <div className="game-ui">
+        {/* 制作台界面 */}
+        {showCraftingTable && currentCraftingTable && playerInventory && (
+          <CraftingTableUI
+            craftingTable={currentCraftingTable}
+            playerInventory={playerInventory}
+            onClose={closeCraftingTable}
+            onCraft={handleCraft}
+            gameEngine={gameEngineRef.current}
+          />
+        )}
+        
+        {/* 熔炉界面 (新增) */}
+        {showFurnace && currentFurnace && playerInventory && (
+          <FurnaceUI
+            furnace={currentFurnace}
+            playerInventory={playerInventory}
+            onClose={closeFurnace}
+            gameEngine={gameEngineRef.current}
+          />
+        )}
+        
         {/* 血条显示 - 物品栏上方 */}
         {uiVisibility.healthBar && (
           <HealthBar className={uiAnimations.healthBar} 
@@ -1252,9 +1337,9 @@ function App() {
           </div>
         )}
         
-        {/* 控制说明 */}
-        {uiVisibility.controlsHelp && showControlsHelp && (
-          <div className={`controls-help ${uiAnimations.controlPanel}`}>
+        {/* 控制说明面板 */}
+        {showControlsHelp && uiVisibility.controlsHelp && (
+          <div className={`controls-help-panel ${uiAnimations.controlPanel}`}>
             <div className="controls-help-header">
               <h3>控制说明:</h3>
               <button 
@@ -1289,24 +1374,25 @@ function App() {
             </div>
           </div>
         )}
-
-        {/* 调试控制台 */}
-        {uiVisibility.debugConsole && (
-          <DebugConsole className={uiAnimations.debugConsole} 
-            gameEngine={gameEngineRef.current}
-            isVisible={showDebugConsole}
-            onToggleVisible={toggleDebugInfo}
-            onSaveGame={saveGame}
+        
+        {/* 错误日志面板 */}
+        {showErrorLog && (
+          <ErrorLogViewer onClose={() => setShowErrorLog(false)} />
+        )}
+        
+        {/* 配置面板 */}
+        {configPanelRef.current && (
+          <ConfigPanel 
+            ref={configPanelRef} 
+            onClose={toggleConfigPanel}
+            className={uiAnimations.controlPanel}
           />
         )}
         
-        {/* 错误日志查看器 */}
-        {uiVisibility.errorLog && showErrorLog && <ErrorLogViewer className={uiAnimations.errorLog} />}
-        
-        {/* 物品栏UI */}
-        {uiVisibility.inventory && gameEngineRef.current && gameEngineRef.current.systems.player && (
-          <InventoryController className={uiAnimations.inventory} 
-            inventory={gameEngineRef.current.systems.player.getInventory()}
+        {/* 调试控制台 - 使用条件渲染和动画类 */}
+        {showDebugConsole && uiVisibility.debugConsole && (
+          <DebugConsole 
+            className={uiAnimations.debugConsole}
             gameEngine={gameEngineRef.current}
           />
         )}

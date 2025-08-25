@@ -191,57 +191,37 @@ body {
   }
 }
 
-@media (max-width: 768px) {
+/* 添加更多细致的媒体查询断点 */
+@media (max-width: 1024px) {
   .top-bar {
-    flex-direction: column;
-    height: auto;
-    padding: 10px;
-    gap: 10px;
-  }
-  
-  .game-title {
-    width: 100%;
-    justify-content: center;
+    height: 45px;
+    padding: 0 12px;
   }
   
   .game-title h2 {
     font-size: 18px;
-    max-width: none;
+    max-width: 180px;
+  }
+  
+  .version {
+    font-size: 9px;
+    padding: 1px 5px;
   }
   
   .game-stats {
-    gap: 6px; /* 缩小间隙 */
-    flex-wrap: nowrap; /* 不允许换行，保持单行显示 */
-    justify-content: flex-end; /* 右对齐 */
-    overflow-x: auto; /* 水平滚动 */
-    width: 100%;
-    padding: 5px 0;
-  }
-  
-  .game-stats::-webkit-scrollbar {
-    height: 4px;
-  }
-  
-  .game-stats::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 2px;
-  }
-  
-  .game-stats::-webkit-scrollbar-thumb {
-    background: rgba(76, 175, 80, 0.5);
-    border-radius: 2px;
+    gap: 5px;
   }
   
   .game-stats span {
-    min-width: 60px; /* 小屏幕下的最小宽度 */
-    width: 70px; /* 小屏幕下的固定宽度 */
-    max-width: 80px;
-    font-size: 10px; /* 小屏幕下的字号 */
-    padding: 4px 6px;
+    min-width: 55px;
+    max-width: 90px;
+    width: 70px;
+    font-size: 10px;
+    padding: 3px 5px;
   }
   
   .game-stats span:nth-child(3) { /* 位置信息 */
-    width: 100px;
+    width: 110px;
     font-size: 9px;
   }
   
@@ -251,13 +231,15 @@ body {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 900px) {
   .top-bar {
-    padding: 5px;
+    height: 40px;
+    padding: 0 10px;
   }
   
   .game-title h2 {
     font-size: 16px;
+    max-width: 160px;
   }
   
   .version {
@@ -270,21 +252,125 @@ body {
   }
   
   .game-stats span {
-    font-size: 8px; /* 更小的字号 */
-    padding: 2px 4px; /* 更小的内边距 */
-    min-width: 45px;
-    width: 50px; /* 更小的固定宽度 */
-    max-width: 60px;
+    min-width: 50px;
+    max-width: 80px;
+    width: 60px;
+    font-size: 9px;
+    padding: 3px 4px;
+  }
+  
+  .game-stats span:nth-child(3) { /* 位置信息 */
+    width: 100px;
+    font-size: 8px;
+  }
+  
+  .game-stats span:nth-child(5) { /* 飞行状态 */
+    width: 80px;
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .top-bar {
+    flex-direction: column;
+    height: auto;
+    padding: 8px;
+    gap: 8px;
+  }
+  
+  .game-title {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .game-title h2 {
+    font-size: 16px;
+    max-width: none;
+  }
+  
+  .version {
+    font-size: 9px;
+    padding: 1px 5px;
+  }
+  
+  .game-stats {
+    gap: 5px; /* 缩小间隙 */
+    flex-wrap: nowrap; /* 不允许换行，保持单行显示 */
+    justify-content: flex-end; /* 右对齐 */
+    overflow-x: auto; /* 水平滚动 */
+    width: 100%;
+    padding: 4px 0;
+    -ms-overflow-style: none; /* 隐藏IE滚动条 */
+    scrollbar-width: none; /* 隐藏Firefox滚动条 */
+  }
+  
+  .game-stats::-webkit-scrollbar {
+    height: 3px;
+  }
+  
+  .game-stats::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 1.5px;
+  }
+  
+  .game-stats::-webkit-scrollbar-thumb {
+    background: rgba(76, 175, 80, 0.5);
+    border-radius: 1.5px;
+  }
+  
+  .game-stats span {
+    min-width: 50px; /* 小屏幕下的最小宽度 */
+    width: 60px; /* 小屏幕下的固定宽度 */
+    max-width: 70px;
+    font-size: 9px; /* 小屏幕下的字号 */
+    padding: 3px 5px;
   }
   
   .game-stats span:nth-child(3) { /* 位置信息 */
     width: 80px;
-    font-size: 7px;
+    font-size: 8px;
   }
   
   .game-stats span:nth-child(5) { /* 飞行状态 */
     width: 70px;
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .top-bar {
+    padding: 5px;
+  }
+  
+  .game-title h2 {
+    font-size: 14px;
+  }
+  
+  .version {
     font-size: 7px;
+    padding: 1px 3px;
+  }
+  
+  .game-stats {
+    gap: 3px;
+  }
+  
+  .game-stats span {
+    font-size: 7px; /* 更小的字号 */
+    padding: 1px 3px; /* 更小的内边距 */
+    min-width: 40px;
+    width: 45px; /* 更小的固定宽度 */
+    max-width: 50px;
+  }
+  
+  .game-stats span:nth-child(3) { /* 位置信息 */
+    width: 70px;
+    font-size: 6px;
+  }
+  
+  .game-stats span:nth-child(5) { /* 飞行状态 */
+    width: 60px;
+    font-size: 6px;
   }
 }
 
@@ -398,6 +484,54 @@ body {
   .control-panel button {
     padding: 5px 8px;
     font-size: 11px;
+    min-width: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .left-control-area {
+    bottom: 8px;
+    left: 8px;
+    max-width: calc(100vw - 16px);
+  }
+  
+  .control-panel {
+    max-width: calc(100vw - 30px);
+    padding: 6px;
+  }
+  
+  .control-panel-row1,
+  .control-panel-row2 {
+    gap: 4px;
+  }
+  
+  .control-panel button {
+    padding: 4px 6px;
+    font-size: 10px;
+    min-width: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .left-control-area {
+    bottom: 5px;
+    left: 5px;
+    max-width: calc(100vw - 10px);
+  }
+  
+  .control-panel {
+    max-width: calc(100vw - 20px);
+    padding: 5px;
+  }
+  
+  .control-panel-row1,
+  .control-panel-row2 {
+    gap: 3px;
+  }
+  
+  .control-panel button {
+    padding: 3px 5px;
+    font-size: 9px;
     min-width: auto;
   }
 }

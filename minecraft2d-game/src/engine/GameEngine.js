@@ -5,7 +5,9 @@
 
 import { EntityManager } from '../entities/EntityManager.js';
 import { AudioManager } from '../audio/AudioManager.js';
+import { PlayerAudioController } from '../audio/PlayerAudioController.js';
 import { FarmingSystem } from '../world/FarmingSystem.js';
+import { ContainerManager } from '../blocks/ContainerManager.js';
 
 export class GameEngine {
   constructor(canvas) {
@@ -84,6 +86,12 @@ export class GameEngine {
     // 农作物系统 (新增)
     this.farmingSystem = new FarmingSystem();
     
+    // 容器管理器 (新增)
+    this.containerManager = new ContainerManager();
+    
+    // 玩家音频控制器 (新增)
+    this.playerAudioController = null;
+    
     // 绑定方法
     this.gameLoop = this.gameLoop.bind(this);
     this.update = this.update.bind(this);
@@ -123,11 +131,42 @@ export class GameEngine {
       this.initializeInput();
       console.log('✅ 输入系统初始化完成');
       
+      // 初始化音频系统
+      this.initializeAudio();
+      console.log('✅ 音频系统初始化完成');
+      
       console.log('✅ 游戏引擎初始化完成');
       return true;
     } catch (error) {
       console.error('❌ 游戏引擎初始化失败:', error);
       return false;
+    }
+  }
+  
+  /**
+   * 初始化音频系统
+   */
+  initializeAudio() {
+    // 音频管理器已经在构造函数中初始化
+    // 玩家音频控制器将在设置玩家时初始化
+  }
+  
+  /**
+   * 设置玩家
+   * @param {Player} player - 玩家实例
+   */
+  setPlayer(player) {
+    this.systems.player = player;
+    
+    // 设置玩家引用
+    if (player) {
+      player.setGameEngine(this);
+      
+      // 创建玩家音频控制器
+      if (this.audioManager) {
+        this.playerAudioController = new PlayerAudioController(player, this.audioManager);
+        player.setAudioController(this.playerAudioController);
+      }
     }
   }
   
@@ -333,6 +372,11 @@ export class GameEngine {
       // 特殊处理：将季节系统传递给农作物系统
       if (this.seasonSystem && this.farmingSystem) {
         this.farmingSystem.setSeasonSystem(this.seasonSystem);
+      }
+      
+      // 特殊处理：当注册地形生成器时，将容器管理器传递给它
+      if (name === 'terrainGenerator' && this.containerManager) {
+        system.setContainerManager(this.containerManager);
       }
     } else {
       console.warn(`⚠️  未知的子系统: ${name}`);
