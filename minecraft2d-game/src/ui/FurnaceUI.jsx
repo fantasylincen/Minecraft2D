@@ -81,8 +81,153 @@ const FurnaceUI = ({
 
   // 处理槽位点击
   const handleSlotClick = (item, source, index) => {
-    // 这里应该实现物品移动逻辑
+    // 实现物品移动逻辑
     console.log(`点击槽位: ${source}, 索引: ${index}`, item);
+    
+    // 如果点击的是玩家背包中的物品
+    if (source === 'player' && item) {
+      // 检查物品类型以确定应该放在哪个槽位
+      const itemDef = gameEngine?.systems?.player?.inventory?.getItemDefinition?.(item.itemId);
+      
+      if (itemDef) {
+        // 如果是燃料
+        if (['coal_item', 'wood_item', 'planks_item', 'sticks_item'].includes(item.itemId)) {
+          // 放入燃料槽位
+          const fuelSlot = furnace.getSlot(1);
+          if (!fuelSlot.itemId || fuelSlot.itemId === item.itemId) {
+            // 移动物品
+            const playerSlot = playerInventory.getSlot(item.slotIndex >= 9 ? item.slotIndex - 9 : item.slotIndex, 
+              item.slotIndex >= 9 ? 'main' : 'hotbar');
+            if (playerSlot && playerSlot.itemId) {
+              // 计算可以移动的数量
+              const maxMove = Math.min(playerSlot.count, 64 - (fuelSlot.count || 0));
+              if (maxMove > 0) {
+                // 更新熔炉槽位
+                if (!fuelSlot.itemId) {
+                  fuelSlot.itemId = playerSlot.itemId;
+                  fuelSlot.count = maxMove;
+                } else {
+                  fuelSlot.count += maxMove;
+                }
+                
+                // 更新玩家背包
+                playerSlot.count -= maxMove;
+                if (playerSlot.count <= 0) {
+                  playerSlot.itemId = null;
+                  playerSlot.count = 0;
+                }
+                
+                // 更新状态
+                setFuelSlot(fuelSlot.itemId ? { ...fuelSlot } : null);
+                const updatedPlayerItems = [...playerItems];
+                const playerItemIndex = updatedPlayerItems.findIndex(i => i.slotIndex === item.slotIndex);
+                if (playerItemIndex !== -1) {
+                  if (playerSlot.count > 0) {
+                    updatedPlayerItems[playerItemIndex] = { ...playerSlot, slotIndex: item.slotIndex };
+                  } else {
+                    updatedPlayerItems.splice(playerItemIndex, 1);
+                  }
+                  setPlayerItems(updatedPlayerItems);
+                }
+                
+                console.log(`移动了 ${maxMove} 个 ${item.itemId} 到燃料槽位`);
+              }
+            }
+          }
+        } 
+        // 如果是可熔炼的物品
+        else if (['iron_ore_item', 'gold_ore_item', 'sand_item', 'clay_ball_item'].includes(item.itemId)) {
+          // 放入输入槽位
+          const inputSlot = furnace.getSlot(0);
+          if (!inputSlot.itemId || inputSlot.itemId === item.itemId) {
+            // 移动物品
+            const playerSlot = playerInventory.getSlot(item.slotIndex >= 9 ? item.slotIndex - 9 : item.slotIndex, 
+              item.slotIndex >= 9 ? 'main' : 'hotbar');
+            if (playerSlot && playerSlot.itemId) {
+              // 计算可以移动的数量
+              const maxMove = Math.min(playerSlot.count, 64 - (inputSlot.count || 0));
+              if (maxMove > 0) {
+                // 更新熔炉槽位
+                if (!inputSlot.itemId) {
+                  inputSlot.itemId = playerSlot.itemId;
+                  inputSlot.count = maxMove;
+                } else {
+                  inputSlot.count += maxMove;
+                }
+                
+                // 更新玩家背包
+                playerSlot.count -= maxMove;
+                if (playerSlot.count <= 0) {
+                  playerSlot.itemId = null;
+                  playerSlot.count = 0;
+                }
+                
+                // 更新状态
+                setInputSlot(inputSlot.itemId ? { ...inputSlot } : null);
+                const updatedPlayerItems = [...playerItems];
+                const playerItemIndex = updatedPlayerItems.findIndex(i => i.slotIndex === item.slotIndex);
+                if (playerItemIndex !== -1) {
+                  if (playerSlot.count > 0) {
+                    updatedPlayerItems[playerItemIndex] = { ...playerSlot, slotIndex: item.slotIndex };
+                  } else {
+                    updatedPlayerItems.splice(playerItemIndex, 1);
+                  }
+                  setPlayerItems(updatedPlayerItems);
+                }
+                
+                console.log(`移动了 ${maxMove} 个 ${item.itemId} 到输入槽位`);
+              }
+            }
+          }
+        }
+      }
+    }
+    // 如果点击的是熔炉槽位中的物品
+    else if (['input', 'fuel', 'output'].includes(source) && item) {
+      // 将物品移回玩家背包
+      const emptySlotIndex = playerInventory.getFirstEmptySlot();
+      if (emptySlotIndex !== -1) {
+        // 获取对应的熔炉槽位
+        let furnaceSlot;
+        if (source === 'input') {
+          furnaceSlot = furnace.getSlot(0);
+        } else if (source === 'fuel') {
+          furnaceSlot = furnace.getSlot(1);
+        } else {
+          furnaceSlot = furnace.getSlot(2);
+        }
+        
+        if (furnaceSlot && furnaceSlot.itemId) {
+          // 移动物品到玩家背包
+          const playerSlot = playerInventory.getSlot(emptySlotIndex >= 9 ? emptySlotIndex - 9 : emptySlotIndex, 
+            emptySlotIndex >= 9 ? 'main' : 'hotbar');
+          if (playerSlot) {
+            playerSlot.itemId = furnaceSlot.itemId;
+            playerSlot.count = furnaceSlot.count;
+            
+            // 清空熔炉槽位
+            furnaceSlot.itemId = null;
+            furnaceSlot.count = 0;
+            
+            // 更新状态
+            if (source === 'input') {
+              setInputSlot(null);
+            } else if (source === 'fuel') {
+              setFuelSlot(null);
+            } else {
+              setOutputSlot(null);
+            }
+            
+            // 更新玩家物品列表
+            const updatedPlayerItems = [...playerItems];
+            updatedPlayerItems.push({ ...playerSlot, slotIndex: emptySlotIndex });
+            setPlayerItems(updatedPlayerItems);
+            
+            console.log(`将 ${furnaceSlot.count} 个 ${furnaceSlot.itemId} 移回玩家背包`);
+          }
+        }
+      }
+    }
   };
 
   // 渲染物品图标

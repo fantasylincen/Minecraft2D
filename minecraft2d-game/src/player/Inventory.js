@@ -397,6 +397,37 @@ export class Inventory {
   }
   
   /**
+   * 获取物品定义 (新增方法)
+   * @param {string} itemId 物品ID
+   * @returns {Object|null} 物品定义
+   */
+  getItemDefinition(itemId) {
+    return itemConfig.getItem(itemId);
+  }
+  
+  /**
+   * 获取第一个空槽位索引 (新增方法)
+   * @returns {number} 空槽位索引，-1表示没有空槽位
+   */
+  getFirstEmptySlot() {
+    // 先检查快捷栏
+    for (let i = 0; i < this.hotbar.length; i++) {
+      if (this.hotbar[i].isEmpty()) {
+        return i;
+      }
+    }
+    
+    // 再检查主背包
+    for (let i = 0; i < this.mainInventory.length; i++) {
+      if (this.mainInventory[i].isEmpty()) {
+        return this.hotbar.length + i; // 返回全局索引
+      }
+    }
+    
+    return -1; // 没有空槽位
+  }
+  
+  /**
    * 检查物品栏是否已满
    * @returns {boolean}
    */

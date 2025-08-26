@@ -155,6 +155,18 @@ export class RecipeManager {
       2500
     ));
     
+    // 添加熔炉配方 (熔炉系统 - 功能实现)
+    this.addRecipe(new Recipe(
+      'furnace_from_cobblestone',
+      '熔炉',
+      [
+        { itemId: 'cobblestone_item', count: 8 }
+      ],
+      { itemId: 'furnace_item', count: 1 },
+      'crafting_table',
+      2000
+    ));
+    
     console.log(`✅ 初始化了 ${this.recipes.size} 个默认配方`);
   }
   

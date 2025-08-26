@@ -400,6 +400,29 @@ export const itemDefinitions = {
     durability: 1562,
     rarity: ItemRarity.EPIC,
     description: '顶级武器，拥有最强的攻击力'
+  },
+  // 添加圆石物品定义 (熔炉系统 - 功能实现)
+  'cobblestone_item': {
+    id: 'cobblestone_item',
+    name: 'cobblestone',
+    displayName: '圆石',
+    type: ItemType.MATERIAL,
+    maxStack: 64,
+    durability: null,
+    rarity: ItemRarity.COMMON,
+    description: '由石头烧制而成的圆石'
+  },
+  // 添加熔炉物品定义 (熔炉系统 - 功能实现)
+  'furnace_item': {
+    id: 'furnace_item',
+    name: 'furnace',
+    displayName: '熔炉',
+    type: ItemType.BLOCK,
+    blockId: 73, // 对应 BlockConfig 中的熔炉方块ID
+    maxStack: 64,
+    durability: null,
+    rarity: ItemRarity.UNCOMMON,
+    description: '用于熔炼矿石和烹饪食物的熔炉'
   }
 };
 

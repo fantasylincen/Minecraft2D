@@ -807,6 +807,19 @@ export class BlockConfig {
         hardness: 2.5,
         special: 'container',
         drops: ['chest_item']
+      },
+      // 添加熔炉方块定义 (熔炉系统 - 功能实现)
+      {
+        id: 73,
+        name: 'furnace',
+        displayName: '熔炉',
+        solid: true,
+        transparent: false,
+        color: '#696969',
+        breakable: true,
+        hardness: 3.5,
+        special: 'container',
+        drops: ['furnace_item']
       }
     ];
     
