@@ -6,8 +6,9 @@
 import { gameConfig } from '../config/GameConfig.js';
 
 export class ConfigPanel {
-  constructor(containerId = 'config-panel') {
+  constructor(containerId = 'config-panel', gameEngine = null) {
     this.containerId = containerId;
+    this.gameEngine = gameEngine; // 添加游戏引擎引用
     this.isVisible = false;
     this.updateCallbacks = new Map();
     
@@ -200,42 +201,64 @@ export class ConfigPanel {
             return;
           }
           
-          const settingsHTML = this.generateSettingsHTML(category, config.settings);
-          console.log(`📄 生成的设置 HTML 长度 (${category}):`, settingsHTML.length);
-          
-          if (settingsHTML.length === 0) {
-            console.warn(`⚠️ 配置类别 ${category} 生成的HTML为空`);
+          // 为开发者选项添加特殊功能
+          let specialContent = '';
+          if (category === 'developer') {
+            specialContent = `
+              <div class="config-setting-group">
+                <h4>📦 给玩家添加方块</h4>
+                <div class="config-setting-item">
+                  <label>方块类型:</label>
+                  <select id="add-block-type" class="config-input">
+                    <option value="block_dirt">泥土</option>
+                    <option value="block_stone">石头</option>
+                    <option value="block_grass">草方块</option>
+                    <option value="block_sand">沙子</option>
+                    <option value="block_wood">木头</option>
+                    <option value="block_leaves">树叶</option>
+                    <option value="block_iron_ore">铁矿石</option>
+                    <option value="block_gold_ore">金矿石</option>
+                    <option value="block_diamond_ore">钻石矿石</option>
+                  </select>
+                </div>
+                <div class="config-setting-item">
+                  <label>数量:</label>
+                  <input type="number" id="add-block-quantity" class="config-input" value="64" min="1" max="64">
+                </div>
+                <div class="config-setting-item">
+                  <button id="add-block-btn" class="config-btn config-btn-primary">添加方块到玩家物品栏</button>
+                </div>
+              </div>
+            `;
           }
+          
+          const settingsHtml = settingKeys.map(key => {
+            const setting = config.settings[key];
+            return this.generateSettingItem(category, key, setting);
+          }).join('');
           
           contentParts.push(`
             <div class="config-tab-content" data-category="${category}" style="display: none;">
               <h3>${this.getCategoryIcon(category)} ${config.displayName || category}</h3>
-              <div class="config-settings">
-                ${settingsHTML}
+              ${specialContent}
+              <div class="config-setting-group">
+                <h4>设置项</h4>
+                ${settingsHtml}
               </div>
             </div>
           `);
-          
-        } catch (categoryError) {
-          console.error(`❌ 处理配置类别 ${category} 失败:`, categoryError);
+        } catch (error) {
+          console.error(`❌ 生成配置类别 ${category} 内容失败:`, error);
           contentParts.push(`
             <div class="config-tab-content" data-category="${category}" style="display: none;">
               <h3>${this.getCategoryIcon(category)} ${category}</h3>
-              <div class="error-message">❌ 配置加载失败: ${categoryError.message}</div>
+              <div class="error-message">❌ 生成内容失败: ${error.message}</div>
             </div>
           `);
         }
       });
       
-      const finalContent = contentParts.join('');
-      console.log(`📄 生成的最终内容长度:`, finalContent.length);
-      
-      if (finalContent.length === 0) {
-        return '<div class="error-message">❌ 无法生成配置内容</div>';
-      }
-      
-      return finalContent;
-      
+      return contentParts.join('');
     } catch (error) {
       console.error('❌ 生成配置内容失败:', error);
       return '<div class="error-message">❌ 生成配置内容失败</div>';
@@ -350,6 +373,49 @@ export class ConfigPanel {
   }
   
   /**
+   * 生成单个设置项HTML
+   */
+  generateSettingItem(category, key, setting) {
+    try {
+      if (!setting) {
+        console.warn(`⚠️ 设置项 ${category}.${key} 为空`);
+        return `<div class="error-setting">❌ 设置项 ${key} 数据为空</div>`;
+      }
+      
+      const inputId = `config-${category}-${key}`;
+      const currentValue = setting.value;
+      
+      // 验证必要属性
+      if (setting.value === undefined) {
+        console.warn(`⚠️ 设置项 ${category}.${key} 缺少value属性`);
+        return `<div class="error-setting">❌ 设置项 ${key} 缺少数值</div>`;
+      }
+      
+      return `
+        <div class="config-setting-item">
+          <div class="config-setting-header">
+            <label for="${inputId}" class="config-setting-label">
+              ${setting.displayName || key}
+            </label>
+            <span class="config-setting-value" id="${inputId}-value">
+              ${this.formatValue(currentValue, setting.unit)}
+            </span>
+          </div>
+          <div class="config-setting-description">
+            ${setting.description || '无描述'}
+          </div>
+          <div class="config-setting-control">
+            ${this.generateInputControl(inputId, category, key, setting)}
+          </div>
+        </div>
+      `;
+    } catch (error) {
+      console.error(`❌ 生成设置项 ${category}.${key} 失败:`, error);
+      return `<div class="error-setting">❌ 设置项 ${key} 生成失败: ${error.message}</div>`;
+    }
+  }
+  
+  /**
    * 生成输入控件
    */
   generateInputControl(inputId, category, key, setting) {
@@ -458,7 +524,82 @@ export class ConfigPanel {
     } else if (target.classList.contains('config-regenerate-btn')) {
       // 处理重新生成地图按钮 (TODO #15)
       this.handleRegenerateWorld(target.dataset.category);
+    } else if (target.id === 'add-block-btn') {
+      // 处理添加方块到玩家物品栏按钮
+      this.handleAddBlockToPlayer();
     }
+  }
+
+  /**
+   * 处理添加方块到玩家物品栏
+   */
+  handleAddBlockToPlayer() {
+    try {
+      // 获取选择的方块类型和数量
+      const blockTypeSelect = document.getElementById('add-block-type');
+      const quantityInput = document.getElementById('add-block-quantity');
+      
+      if (!blockTypeSelect || !quantityInput) {
+        console.error('❌ 未找到添加方块的界面元素');
+        this.showNotification('❌ 界面元素缺失', 'error');
+        return;
+      }
+      
+      const blockType = blockTypeSelect.value;
+      const quantity = parseInt(quantityInput.value) || 64;
+      
+      // 验证数量
+      if (quantity < 1 || quantity > 64) {
+        this.showNotification('❌ 数量必须在1-64之间', 'error');
+        return;
+      }
+      
+      // 获取游戏引擎实例
+      const gameEngine = window.gameEngine || this.gameEngine;
+      
+      if (!gameEngine || !gameEngine.systems || !gameEngine.systems.player) {
+        console.error('❌ 游戏引擎或玩家系统不可用');
+        this.showNotification('❌ 游戏引擎不可用', 'error');
+        return;
+      }
+      
+      const player = gameEngine.systems.player;
+      
+      // 向玩家物品栏添加方块
+      const remaining = player.inventory.addItem(blockType, quantity);
+      
+      if (remaining === 0) {
+        this.showNotification(`✅ 成功添加 ${quantity} 个 ${this.getBlockDisplayName(blockType)}`, 'success');
+      } else {
+        const added = quantity - remaining;
+        this.showNotification(`✅ 添加了 ${added} 个 ${this.getBlockDisplayName(blockType)}，${remaining} 个无法添加`, 'info');
+      }
+      
+      console.log(`📦 添加方块到玩家物品栏: ${blockType} x${quantity}`);
+      
+    } catch (error) {
+      console.error('❌ 添加方块到玩家物品栏失败:', error);
+      this.showNotification(`❌ 添加失败: ${error.message}`, 'error');
+    }
+  }
+  
+  /**
+   * 获取方块显示名称
+   */
+  getBlockDisplayName(blockType) {
+    const blockNames = {
+      'block_dirt': '泥土',
+      'block_stone': '石头',
+      'block_grass': '草方块',
+      'block_sand': '沙子',
+      'block_wood': '木头',
+      'block_leaves': '树叶',
+      'block_iron_ore': '铁矿石',
+      'block_gold_ore': '金矿石',
+      'block_diamond_ore': '钻石矿石'
+    };
+    
+    return blockNames[blockType] || blockType;
   }
   
   /**

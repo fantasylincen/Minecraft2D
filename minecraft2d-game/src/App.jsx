@@ -308,12 +308,11 @@ function App() {
       
       // 初始化配置面板
       console.log('初始化配置面板...');
-      const configPanel = new ConfigPanel();
-      configPanel.gameConfig = gameConfig;  // 添加这一行
+      const configPanel = new ConfigPanel('config-panel', gameEngine); // 传入游戏引擎实例
+      configPanel.gameConfig = gameConfig;
       configPanelRef.current = configPanel;
       
       // 为配置面板提供游戏引擎访问权限 (TODO #15)
-      configPanel.gameEngine = gameEngine;
       window.gameEngine = gameEngine; // 全局访问
       
       // 设置配置变更回调 (TODO #23)

@@ -5,7 +5,6 @@
 
 import { EntityManager } from '../entities/EntityManager.js';
 import { AudioManager } from '../audio/AudioManager.js';
-import { PlayerAudioController } from '../audio/PlayerAudioController.js';
 import { FarmingSystem } from '../world/FarmingSystem.js';
 import { ContainerManager } from '../blocks/ContainerManager.js';
 import { inputManager } from '../input/InputManager.js'; // 新增导入
@@ -311,10 +310,12 @@ export class GameEngine {
       player.setGameEngine(this);
       
       // 创建玩家音频控制器
+      /*
       if (this.audioManager) {
         this.playerAudioController = new PlayerAudioController(player, this.audioManager);
         player.setAudioController(this.playerAudioController);
       }
+      */
     }
   }
   
