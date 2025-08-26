@@ -22,8 +22,8 @@ export class PlayerRendering {
     // 计算屏幕坐标
     const screenPos = camera.worldToScreen(this.player.position.x, this.player.position.y);
     
-    // 根据潜行模式调整玩家尺寸
-    const sizeMultiplier = this.player.sneakMode.enabled ? this.player.sneakMode.speedMultiplier : 1.0;
+    // 不再根据潜行模式调整玩家尺寸，只影响速度
+    const sizeMultiplier = 1.0;
     const scaledWidth = this.player.size.width * sizeMultiplier * camera.zoom;
     const scaledHeight = this.player.size.height * sizeMultiplier * camera.zoom;
     
@@ -100,13 +100,13 @@ export class PlayerRendering {
     // 保存原始的变换状态
     ctx.save();
     
-    // 根据缩放和尺寸调整激光线条样式
+    // 根据缩放调整激光线条样式，但不使用潜行模式的尺寸乘数
     ctx.strokeStyle = '#00FFFF'; // 亮蓝色
-    ctx.lineWidth = 2 * zoom * sizeMultiplier;
+    ctx.lineWidth = 2 * zoom; // 不使用sizeMultiplier
     ctx.lineCap = 'round';
     
-    // 计算激光线条的终点（根据缩放和尺寸调整）
-    const laserLength = this.player.size.height * 2 * zoom * sizeMultiplier; // 2个玩家的身高
+    // 计算激光线条的终点（根据缩放调整，但不使用潜行模式的尺寸乘数）
+    const laserLength = this.player.size.height * 2 * zoom; // 2个玩家的身高，不使用sizeMultiplier
     const endX = screenPos.x + this.player.facing.directionX * laserLength;
     const endY = screenPos.y - this.player.facing.directionY * laserLength; // Y轴翻转修复
     
@@ -116,9 +116,9 @@ export class PlayerRendering {
     ctx.lineTo(endX, endY);
     ctx.stroke();
     
-    // 绘制基准点（红色小圆点），根据缩放和尺寸调整大小
+    // 绘制基准点（红色小圆点），根据缩放调整大小，但不使用潜行模式的尺寸乘数
     ctx.fillStyle = '#FF0000'; // 红色
-    const dotRadius = (2 * zoom * sizeMultiplier + 1) / 2; // 直径比 略宽1像素
+    const dotRadius = (2 * zoom + 1) / 2; // 直径比 略宽1像素，不使用sizeMultiplier
     ctx.beginPath();
     ctx.arc(screenPos.x, screenPos.y, dotRadius, 0, Math.PI * 2);
     ctx.fill();
@@ -174,9 +174,9 @@ export class PlayerRendering {
       // 保存原始的变换状态
       ctx.save();
       
-      // 设置射线样式，根据尺寸调整宽度
+      // 设置射线样式，不使用潜行模式的尺寸乘数
       ctx.strokeStyle = rayColor;
-      ctx.lineWidth = rayWidth * sizeMultiplier;
+      ctx.lineWidth = rayWidth; // 不使用sizeMultiplier
       ctx.lineCap = 'round';
       
       // 获取目标方块（用于障碍物检测）
@@ -199,9 +199,10 @@ export class PlayerRendering {
         const maxDistance = rayLength * this.player.worldConfig.BLOCK_SIZE;
         
         // 计算实际的光线终点（考虑障碍物）
+        // 眼睛位置不使用潜行模式的尺寸乘数
         const endPoint = this.calculateRayEndPoint(
           this.player.position.x,
-          this.player.position.y + 2 * sizeMultiplier, // 眼睛稍微高一点，根据尺寸调整
+          this.player.position.y + 2, // 眼睛稍微高一点，不使用sizeMultiplier
           directionX,
           directionY,
           maxDistance
@@ -217,9 +218,9 @@ export class PlayerRendering {
       ctx.lineTo(endX, endY);
       ctx.stroke();
       
-      // 绘制基准点（红色小圆点），根据尺寸调整大小
+      // 绘制基准点（红色小圆点），不使用潜行模式的尺寸乘数
       ctx.fillStyle = '#FF0000'; // 红色
-      const dotRadius = (rayWidth * sizeMultiplier + 1) / 2; // 直径比射线略宽1像素
+      const dotRadius = (rayWidth + 1) / 2; // 直径比射线略宽1像素，不使用sizeMultiplier
       ctx.beginPath();
       ctx.arc(screenPos.x, screenPos.y, dotRadius, 0, Math.PI * 2);
       ctx.fill();
@@ -420,8 +421,8 @@ export class PlayerRendering {
    */
   renderDebugInfo(ctx, screenPos, zoom = 1, sizeMultiplier = 1.0) {
     ctx.fillStyle = '#000';
-    // 根据缩放和尺寸调整字体大小
-    const fontSize = 12 * zoom * sizeMultiplier;
+    // 根据缩放调整字体大小，但不使用潜行模式的尺寸乘数
+    const fontSize = 12 * zoom;
     ctx.font = `${fontSize}px Arial`;
     
     const debugText = [
@@ -430,15 +431,15 @@ export class PlayerRendering {
       `Ground: ${this.player.physics.onGround}`,
       `Jump: ${this.player.physics.canJump}`,
       `Flying: ${this.player.flyMode.enabled}`,
-      `Sneaking: ${this.player.sneakMode.enabled}`, // 添加潜行模式状态
+      `Sneaking: ${this.player.sneakModule.isSneaking()}`, // 添加潜行模式状态
       `In Water: ${this.player.inWater.isSwimming}`,
       this.player.flyMode.enabled ? `Speed: ${this.player.getFlySpeedPercentage()}%` : ''
     ].filter(text => text !== ''); // 过滤空字符串
     
-    // 根据缩放和尺寸调整文本位置
-    const lineHeight = 14 * zoom * sizeMultiplier;
-    const xOffset = 20 * zoom * sizeMultiplier;
-    const yOffset = 30 * zoom * sizeMultiplier;
+    // 根据缩放调整文本位置，但不使用潜行模式的尺寸乘数
+    const lineHeight = 14 * zoom;
+    const xOffset = 20 * zoom;
+    const yOffset = 30 * zoom;
     
     debugText.forEach((text, index) => {
       ctx.fillText(text, screenPos.x + xOffset, screenPos.y - yOffset + index * lineHeight);

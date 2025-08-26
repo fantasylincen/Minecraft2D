@@ -19,6 +19,7 @@ import { PlayerPlacement } from './PlayerPlacement.js';
 import { PlayerRendering } from './PlayerRendering.js';
 import { PlayerInventory } from './PlayerInventory.js';
 import { PlayerInteraction } from './PlayerInteraction.js';
+import { PlayerSneak } from './PlayerSneak.js';
 
 export class Player {
   constructor(worldConfig) {
@@ -186,6 +187,7 @@ export class Player {
     this.renderingModule = new PlayerRendering(this);
     this.inventoryModule = new PlayerInventory(this);
     this.interactionModule = new PlayerInteraction(this);
+    this.sneakModule = new PlayerSneak(this);
     
     // 给玩家一些初始物品用于测试
     this.initializeStartingItems();

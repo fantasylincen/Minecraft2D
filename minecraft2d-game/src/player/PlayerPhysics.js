@@ -65,20 +65,26 @@ export class PlayerPhysics {
    * 更新正常模式物理
    */
   updateNormalPhysics(deltaTime) {
-    // 检查是否启用潜行模式
-    const isSneaking = this.player.controls.sneakLeft || this.player.controls.sneakRight;
-    this.player.sneakMode.enabled = isSneaking;
+    // 更新潜行模式状态
+    this.player.sneakModule.updateSneakMode();
     
     // 根据潜行模式调整移动速度
-    const moveSpeed = this.player.sneakMode.enabled ? 
-      this.player.physics.speed * this.player.sneakMode.speedMultiplier : 
-      this.player.physics.speed;
+    const moveSpeed = this.player.sneakModule.getSneakSpeed(this.player.physics.speed);
     
-    // 水平移动 - 简化逗辑
-    if (this.player.controls.left || this.player.controls.sneakLeft) {
+    // 水平移动 - 简化逻辑
+    // 修复：确保正常的左右移动优先级高于潜行移动
+    if (this.player.controls.left) {
       this.player.physics.velocity.x = this.player.inWater.isSwimming ? 
         -this.player.inWater.swimSpeed : -moveSpeed;
-    } else if (this.player.controls.right || this.player.controls.sneakRight) {
+    } else if (this.player.controls.right) {
+      this.player.physics.velocity.x = this.player.inWater.isSwimming ? 
+        this.player.inWater.swimSpeed : moveSpeed;
+    } else if (this.player.controls.sneakLeft) {
+      // 潜行向左移动
+      this.player.physics.velocity.x = this.player.inWater.isSwimming ? 
+        -this.player.inWater.swimSpeed : -moveSpeed;
+    } else if (this.player.controls.sneakRight) {
+      // 潜行向右移动
       this.player.physics.velocity.x = this.player.inWater.isSwimming ? 
         this.player.inWater.swimSpeed : moveSpeed;
     } else {
@@ -157,6 +163,7 @@ export class PlayerPhysics {
    * 主动更新地面状态
    * Author: Minecraft2D Development Team
    * 修复玩家从方块上横向移动到半空中不下落的bug
+   * 修复潜行模式下玩家从砖块上落下的问题
    */
   updateGroundState() {
     if (!this.player.terrainGenerator) return;
@@ -170,7 +177,9 @@ export class PlayerPhysics {
     const bottom = this.player.position.y - this.player.size.height / 2;
     
     // 检查脚下的方块（向下扩展一小段距离检测）
-    const checkDistance = 2; // 检测脚下2像素范围
+    // 在潜行模式下，玩家高度会变化，需要相应调整检测位置
+    const isSneaking = this.player.sneakModule.isSneaking();
+    const checkDistance = isSneaking ? 3 : 2; // 潜行模式下稍微增加检测距离
     const groundCheckY = bottom - checkDistance;
     
     const leftBlock = Math.floor(left / blockSize);
@@ -187,24 +196,54 @@ export class PlayerPhysics {
       }
     }
     
+    // 潜行模式特殊处理：如果玩家在潜行模式下且正在水平移动，检查是否应该允许悬挂
+    let shouldAllowSneakHang = false;
+    if (isSneaking && Math.abs(this.player.physics.velocity.x) > 0.1) {
+      // 检查玩家是否在方块边缘
+      const footLeftBlock = Math.floor((this.player.position.x - this.player.size.width / 2) / blockSize);
+      const footRightBlock = Math.floor((this.player.position.x + this.player.size.width / 2) / blockSize);
+      const footBlockY = Math.floor((this.player.position.y - this.player.size.height / 2 - epsilon) / blockSize);
+      
+      // 检查脚下是否有支撑
+      let hasFootGroundSupport = false;
+      for (let x = footLeftBlock; x <= footRightBlock; x++) {
+        const blockId = this.player.terrainGenerator.getBlock(x, footBlockY);
+        if (blockConfig.isSolid(blockId)) {
+          hasFootGroundSupport = true;
+          break;
+        }
+      }
+      
+      // 如果脚下没有支撑，则允许悬挂
+      if (!hasFootGroundSupport) {
+        shouldAllowSneakHang = true;
+      }
+    }
+    
     // 更新地面状态
     const wasOnGround = this.player.physics.onGround;
-    this.player.physics.onGround = hasGroundSupport;
+    // 如果潜行模式下允许悬挂，则保持在地面状态
+    this.player.physics.onGround = shouldAllowSneakHang ? true : hasGroundSupport;
     
-    // 如果从地面变为悬空，立即开始应用重力
-    if (wasOnGround && !this.player.physics.onGround) {
+    // 如果从地面变为悬空，立即开始应用重力（除非是潜行悬挂）
+    if (wasOnGround && !this.player.physics.onGround && !shouldAllowSneakHang) {
       // 检查是否为主动跳跃：如果有向上的速度，说明是跳跃，不要干扰
       // 只有在没有向上速度或速度很小时，才触发重力（真正的悬空掉落）
       if (this.player.physics.velocity.y < 50) { // 50是一个阈值，小于此值认为不是跳跃
         this.player.physics.velocity.y = -1; // 微小的下向速度，触发重力
       }
       this.player.physics.canJump = false;
-    } else if (!wasOnGround && this.player.physics.onGround) {
-      // 如果从悬空变为在地面，停止下落
+    } else if (!wasOnGround && this.player.physics.onGround && !shouldAllowSneakHang) {
+      // 如果从悬空变为在地面，停止下落（除非是潜行悬挂）
       if (this.player.physics.velocity.y < 0) {
         this.player.physics.velocity.y = 0;
       }
       this.player.physics.canJump = true;
+    }
+    
+    // 如果是潜行悬挂状态，确保不会下落
+    if (shouldAllowSneakHang) {
+      this.player.physics.velocity.y = Math.max(0, this.player.physics.velocity.y);
     }
   }
 
@@ -258,6 +297,14 @@ export class PlayerPhysics {
     // 尝试移动
     this.player.position.x += moveDistance;
     
+    // 只在潜行模式下检查是否即将掉落
+    if (this.player.sneakModule.isSneaking() && this.player.sneakModule.willFall()) {
+      // 如果即将掉落，则停止移动
+      this.player.position.x -= moveDistance;
+      this.player.physics.velocity.x = 0;
+      return;
+    }
+    
     // 计算玩家边界（添加小偶置避免精度问题）
     const epsilon = 0.01;
     const left = this.player.position.x - this.player.size.width / 2 + epsilon;
@@ -273,6 +320,7 @@ export class PlayerPhysics {
     
     // 检查左右碰撞
     if (this.player.physics.velocity.x < 0) { // 向左移动
+      // 检查前方是否有固体方块阻挡
       for (let y = bottomBlock; y <= topBlock; y++) {
         const blockId = this.player.terrainGenerator.getBlock(leftBlock, y);
         if (blockConfig.isSolid(blockId)) {
@@ -284,6 +332,7 @@ export class PlayerPhysics {
         }
       }
     } else { // 向右移动
+      // 检查前方是否有固体方块阻挡
       for (let y = bottomBlock; y <= topBlock; y++) {
         const blockId = this.player.terrainGenerator.getBlock(rightBlock, y);
         if (blockConfig.isSolid(blockId)) {

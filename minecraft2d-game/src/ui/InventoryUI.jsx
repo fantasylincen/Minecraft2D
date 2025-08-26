@@ -166,9 +166,7 @@ export const HotbarComponent = ({
           className="hotbar-slot"
         />
       ))}
-      <div className="hotbar-selection-hint">
-        使用数字键 1-9 选择物品
-      </div>
+     
     </div>
   );
 };
