@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V键放置方块功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .test-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background: #45a049;
+        }
+        .log {
+            background: #1e1e1e;
+            border-radius: 4px;
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .log-entry {
+            margin: 5px 0;
+        }
+        .success {
+            color: #4CAF50;
+        }
+        .error {
+            color: #f44336;
+        }
+        .info {
+            color: #2196F3;
+        }
+        .warning {
+            color: #FF9800;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>V键放置方块功能测试</h1>
+        
+        <div class="test-section">
+            <h2>测试说明</h2>
+            <p>本测试用于验证V键是否能正确触发放置方块功能。</p>
+            <p>请确保游戏已加载并初始化完成后再进行测试。</p>
+        </div>
+        
+        <div class="test-section">
+            <h2>测试操作</h2>
+            <button class="test-button" onclick="runTest()">运行V键测试</button>
+            <button class="test-button" onclick="checkVKeyStatus()">检查V键状态</button>
+            <button class="test-button" onclick="clearLogs()">清空日志</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>测试日志</h2>
+            <div class="log" id="test-log">
+                <div class="log-entry info">等待测试开始...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 日志记录函数
+        function logToTest(message, type = 'info') {
+            const logElement = document.getElementById('test-log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logElement.appendChild(entry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        // 模拟V键按下测试
+        function runTest() {
+            logToTest('开始测试V键放置方块功能', 'info');
+            
+            try {
+                // 检查必要的对象是否存在
+                if (typeof window.inputManager === 'undefined') {
+                    logToTest('❌ inputManager未定义', 'error');
+                    return;
+                }
+                
+                if (typeof window.gameEngine === 'undefined' || !window.gameEngine) {
+                    logToTest('❌ gameEngine未初始化', 'error');
+                    return;
+                }
+                
+                if (!window.gameEngine.systems.player) {
+                    logToTest('❌ 玩家系统未初始化', 'error');
+                    return;
+                }
+                
+                logToTest('✅ 基础环境检查通过', 'success');
+                
+                // 记录初始状态
+                const initialPlaceState = window.gameEngine.systems.player.controls.place;
+                logToTest(`初始放置状态: ${initialPlaceState}`, 'info');
+                
+                // 创建并派发V键按下事件
+                const keydownEvent = new KeyboardEvent('keydown', {
+                    code: 'KeyV',
+                    key: 'v',
+                    bubbles: true
+                });
+                
+                document.dispatchEvent(keydownEvent);
+                logToTest('✓ 成功派发V键按下事件', 'success');
+                
+                // 等待一小段时间后检查状态
+                setTimeout(() => {
+                    const currentPlaceState = window.gameEngine.systems.player.controls.place;
+                    logToTest(`V键按下后放置状态: ${currentPlaceState}`, 'info');
+                    
+                    if (currentPlaceState !== initialPlaceState) {
+                        logToTest('✅ V键按下状态改变成功', 'success');
+                    } else {
+                        logToTest('⚠ V键按下状态未改变', 'warning');
+                    }
+                    
+                    // 创建并派发V键释放事件
+                    const keyupEvent = new KeyboardEvent('keyup', {
+                        code: 'KeyV',
+                        key: 'v',
+                        bubbles: true
+                    });
+                    
+                    document.dispatchEvent(keyupEvent);
+                    logToTest('✓ 成功派发V键释放事件', 'success');
+                    
+                    // 再次检查状态
+                    setTimeout(() => {
+                        const finalPlaceState = window.gameEngine.systems.player.controls.place;
+                        logToTest(`V键释放后放置状态: ${finalPlaceState}`, 'info');
+                        
+                        if (finalPlaceState === false) {
+                            logToTest('✅ V键释放后状态重置成功', 'success');
+                        } else {
+                            logToTest('❌ V键释放后状态未重置', 'error');
+                        }
+                        
+                        logToTest('测试完成', 'info');
+                    }, 100);
+                }, 100);
+                
+            } catch (error) {
+                logToTest(`✗ 测试失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 检查V键状态
+        function checkVKeyStatus() {
+            logToTest('检查V键状态...', 'info');
+            
+            try {
+                if (typeof window.inputManager !== 'undefined' && window.inputManager) {
+                    const isVPressed = window.inputManager.isKeyPressed('KeyV');
+                    logToTest(`V键当前按下状态: ${isVPressed}`, isVPressed ? 'success' : 'info');
+                } else {
+                    logToTest('❌ inputManager未定义', 'error');
+                }
+                
+                if (typeof window.gameEngine !== 'undefined' && 
+                    window.gameEngine && 
+                    window.gameEngine.systems && 
+                    window.gameEngine.systems.player) {
+                    const player = window.gameEngine.systems.player;
+                    logToTest(`玩家放置控制状态: ${player.controls.place}`, player.controls.place ? 'success' : 'info');
+                } else {
+                    logToTest('❌ 玩家系统未初始化', 'error');
+                }
+            } catch (error) {
+                logToTest(`✗ 检查失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 清空日志
+        function clearLogs() {
+            const logElement = document.getElementById('test-log');
+            logElement.innerHTML = '<div class="log-entry info">日志已清空</div>';
+        }
+        
+        // 页面加载完成后初始化
+        window.addEventListener('load', function() {
+            logToTest('测试页面已加载', 'success');
+        });
+    </script>
+</body>
+</html>

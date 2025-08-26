@@ -15,7 +15,7 @@ export class PlayerPlacement {
    * 处理放置方块逻辑 (新增 - 放置方块功能 - 基础实现)
    * Author: Minecraft2D Development Team
    */
-  handleBlockPlacement() {
+  handleBlockPlacement(deltaTime) {
     if (!this.player.terrainGenerator) return;
     
     // 检查是否按下了放置键（右键）
@@ -75,13 +75,13 @@ export class PlayerPlacement {
   }
 
   /**
-   * 获取放置位置 (修改 - 使用射线相交的第一个方块作为基准点)
+   * 获取放置位置 (修改 - 使用射线相交的第一个方块作为基准点，只考虑有物体的区块)
    * @returns {Object|null} 放置位置坐标
    */
   getPlacementPosition() {
     if (!this.player.terrainGenerator) return null;
     
-    // 获取视线方向最近的方块（射线相交的第一个方块）
+    // 获取视线方向最近的方块（射线相交的第一个有物体的区块）
     const targetBlock = this.player.getTargetBlock();
     
     // 如果没有找到目标方块，不可放置

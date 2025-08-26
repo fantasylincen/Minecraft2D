@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V键放置砖块测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .test-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background: #45a049;
+        }
+        .log {
+            background: #1e1e1e;
+            border-radius: 4px;
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .log-entry {
+            margin: 5px 0;
+        }
+        .success {
+            color: #4CAF50;
+        }
+        .error {
+            color: #f44336;
+        }
+        .info {
+            color: #2196F3;
+        }
+        .warning {
+            color: #FF9800;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>V键放置砖块测试</h1>
+        
+        <div class="test-section">
+            <h2>测试说明</h2>
+            <p>本测试用于验证按V键是否能正确放置砖块。</p>
+            <p>请确保游戏已加载并初始化完成后再进行测试。</p>
+        </div>
+        
+        <div class="test-section">
+            <h2>测试操作</h2>
+            <button class="test-button" onclick="testVKey()">测试V键放置砖块</button>
+            <button class="test-button" onclick="checkStatus()">检查状态</button>
+            <button class="test-button" onclick="forcePlaceBlock()">强制放置方块</button>
+            <button class="test-button" onclick="clearLogs()">清空日志</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>测试日志</h2>
+            <div class="log" id="test-log">
+                <div class="log-entry info">等待测试开始...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 日志记录函数
+        function logToTest(message, type = 'info') {
+            const logElement = document.getElementById('test-log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logElement.appendChild(entry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        // 测试V键放置砖块
+        function testVKey() {
+            logToTest('开始测试V键放置砖块功能', 'info');
+            
+            try {
+                // 检查必要的对象是否存在
+                if (typeof window.inputManager === 'undefined') {
+                    logToTest('❌ inputManager未定义', 'error');
+                    return;
+                }
+                
+                if (typeof window.gameEngine === 'undefined' || !window.gameEngine) {
+                    logToTest('❌ gameEngine未初始化', 'error');
+                    return;
+                }
+                
+                if (!window.gameEngine.systems.player) {
+                    logToTest('❌ 玩家系统未初始化', 'error');
+                    return;
+                }
+                
+                logToTest('✅ 基础环境检查通过', 'success');
+                
+                // 记录初始状态
+                const player = window.gameEngine.systems.player;
+                const initialPlaceState = player.controls.place;
+                logToTest(`初始放置状态: ${initialPlaceState}`, 'info');
+                
+                // 检查玩家是否持有物品
+                const heldItem = player.getHeldItem();
+                if (heldItem && !heldItem.isEmpty()) {
+                    const itemDef = heldItem.getItemDefinition();
+                    logToTest(`玩家手持物品: ${itemDef ? itemDef.name : '未知'}`, 'info');
+                    
+                    if (itemDef && itemDef.type === 'block') {
+                        logToTest('✅ 玩家持有方块类型物品', 'success');
+                    } else {
+                        logToTest('⚠ 玩家手持物品不是方块类型', 'warning');
+                    }
+                } else {
+                    logToTest('❌ 玩家手中没有物品', 'error');
+                }
+                
+                // 模拟按下V键
+                logToTest('模拟按下V键...', 'info');
+                const keydownEvent = new KeyboardEvent('keydown', {
+                    code: 'KeyV',
+                    key: 'v',
+                    bubbles: true
+                });
+                document.dispatchEvent(keydownEvent);
+                
+                // 等待一小段时间
+                setTimeout(() => {
+                    const pressedPlaceState = player.controls.place;
+                    logToTest(`V键按下后放置状态: ${pressedPlaceState}`, 'info');
+                    
+                    if (pressedPlaceState) {
+                        logToTest('✅ V键按下成功激活放置状态', 'success');
+                    } else {
+                        logToTest('❌ V键按下未激活放置状态', 'error');
+                    }
+                    
+                    // 模拟释放V键
+                    logToTest('模拟释放V键...', 'info');
+                    const keyupEvent = new KeyboardEvent('keyup', {
+                        code: 'KeyV',
+                        key: 'v',
+                        bubbles: true
+                    });
+                    document.dispatchEvent(keyupEvent);
+                    
+                    // 再等待一小段时间
+                    setTimeout(() => {
+                        const releasedPlaceState = player.controls.place;
+                        logToTest(`V键释放后放置状态: ${releasedPlaceState}`, 'info');
+                        
+                        if (!releasedPlaceState) {
+                            logToTest('✅ V键释放成功重置放置状态', 'success');
+                        } else {
+                            logToTest('❌ V键释放未重置放置状态', 'error');
+                        }
+                        
+                        logToTest('V键测试完成', 'info');
+                    }, 100);
+                }, 100);
+                
+            } catch (error) {
+                logToTest(`✗ 测试失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 检查状态
+        function checkStatus() {
+            logToTest('检查系统状态...', 'info');
+            
+            try {
+                // 检查inputManager
+                if (typeof window.inputManager !== 'undefined' && window.inputManager) {
+                    const isVPressed = window.inputManager.isKeyPressed('KeyV');
+                    logToTest(`V键当前按下状态: ${isVPressed}`, isVPressed ? 'success' : 'info');
+                } else {
+                    logToTest('❌ inputManager未定义', 'error');
+                }
+                
+                // 检查gameEngine和player
+                if (typeof window.gameEngine !== 'undefined' && 
+                    window.gameEngine && 
+                    window.gameEngine.systems && 
+                    window.gameEngine.systems.player) {
+                    const player = window.gameEngine.systems.player;
+                    logToTest(`玩家放置控制状态: ${player.controls.place}`, player.controls.place ? 'success' : 'info');
+                    
+                    // 检查玩家是否持有物品
+                    const heldItem = player.getHeldItem();
+                    if (heldItem && !heldItem.isEmpty()) {
+                        const itemDef = heldItem.getItemDefinition();
+                        logToTest(`手持物品: ${itemDef ? itemDef.name : '未知'}`, 'info');
+                        
+                        // 检查是否为方块类型
+                        if (itemDef && itemDef.type === 'block') {
+                            logToTest(`方块ID: ${itemDef.blockId}`, 'info');
+                        }
+                    } else {
+                        logToTest('手中没有物品', 'warning');
+                    }
+                    
+                    // 检查放置模块
+                    if (player.placementModule) {
+                        logToTest('✅ 放置模块已加载', 'success');
+                    } else {
+                        logToTest('❌ 放置模块未加载', 'error');
+                    }
+                    
+                    // 检查地形生成器
+                    if (player.terrainGenerator) {
+                        logToTest('✅ 地形生成器已设置', 'success');
+                    } else {
+                        logToTest('❌ 地形生成器未设置', 'error');
+                    }
+                } else {
+                    logToTest('❌ 玩家系统未初始化', 'error');
+                }
+            } catch (error) {
+                logToTest(`✗ 检查失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 强制放置方块（绕过按键检测直接调用放置逻辑）
+        function forcePlaceBlock() {
+            logToTest('强制放置方块...', 'info');
+            
+            try {
+                if (typeof window.gameEngine === 'undefined' || 
+                    !window.gameEngine || 
+                    !window.gameEngine.systems || 
+                    !window.gameEngine.systems.player) {
+                    logToTest('❌ 玩家系统未初始化', 'error');
+                    return;
+                }
+                
+                const player = window.gameEngine.systems.player;
+                
+                if (!player.placementModule) {
+                    logToTest('❌ 放置模块不存在', 'error');
+                    return;
+                }
+                
+                // 检查玩家是否持有物品
+                const heldItem = player.getHeldItem();
+                if (!heldItem || heldItem.isEmpty()) {
+                    logToTest('❌ 玩家手中没有物品', 'error');
+                    return;
+                }
+                
+                const itemDef = heldItem.getItemDefinition();
+                if (!itemDef || itemDef.type !== 'block') {
+                    logToTest('❌ 玩家手中物品不是方块类型', 'error');
+                    return;
+                }
+                
+                logToTest(`尝试放置方块: ${itemDef.name}`, 'info');
+                
+                // 临时设置放置状态为true
+                const originalPlaceState = player.controls.place;
+                player.controls.place = true;
+                
+                // 执行放置逻辑
+                try {
+                    player.placementModule.handleBlockPlacement(0.016); // 模拟16ms的deltaTime
+                    logToTest('✅ 放置逻辑执行完成', 'success');
+                } catch (error) {
+                    logToTest(`❌ 放置逻辑执行出错: ${error.message}`, 'error');
+                }
+                
+                // 恢复原始状态
+                player.controls.place = originalPlaceState;
+                
+            } catch (error) {
+                logToTest(`强制放置方块时出错: ${error.message}`, 'error');
+            }
+        }
+        
+        // 清空日志
+        function clearLogs() {
+            const logElement = document.getElementById('test-log');
+            logElement.innerHTML = '<div class="log-entry info">日志已清空</div>';
+        }
+        
+        // 页面加载完成后初始化
+        window.addEventListener('load', function() {
+            logToTest('测试页面已加载', 'success');
+        });
+        
+        // 监听实际的键盘事件
+        document.addEventListener('keydown', function(event) {
+            if (event.code === 'KeyV') {
+                logToTest('检测到实际V键按下事件', 'info');
+            }
+        });
+        
+        document.addEventListener('keyup', function(event) {
+            if (event.code === 'KeyV') {
+                logToTest('检测到实际V键释放事件', 'info');
+            }
+        });
+    </script>
+</body>
+</html>

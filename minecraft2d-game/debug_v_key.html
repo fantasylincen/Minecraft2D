@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V键放置方块功能深度调试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .debug-section {
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .debug-button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        .debug-button:hover {
+            background: #1976D2;
+        }
+        .debug-button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .log {
+            background: #1e1e1e;
+            border-radius: 4px;
+            padding: 15px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        .log-entry {
+            margin: 3px 0;
+        }
+        .success {
+            color: #4CAF50;
+        }
+        .error {
+            color: #f44336;
+        }
+        .info {
+            color: #2196F3;
+        }
+        .warning {
+            color: #FF9800;
+        }
+        .debug {
+            color: #9C27B0;
+        }
+        .critical {
+            color: #FF5722;
+            font-weight: bold;
+        }
+        .control-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .status-item {
+            background: #333;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        .status-on {
+            background-color: #4CAF50;
+        }
+        .status-off {
+            background-color: #f44336;
+        }
+        .status-unknown {
+            background-color: #FF9800;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>V键放置方块功能深度调试</h1>
+        
+        <div class="debug-section">
+            <h2>调试控制面板</h2>
+            <div class="control-panel">
+                <button class="debug-button" onclick="runFullDiagnostics()">运行完整诊断</button>
+                <button class="debug-button" onclick="testVKeyPress()">测试V键按下</button>
+                <button class="debug-button" onclick="testVKeyRelease()">测试V键释放</button>
+                <button class="debug-button" onclick="checkAllSystems()">检查所有系统</button>
+                <button class="debug-button" onclick="forcePlacementUpdate()">强制执行放置逻辑</button>
+                <button class="debug-button" onclick="clearLogs()">清空日志</button>
+            </div>
+        </div>
+        
+        <div class="debug-section">
+            <h2>实时状态监控</h2>
+            <div class="status-grid" id="status-grid">
+                <div class="status-item">游戏引擎: <span id="engine-status">未知</span></div>
+                <div class="status-item">玩家系统: <span id="player-status">未知</span></div>
+                <div class="status-item">V键状态: <span id="vkey-status">未知</span></div>
+                <div class="status-item">放置状态: <span id="place-status">未知</span></div>
+                <div class="status-item">手持物品: <span id="held-item">未知</span></div>
+                <div class="status-item">地形生成器: <span id="terrain-status">未知</span></div>
+            </div>
+        </div>
+        
+        <div class="debug-section">
+            <h2>按键处理函数监控</h2>
+            <div class="control-panel">
+                <button class="debug-button" onclick="checkKeyHandlers()">检查V键处理函数</button>
+                <button class="debug-button" onclick="checkInputManager()">检查输入管理器</button>
+            </div>
+            <div id="key-handler-info"></div>
+        </div>
+        
+        <div class="debug-section">
+            <h2>调试日志</h2>
+            <div class="log" id="debug-log">
+                <div class="log-entry info">等待调试开始...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 日志记录函数
+        function logToDebug(message, type = 'info') {
+            const logElement = document.getElementById('debug-log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logElement.appendChild(entry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        // 更新状态显示
+        function updateStatusDisplays() {
+            const statusMap = {
+                'engine-status': '未知',
+                'player-status': '未知',
+                'vkey-status': '未知',
+                'place-status': '未知',
+                'held-item': '未知',
+                'terrain-status': '未知'
+            };
+            
+            const statusClasses = {
+                'engine-status': 'status-unknown',
+                'player-status': 'status-unknown',
+                'vkey-status': 'status-unknown',
+                'place-status': 'status-unknown',
+                'held-item': 'status-unknown',
+                'terrain-status': 'status-unknown'
+            };
+            
+            try {
+                // 检查游戏引擎
+                if (typeof window.gameEngine !== 'undefined' && window.gameEngine) {
+                    statusMap['engine-status'] = '已初始化';
+                    statusClasses['engine-status'] = 'status-on';
+                } else {
+                    statusMap['engine-status'] = '未初始化';
+                    statusClasses['engine-status'] = 'status-off';
+                }
+                
+                // 检查玩家系统
+                if (typeof window.gameEngine !== 'undefined' && 
+                    window.gameEngine && 
+                    window.gameEngine.systems && 
+                    window.gameEngine.systems.player) {
+                    statusMap['player-status'] = '已初始化';
+                    statusClasses['player-status'] = 'status-on';
+                } else {
+                    statusMap['player-status'] = '未初始化';
+                    statusClasses['player-status'] = 'status-off';
+                }
+                
+                // 检查V键状态
+                if (typeof window.inputManager !== 'undefined' && window.inputManager) {
+                    const isVPressed = window.inputManager.isKeyPressed('KeyV');
+                    statusMap['vkey-status'] = isVPressed ? '已按下' : '未按下';
+                    statusClasses['vkey-status'] = isVPressed ? 'status-on' : 'status-off';
+                } else {
+                    statusMap['vkey-status'] = '输入管理器未定义';
+                    statusClasses['vkey-status'] = 'status-off';
+                }
+                
+                // 检查放置控制状态
+                if (typeof window.gameEngine !== 'undefined' && 
+                    window.gameEngine && 
+                    window.gameEngine.systems && 
+                    window.gameEngine.systems.player) {
+                    const player = window.gameEngine.systems.player;
+                    statusMap['place-status'] = player.controls.place ? '已激活' : '未激活';
+                    statusClasses['place-status'] = player.controls.place ? 'status-on' : 'status-off';
+                } else {
+                    statusMap['place-status'] = '玩家系统未定义';
+                    statusClasses['place-status'] = 'status-off';
+                }
+                
+                // 检查手持物品
+                if (typeof window.gameEngine !== 'undefined' && 
+                    window.gameEngine && 
+                    window.gameEngine.systems && 
+                    window.gameEngine.systems.player) {
+                    const player = window.gameEngine.systems.player;
+                    const item = player.getHeldItem();
+                    if (item && !item.isEmpty()) {
+                        const itemDef = item.getItemDefinition();
+                        statusMap['held-item'] = itemDef ? itemDef.name : '未知物品';
+                        statusClasses['held-item'] = 'status-on';
+                    } else {
+                        statusMap['held-item'] = '无';
+                        statusClasses['held-item'] = 'status-off';
+                    }
+                } else {
+                    statusMap['held-item'] = '玩家系统未定义';
+                    statusClasses['held-item'] = 'status-off';
+                }
+                
+                // 检查地形生成器
+                if (typeof window.gameEngine !== 'undefined' && 
+                    window.gameEngine && 
+                    window.gameEngine.systems && 
+                    window.gameEngine.systems.terrainGenerator) {
+                    statusMap['terrain-status'] = '已初始化';
+                    statusClasses['terrain-status'] = 'status-on';
+                } else {
+                    statusMap['terrain-status'] = '未初始化';
+                    statusClasses['terrain-status'] = 'status-off';
+                }
+            } catch (error) {
+                logToDebug(`更新状态显示时出错: ${error.message}`, 'error');
+            }
+            
+            // 更新DOM元素
+            Object.keys(statusMap).forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = statusMap[id];
+                    element.className = statusClasses[id];
+                }
+            });
+        }
+        
+        // 运行完整诊断
+        function runFullDiagnostics() {
+            logToDebug('开始运行完整诊断...', 'info');
+            
+            try {
+                // 1. 检查基础环境
+                logToDebug('1. 检查基础环境...', 'info');
+                checkBasicEnvironment();
+                
+                // 2. 检查输入系统
+                logToDebug('2. 检查输入系统...', 'info');
+                checkInputSystem();
+                
+                // 3. 检查玩家系统
+                logToDebug('3. 检查玩家系统...', 'info');
+                checkPlayerSystem();
+                
+                // 4. 检查放置系统
+                logToDebug('4. 检查放置系统...', 'info');
+                checkPlacementSystem();
+                
+                logToDebug('完整诊断完成', 'success');
+            } catch (error) {
+                logToDebug(`诊断过程中出错: ${error.message}`, 'error');
+            }
+            
+            updateStatusDisplays();
+        }
+        
+        // 检查基础环境
+        function checkBasicEnvironment() {
+            logToDebug('检查基础环境...', 'debug');
+            
+            // 检查window对象
+            if (typeof window === 'undefined') {
+                logToDebug('❌ window对象未定义', 'error');
+                return false;
+            }
+            logToDebug('✓ window对象存在', 'success');
+            
+            // 检查游戏引擎
+            if (typeof window.gameEngine === 'undefined') {
+                logToDebug('⚠ gameEngine未定义', 'warning');
+            } else if (!window.gameEngine) {
+                logToDebug('⚠ gameEngine为null', 'warning');
+            } else {
+                logToDebug('✓ gameEngine已初始化', 'success');
+            }
+            
+            // 检查输入管理器
+            if (typeof window.inputManager === 'undefined') {
+                logToDebug('❌ inputManager未定义', 'error');
+                return false;
+            }
+            logToDebug('✓ inputManager存在', 'success');
+            
+            return true;
+        }
+        
+        // 检查输入系统
+        function checkInputSystem() {
+            logToDebug('检查输入系统...', 'debug');
+            
+            if (typeof window.inputManager === 'undefined') {
+                logToDebug('❌ inputManager未定义', 'error');
+                return false;
+            }
+            
+            // 检查V键状态
+            const isVPressed = window.inputManager.isKeyPressed('KeyV');
+            logToDebug(`V键当前状态: ${isVPressed}`, isVPressed ? 'success' : 'info');
+            
+            // 检查按键处理函数
+            const keyHandlers = window.inputManager.keyHandlers.get('KeyV');
+            const releaseHandlers = window.inputManager.keyReleaseHandlers.get('KeyV');
+            
+            logToDebug(`V键按下处理函数数量: ${keyHandlers ? keyHandlers.length : 0}`, 'debug');
+            logToDebug(`V键释放处理函数数量: ${releaseHandlers ? releaseHandlers.length : 0}`, 'debug');
+            
+            if (keyHandlers && keyHandlers.length > 0) {
+                keyHandlers.forEach((handler, index) => {
+                    logToDebug(`  按下处理函数 ${index}: context=${handler.context}, priority=${handler.priority}`, 'debug');
+                });
+            }
+            
+            if (releaseHandlers && releaseHandlers.length > 0) {
+                releaseHandlers.forEach((handler, index) => {
+                    logToDebug(`  释放处理函数 ${index}: context=${handler.context}, priority=${handler.priority}`, 'debug');
+                });
+            }
+            
+            return true;
+        }
+        
+        // 检查玩家系统
+        function checkPlayerSystem() {
+            logToDebug('检查玩家系统...', 'debug');
+            
+            if (typeof window.gameEngine === 'undefined' || !window.gameEngine) {
+                logToDebug('❌ gameEngine未定义', 'error');
+                return false;
+            }
+            
+            if (!window.gameEngine.systems || !window.gameEngine.systems.player) {
+                logToDebug('❌ 玩家系统未初始化', 'error');
+                return false;
+            }
+            
+            const player = window.gameEngine.systems.player;
+            
+            logToDebug('✓ 玩家系统已初始化', 'success');
+            logToDebug(`  控制状态: place=${player.controls.place}, mine=${player.controls.mine}`, 'debug');
+            logToDebug(`  放置系统: lastPlaceTime=${player.placement.lastPlaceTime}`, 'debug');
+            
+            // 检查子模块
+            if (player.placementModule) {
+                logToDebug('✓ 放置模块存在', 'success');
+            } else {
+                logToDebug('❌ 放置模块不存在', 'error');
+            }
+            
+            return true;
+        }
+        
+        // 检查放置系统
+        function checkPlacementSystem() {
+            logToDebug('检查放置系统...', 'debug');
+            
+            if (typeof window.gameEngine === 'undefined' || 
+                !window.gameEngine || 
+                !window.gameEngine.systems || 
+                !window.gameEngine.systems.player) {
+                logToDebug('❌ 玩家系统未初始化', 'error');
+                return false;
+            }
+            
+            const player = window.gameEngine.systems.player;
+            
+            if (!player.placementModule) {
+                logToDebug('❌ 放置模块不存在', 'error');
+                return false;
+            }
+            
+            // 检查放置方法
+            if (typeof player.placementModule.handleBlockPlacement === 'function') {
+                logToDebug('✓ handleBlockPlacement方法存在', 'success');
+            } else {
+                logToDebug('❌ handleBlockPlacement方法不存在', 'error');
+                return false;
+            }
+            
+            // 检查测试方法
+            if (typeof player.placementModule.testBlockPlacement === 'function') {
+                logToDebug('✓ testBlockPlacement方法存在', 'success');
+            } else {
+                logToDebug('⚠ testBlockPlacement方法不存在', 'warning');
+            }
+            
+            // 检查地形生成器
+            if (player.terrainGenerator) {
+                logToDebug('✓ 地形生成器已设置', 'success');
+            } else {
+                logToDebug('⚠ 地形生成器未设置', 'warning');
+            }
+            
+            return true;
+        }
+        
+        // 测试V键按下
+        function testVKeyPress() {
+            logToDebug('测试V键按下...', 'info');
+            
+            try {
+                // 创建并派发V键按下事件
+                const keydownEvent = new KeyboardEvent('keydown', {
+                    code: 'KeyV',
+                    key: 'v',
+                    bubbles: true
+                });
+                
+                document.dispatchEvent(keydownEvent);
+                logToDebug('✓ 成功派发V键按下事件', 'success');
+                
+                // 等待一小段时间后检查状态
+                setTimeout(() => {
+                    updateStatusDisplays();
+                    
+                    // 检查放置控制状态
+                    if (typeof window.gameEngine !== 'undefined' && 
+                        window.gameEngine && 
+                        window.gameEngine.systems && 
+                        window.gameEngine.systems.player) {
+                        const player = window.gameEngine.systems.player;
+                        if (player.controls.place) {
+                            logToDebug('✅ 放置控制状态已激活', 'success');
+                        } else {
+                            logToDebug('⚠ 放置控制状态未激活', 'warning');
+                        }
+                    }
+                }, 50);
+            } catch (error) {
+                logToDebug(`✗ 测试失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 测试V键释放
+        function testVKeyRelease() {
+            logToDebug('测试V键释放...', 'info');
+            
+            try {
+                // 创建并派发V键释放事件
+                const keyupEvent = new KeyboardEvent('keyup', {
+                    code: 'KeyV',
+                    key: 'v',
+                    bubbles: true
+                });
+                
+                document.dispatchEvent(keyupEvent);
+                logToDebug('✓ 成功派发V键释放事件', 'success');
+                
+                // 等待一小段时间后检查状态
+                setTimeout(() => {
+                    updateStatusDisplays();
+                    
+                    // 检查放置控制状态
+                    if (typeof window.gameEngine !== 'undefined' && 
+                        window.gameEngine && 
+                        window.gameEngine.systems && 
+                        window.gameEngine.systems.player) {
+                        const player = window.gameEngine.systems.player;
+                        if (!player.controls.place) {
+                            logToDebug('✅ 放置控制状态已重置', 'success');
+                        } else {
+                            logToDebug('⚠ 放置控制状态未重置', 'warning');
+                        }
+                    }
+                }, 50);
+            } catch (error) {
+                logToDebug(`✗ 测试失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 检查所有系统
+        function checkAllSystems() {
+            logToDebug('检查所有系统...', 'info');
+            
+            // 检查游戏引擎系统
+            if (typeof window.gameEngine !== 'undefined' && window.gameEngine) {
+                logToDebug('游戏引擎系统:', 'info');
+                Object.keys(window.gameEngine.systems).forEach(systemName => {
+                    const system = window.gameEngine.systems[systemName];
+                    const status = system ? '已初始化' : '未初始化';
+                    logToDebug(`  ${systemName}: ${status}`, system ? 'success' : 'warning');
+                });
+            } else {
+                logToDebug('游戏引擎未初始化', 'error');
+            }
+            
+            // 检查输入管理器状态
+            if (typeof window.inputManager !== 'undefined' && window.inputManager) {
+                logToDebug('输入管理器状态:', 'info');
+                logToDebug(`  按键数量: ${Object.keys(window.inputManager.keys).length}`, 'debug');
+                logToDebug(`  按下处理函数映射数量: ${window.inputManager.keyHandlers.size}`, 'debug');
+                logToDebug(`  释放处理函数映射数量: ${window.inputManager.keyReleaseHandlers.size}`, 'debug');
+            }
+            
+            updateStatusDisplays();
+        }
+        
+        // 强制执行放置逻辑
+        function forcePlacementUpdate() {
+            logToDebug('强制执行放置逻辑...', 'info');
+            
+            try {
+                if (typeof window.gameEngine === 'undefined' || 
+                    !window.gameEngine || 
+                    !window.gameEngine.systems || 
+                    !window.gameEngine.systems.player) {
+                    logToDebug('❌ 玩家系统未初始化', 'error');
+                    return;
+                }
+                
+                const player = window.gameEngine.systems.player;
+                
+                if (!player.placementModule) {
+                    logToDebug('❌ 放置模块不存在', 'error');
+                    return;
+                }
+                
+                // 临时设置放置状态为true
+                const originalPlaceState = player.controls.place;
+                player.controls.place = true;
+                
+                logToDebug('临时激活放置状态并执行放置逻辑...', 'info');
+                
+                // 执行放置逻辑
+                try {
+                    player.placementModule.handleBlockPlacement(0.016); // 模拟16ms的deltaTime
+                    logToDebug('✅ 放置逻辑执行完成', 'success');
+                } catch (error) {
+                    logToDebug(`❌ 放置逻辑执行出错: ${error.message}`, 'error');
+                }
+                
+                // 恢复原始状态
+                player.controls.place = originalPlaceState;
+                
+                updateStatusDisplays();
+            } catch (error) {
+                logToDebug(`强制执行放置逻辑时出错: ${error.message}`, 'error');
+            }
+        }
+        
+        // 检查V键处理函数
+        function checkKeyHandlers() {
+            logToDebug('检查V键处理函数...', 'info');
+            
+            try {
+                if (typeof window.inputManager === 'undefined' || !window.inputManager) {
+                    logToDebug('❌ inputManager未定义', 'error');
+                    return;
+                }
+                
+                const keyHandlers = window.inputManager.keyHandlers.get('KeyV');
+                const releaseHandlers = window.inputManager.keyReleaseHandlers.get('KeyV');
+                
+                const infoElement = document.getElementById('key-handler-info');
+                let infoHTML = '<h3>V键处理函数详情</h3>';
+                
+                infoHTML += `<p>按下处理函数数量: ${keyHandlers ? keyHandlers.length : 0}</p>`;
+                if (keyHandlers && keyHandlers.length > 0) {
+                    infoHTML += '<ul>';
+                    keyHandlers.forEach((handler, index) => {
+                        infoHTML += `<li>按下处理函数 ${index}: context=${handler.context}, priority=${handler.priority}</li>`;
+                    });
+                    infoHTML += '</ul>';
+                }
+                
+                infoHTML += `<p>释放处理函数数量: ${releaseHandlers ? releaseHandlers.length : 0}</p>`;
+                if (releaseHandlers && releaseHandlers.length > 0) {
+                    infoHTML += '<ul>';
+                    releaseHandlers.forEach((handler, index) => {
+                        infoHTML += `<li>释放处理函数 ${index}: context=${handler.context}, priority=${handler.priority}</li>`;
+                    });
+                    infoHTML += '</ul>';
+                }
+                
+                infoElement.innerHTML = infoHTML;
+                
+                logToDebug('V键处理函数检查完成', 'success');
+            } catch (error) {
+                logToDebug(`检查V键处理函数时出错: ${error.message}`, 'error');
+            }
+        }
+        
+        // 检查输入管理器
+        function checkInputManager() {
+            logToDebug('检查输入管理器...', 'info');
+            
+            try {
+                if (typeof window.inputManager === 'undefined' || !window.inputManager) {
+                    logToDebug('❌ inputManager未定义', 'error');
+                    return;
+                }
+                
+                logToDebug(`输入管理器状态:`, 'debug');
+                logToDebug(`  activeContext: ${window.inputManager.getActiveContext()}`, 'debug');
+                logToDebug(`  keys对象大小: ${Object.keys(window.inputManager.keys).length}`, 'debug');
+                logToDebug(`  keyHandlers映射大小: ${window.inputManager.keyHandlers.size}`, 'debug');
+                logToDebug(`  keyReleaseHandlers映射大小: ${window.inputManager.keyReleaseHandlers.size}`, 'debug');
+                logToDebug(`  keyPriorities映射大小: ${window.inputManager.keyPriorities.size}`, 'debug');
+                
+                // 检查一些常见的按键状态
+                const commonKeys = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyV', 'Space'];
+                commonKeys.forEach(key => {
+                    const isPressed = window.inputManager.isKeyPressed(key);
+                    logToDebug(`  ${key}: ${isPressed ? '按下' : '未按下'}`, isPressed ? 'success' : 'info');
+                });
+                
+            } catch (error) {
+                logToDebug(`检查输入管理器时出错: ${error.message}`, 'error');
+            }
+        }
+        
+        // 清空日志
+        function clearLogs() {
+            const logElement = document.getElementById('debug-log');
+            logElement.innerHTML = '<div class="log-entry info">日志已清空</div>';
+        }
+        
+        // 页面加载完成后初始化
+        window.addEventListener('load', function() {
+            logToDebug('调试页面已加载', 'success');
+            logToDebug('开始监控系统状态...', 'info');
+            
+            // 定期更新状态显示
+            setInterval(updateStatusDisplays, 500);
+            
+            // 初始状态更新
+            updateStatusDisplays();
+        });
+        
+        // 监听实际的键盘事件
+        document.addEventListener('keydown', function(event) {
+            if (event.code === 'KeyV') {
+                logToDebug('检测到实际V键按下事件', 'info');
+                setTimeout(updateStatusDisplays, 10);
+            }
+        });
+        
+        document.addEventListener('keyup', function(event) {
+            if (event.code === 'KeyV') {
+                logToDebug('检测到实际V键释放事件', 'info');
+                setTimeout(updateStatusDisplays, 10);
+            }
+        });
+    </script>
+</body>
+</html>

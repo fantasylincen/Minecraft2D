@@ -57,7 +57,7 @@ export class PlayerMining {
   }
 
   /**
-   * 获取视线方向最近的方块 (TODO #9)
+   * 获取视线方向最近的方块 (修改 - 光线可以穿过流体，遇到固体障碍物中断)
    * Author: Minecraft2D Development Team
    */
   getTargetBlock() {
@@ -91,14 +91,15 @@ export class PlayerMining {
       // 获取方块
       const blockId = this.player.terrainGenerator.getBlock(blockX, blockY);
       
-      // 如果不是空气方块，返回这个方块
-      if (blockId !== blockConfig.getBlock('air').id) {
+      // 检查是否为固体方块（不是空气且不是流体）
+      if (blockId !== blockConfig.getBlock('air').id && !blockConfig.isFluid(blockId)) {
         return {
           x: blockX,
           y: blockY,
           blockId: blockId
         };
       }
+      // 如果是流体，光线可以穿过，继续前进
     }
     
     return null; // 没有找到目标方块

@@ -164,6 +164,10 @@ export class GameEngine {
           this.systems.player.controls.place = true;
         }
       }
+      // 左键点击触发光线追踪
+      else if (e.button === 0) { // 0表示左键
+        // 左键逻辑可以保留用于其他用途
+      }
     });
     
     this.canvas.addEventListener('mouseup', (e) => {
@@ -173,6 +177,10 @@ export class GameEngine {
           // 重置放置控制状态
           this.systems.player.controls.place = false;
         }
+      }
+      // 左键释放
+      else if (e.button === 0) { // 0表示左键
+        // 左键释放逻辑
       }
     });
     
@@ -196,21 +204,6 @@ export class GameEngine {
       if (this.systems.player && this.systems.camera) {
         const worldPos = this.systems.camera.screenToWorld(this.mousePosition.x, this.mousePosition.y);
         this.systems.player.setMousePosition(worldPos.x, worldPos.y);
-      }
-    });
-    
-    this.canvas.addEventListener('mousedown', (e) => {
-      // 左键点击触发光线追踪
-      if (e.button === 0) { // 0表示左键
-        // 移除放置方块的逻辑，改为使用V键放置
-        // 光线追踪逻辑可以保留用于其他用途
-      }
-    });
-    
-    this.canvas.addEventListener('mouseup', (e) => {
-      // 左键释放
-      if (e.button === 0) { // 0表示左键
-        // 移除放置方块的逻辑
       }
     });
     
