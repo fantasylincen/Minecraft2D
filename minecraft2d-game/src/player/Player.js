@@ -8,6 +8,7 @@ import { Inventory } from './Inventory.js';
 import { itemConfig, ItemType } from '../config/ItemConfig.js';
 import { ContainerManager } from '../blocks/ContainerManager.js';
 import { PlayerAudioController } from '../audio/PlayerAudioController.js';
+import { inputManager } from '../input/InputManager.js'; // 新增导入
 
 export class Player {
   constructor(worldConfig) {
@@ -169,8 +170,185 @@ export class Player {
     // 初始化音频控制器 (新增)
     this.audioController = null;
     
+    // 注册玩家控制按键处理函数
+    this.registerControlKeyHandlers();
+    
     console.log('👤 Player 初始化完成');
     console.log(`🟢 跳跃高度: ${jumpHeight.toFixed(1)}像素, 最小摔伤高度: ${this.fallDamage.minFallHeight.toFixed(1)}像素`);
+  }
+  
+  /**
+   * 注册玩家控制按键处理函数
+   */
+  registerControlKeyHandlers() {
+    // WASD移动控制
+    inputManager.registerKeyHandler('KeyW', (event) => {
+      if (this.flyMode.enabled) {
+        this.controls.up = true;
+      } else {
+        this.controls.jump = true;
+      }
+    }, 'game', 0);
+    
+    inputManager.registerKeyHandler('KeyA', (event) => {
+      this.controls.left = true;
+    }, 'game', 0);
+    
+    inputManager.registerKeyHandler('KeyS', (event) => {
+      this.controls.down = true;
+    }, 'game', 0);
+    
+    inputManager.registerKeyHandler('KeyD', (event) => {
+      this.controls.right = true;
+    }, 'game', 0);
+    
+    // 方向键移动控制
+    inputManager.registerKeyHandler('ArrowUp', (event) => {
+      if (this.flyMode.enabled) {
+        this.controls.up = true;
+      } else {
+        this.controls.jump = true;
+      }
+    }, 'game', 0);
+    
+    inputManager.registerKeyHandler('ArrowLeft', (event) => {
+      this.controls.left = true;
+    }, 'game', 0);
+    
+    inputManager.registerKeyHandler('ArrowDown', (event) => {
+      this.controls.down = true;
+    }, 'game', 0);
+    
+    inputManager.registerKeyHandler('ArrowRight', (event) => {
+      this.controls.right = true;
+    }, 'game', 0);
+    
+    // 空格键跳跃
+    inputManager.registerKeyHandler('Space', (event) => {
+      if (!this.flyMode.enabled) {
+        this.controls.jump = true;
+      }
+    }, 'game', 0);
+    
+    // 按键释放处理
+    this.registerKeyReleaseHandlers();
+  }
+  
+  /**
+   * 注册按键释放处理函数
+   */
+  registerKeyReleaseHandlers() {
+    // WASD释放控制
+    inputManager.registerKeyHandler('KeyW', (event) => {
+      if (this.flyMode.enabled) {
+        this.controls.up = false;
+      } else {
+        this.controls.jump = false;
+      }
+    }, 'game', 0, true); // true表示是释放处理
+    
+    inputManager.registerKeyHandler('KeyA', (event) => {
+      this.controls.left = false;
+    }, 'game', 0, true);
+    
+    inputManager.registerKeyHandler('KeyS', (event) => {
+      this.controls.down = false;
+    }, 'game', 0, true);
+    
+    inputManager.registerKeyHandler('KeyD', (event) => {
+      this.controls.right = false;
+    }, 'game', 0, true);
+    
+    // 方向键释放控制
+    inputManager.registerKeyHandler('ArrowUp', (event) => {
+      if (this.flyMode.enabled) {
+        this.controls.up = false;
+      } else {
+        this.controls.jump = false;
+      }
+    }, 'game', 0, true);
+    
+    inputManager.registerKeyHandler('ArrowLeft', (event) => {
+      this.controls.left = false;
+    }, 'game', 0, true);
+    
+    inputManager.registerKeyHandler('ArrowDown', (event) => {
+      this.controls.down = false;
+    }, 'game', 0, true);
+    
+    inputManager.registerKeyHandler('ArrowRight', (event) => {
+      this.controls.right = false;
+    }, 'game', 0, true);
+    
+    // 空格键释放
+    inputManager.registerKeyHandler('Space', (event) => {
+      this.controls.jump = false;
+    }, 'game', 0, true);
+  }
+  
+  /**
+   * 更新玩家状态
+   * @param {number} deltaTime - 时间增量
+   * @param {Object} keys - 按键状态对象（为了向后兼容保留）
+   */
+  update(deltaTime, keys) {
+    // 更新朝向
+    this.updateFacing();
+    
+    // 更新控制状态（使用新的输入管理器）
+    this.updateControls();
+    
+    // 更新物理状态
+    this.updatePhysics(deltaTime);
+    
+    // 更新健康系统
+    this.updateHealth(deltaTime);
+    
+    // 更新挖掘逻辑
+    this.handleMining(deltaTime);
+    
+    // 更新放置逻辑
+    this.handlePlacement(deltaTime);
+    
+    // 更新动画控制器
+    if (this.animationController) {
+      this.animationController.update(deltaTime);
+    }
+    
+    // 更新音频控制器
+    if (this.audioController) {
+      this.audioController.update(deltaTime);
+    }
+  }
+  
+  /**
+   * 更新控制状态（使用新的输入管理器）
+   */
+  updateControls() {
+    // 控制状态已经在按键处理函数中更新，这里只需要处理一些特殊逻辑
+    
+    // 检查飞行模式切换
+    if (this.controls.fly && !this.prevFly) {
+      this.toggleFlyMode();
+    }
+    this.prevFly = this.controls.fly;
+    
+    // 检查飞行速度调节
+    if (this.controls.speedUp && !this.prevSpeedUp) {
+      this.increaseFlySpeed();
+    }
+    this.prevSpeedUp = this.controls.speedUp;
+    
+    if (this.controls.speedDown && !this.prevSpeedDown) {
+      this.decreaseFlySpeed();
+    }
+    this.prevSpeedDown = this.controls.speedDown;
+    
+    // 检查挖掘
+    if (this.controls.mine && !this.prevMine) {
+      // 挖掘逻辑在handleMining中处理
+    }
+    this.prevMine = this.controls.mine;
   }
   
   /**

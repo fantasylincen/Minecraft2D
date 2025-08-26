@@ -3,6 +3,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { inputManager } from '../input/InputManager.js'; // 新增导入
 import '../App.css';
 import './InventoryUI.css';
 
@@ -55,6 +56,26 @@ const FurnaceUI = ({
       }
     }
   }, [furnace]);
+
+  // 当熔炉界面显示时，设置输入管理器的上下文
+  useEffect(() => {
+    // 设置输入管理器上下文为熔炉
+    inputManager.setActiveContext('furnace');
+    
+    // 注册ESC键关闭熔炉
+    const handleEscapeKey = (event) => {
+      onClose?.();
+    };
+    
+    inputManager.registerKeyHandler('Escape', handleEscapeKey, 'furnace', 10);
+    
+    // 清理函数
+    return () => {
+      // 恢复输入管理器上下文为游戏
+      inputManager.setActiveContext('game');
+      inputManager.unregisterKeyHandler('Escape', handleEscapeKey, false);
+    };
+  }, [onClose]);
 
   // 定期更新熔炉状态
   useEffect(() => {

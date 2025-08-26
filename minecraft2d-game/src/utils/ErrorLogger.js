@@ -5,7 +5,7 @@
 
 class ErrorLogger {
   constructor() {
-    this.logFile = '/logs/client-error.log';
+    this.logFile = '/client-error.log';
     this.isLogging = false;
     // 错误日志服务器地址
     this.serverUrl = 'http://localhost:3001';

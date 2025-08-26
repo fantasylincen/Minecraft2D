@@ -8,6 +8,7 @@ import { AudioManager } from '../audio/AudioManager.js';
 import { PlayerAudioController } from '../audio/PlayerAudioController.js';
 import { FarmingSystem } from '../world/FarmingSystem.js';
 import { ContainerManager } from '../blocks/ContainerManager.js';
+import { inputManager } from '../input/InputManager.js'; // 新增导入
 
 export class GameEngine {
   constructor(canvas) {
@@ -127,7 +128,7 @@ export class GameEngine {
       this.setupCanvas();
       console.log('✅ 画布设置完成');
       
-      // 初始化输入处理
+      // 初始化输入处理（使用新的输入管理器）
       this.initializeInput();
       console.log('✅ 输入系统初始化完成');
       
@@ -144,95 +145,11 @@ export class GameEngine {
   }
   
   /**
-   * 初始化音频系统
-   */
-  initializeAudio() {
-    // 音频管理器已经在构造函数中初始化
-    // 玩家音频控制器将在设置玩家时初始化
-  }
-  
-  /**
-   * 设置玩家
-   * @param {Player} player - 玩家实例
-   */
-  setPlayer(player) {
-    this.systems.player = player;
-    
-    // 设置玩家引用
-    if (player) {
-      player.setGameEngine(this);
-      
-      // 创建玩家音频控制器
-      if (this.audioManager) {
-        this.playerAudioController = new PlayerAudioController(player, this.audioManager);
-        player.setAudioController(this.playerAudioController);
-      }
-    }
-  }
-  
-  /**
-   * 设置画布
-   */
-  setupCanvas() {
-    if (!this.canvas) {
-      throw new Error('Canvas element is required');
-    }
-    
-    // 检查Canvas支持
-    if (!this.canvas.getContext) {
-      throw new Error('浏览器不支持Canvas');
-    }
-    
-    // 检查2D上下文
-    const testCtx = this.canvas.getContext('2d');
-    if (!testCtx) {
-      throw new Error('无法获取Canvas 2D上下文');
-    }
-    
-    console.log('Canvas信息:', {
-      tagName: this.canvas.tagName,
-      width: this.canvas.width,
-      height: this.canvas.height,
-      offsetWidth: this.canvas.offsetWidth,
-      offsetHeight: this.canvas.offsetHeight
-    });
-    
-    // 设置画布大小
-    const resizeCanvas = () => {
-      try {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
-        console.log('画布大小设置为:', this.canvas.width, 'x', this.canvas.height);
-      } catch (error) {
-        console.error('设置画布大小失败:', error);
-      }
-    };
-    
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-    
-    // 设置渲染上下文属性
-    this.ctx.imageSmoothingEnabled = false; // 像素风格，不使用抗锯齿
-    
-    console.log('✅ 画布设置完成');
-  }
-  
-  /**
-   * 初始化输入处理
+   * 初始化输入处理（使用新的输入管理器）
    */
   initializeInput() {
-    this.keys = {};
-    
-    // 键盘事件监听
-    window.addEventListener('keydown', (e) => {
-      this.keys[e.code] = true;
-      this.handleKeyDown(e);
-    });
-    
-    window.addEventListener('keyup', (e) => {
-      this.keys[e.code] = false;
-      this.handleKeyUp(e);
-    });
+    // 注册游戏相关的按键处理函数
+    this.registerGameKeyHandlers();
     
     // 鼠标事件监听 (新增 - 放置方块功能 - 基础实现)
     this.canvas.addEventListener('contextmenu', (e) => {
@@ -307,36 +224,134 @@ export class GameEngine {
   }
   
   /**
-   * 处理按键按下
+   * 注册游戏相关的按键处理函数
+   */
+  registerGameKeyHandlers() {
+    // ESC键切换暂停
+    inputManager.registerKeyHandler('Escape', (event) => {
+      this.togglePause();
+    }, 'game', 0);
+    
+    // F键切换飞行模式
+    inputManager.registerKeyHandler('KeyF', (event) => {
+      if (this.systems.player) {
+        this.systems.player.toggleFlyMode();
+      }
+    }, 'game', 0);
+    
+    // +键提升飞行速度
+    inputManager.registerKeyHandler('Equal', (event) => {
+      if (this.systems.player && this.systems.player.isFlying()) {
+        this.systems.player.increaseFlySpeed();
+      }
+    }, 'game', 0);
+    
+    inputManager.registerKeyHandler('NumpadAdd', (event) => {
+      if (this.systems.player && this.systems.player.isFlying()) {
+        this.systems.player.increaseFlySpeed();
+      }
+    }, 'game', 0);
+    
+    // -键降低飞行速度
+    inputManager.registerKeyHandler('Minus', (event) => {
+      if (this.systems.player && this.systems.player.isFlying()) {
+        this.systems.player.decreaseFlySpeed();
+      }
+    }, 'game', 0);
+    
+    inputManager.registerKeyHandler('NumpadSubtract', (event) => {
+      if (this.systems.player && this.systems.player.isFlying()) {
+        this.systems.player.decreaseFlySpeed();
+      }
+    }, 'game', 0);
+  }
+  
+  /**
+   * 处理按键按下（保留用于特殊处理）
    */
   handleKeyDown(event) {
-    // 不再阻止任何按键的默认行为，让浏览器处理所有按键
-    // 只处理特定的功能键
+    // 不再需要在这里处理按键，因为使用了新的输入管理器
+  }
+  
+  /**
+   * 处理按键释放（保留用于特殊处理）
+   */
+  handleKeyUp(event) {
+    // 暂时为空，后续可添加按键释放处理逻辑
+  }
+  
+  /**
+   * 初始化音频系统
+   */
+  initializeAudio() {
+    // 音频管理器已经在构造函数中初始化
+    // 玩家音频控制器将在设置玩家时初始化
+  }
+  
+  /**
+   * 设置玩家
+   * @param {Player} player - 玩家实例
+   */
+  setPlayer(player) {
+    this.systems.player = player;
     
-    // 特殊按键处理
-    switch (event.code) {
-      case 'Escape':
-        this.togglePause();
-        break;
-      case 'KeyF':
-        // F键用于切换飞行模式，在Player类中处理
-        break;
-      case 'Equal':
-      case 'NumpadAdd':
-        // +键用于提升飞行速度，在Player类中处理
-        break;
-      case 'Minus':
-      case 'NumpadSubtract':
-        // -键用于降低飞行速度，在Player类中处理
-        break;
+    // 设置玩家引用
+    if (player) {
+      player.setGameEngine(this);
+      
+      // 创建玩家音频控制器
+      if (this.audioManager) {
+        this.playerAudioController = new PlayerAudioController(player, this.audioManager);
+        player.setAudioController(this.playerAudioController);
+      }
     }
   }
   
   /**
-   * 处理按键释放
+   * 设置画布
    */
-  handleKeyUp(event) {
-    // 暂时为空，后续可添加按键释放处理逻辑
+  setupCanvas() {
+    if (!this.canvas) {
+      throw new Error('Canvas element is required');
+    }
+    
+    // 检查Canvas支持
+    if (!this.canvas.getContext) {
+      throw new Error('浏览器不支持Canvas');
+    }
+    
+    // 检查2D上下文
+    const testCtx = this.canvas.getContext('2d');
+    if (!testCtx) {
+      throw new Error('无法获取Canvas 2D上下文');
+    }
+    
+    console.log('Canvas信息:', {
+      tagName: this.canvas.tagName,
+      width: this.canvas.width,
+      height: this.canvas.height,
+      offsetWidth: this.canvas.offsetWidth,
+      offsetHeight: this.canvas.offsetHeight
+    });
+    
+    // 设置画布大小
+    const resizeCanvas = () => {
+      try {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+        console.log('画布大小设置为:', this.canvas.width, 'x', this.canvas.height);
+      } catch (error) {
+        console.error('设置画布大小失败:', error);
+      }
+    };
+    
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    
+    // 设置渲染上下文属性
+    this.ctx.imageSmoothingEnabled = false; // 像素风格，不使用抗锯齿
+    
+    console.log('✅ 画布设置完成');
   }
   
   /**
@@ -470,7 +485,7 @@ export class GameEngine {
     
     // 更新各个子系统
     if (this.systems.player) {
-      this.systems.player.update(deltaTime, this.keys);
+      this.systems.player.update(deltaTime, inputManager.getAllKeys());
     }
     
     if (this.systems.camera) {

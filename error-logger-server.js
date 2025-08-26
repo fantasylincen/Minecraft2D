@@ -15,14 +15,8 @@ const PORT = 3001;
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// 确保日志目录存在
-const logDir = path.join(__dirname, 'logs');
-if (!fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir, { recursive: true });
-}
-
-// 日志文件路径
-const logFile = path.join(logDir, 'client-error.log');
+// 日志文件路径 - 修改为项目根目录下的 client-error.log
+const logFile = path.join(__dirname, 'client-error.log');
 
 /**
  * 记录错误日志到文件

@@ -7,7 +7,8 @@ export default defineConfig({
   base: '/Minecraft2D/',
   server: {
     fs: {
-      allow: ['.']
+      allow: ['.'],
+      strict: false
     }
   },
   build: {
@@ -15,6 +16,9 @@ export default defineConfig({
       output: {
         manualChunks: undefined
       }
+    },
+    watch: {
+      usePolling: true
     }
   }
 })

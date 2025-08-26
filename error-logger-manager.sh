@@ -3,7 +3,7 @@
 # 错误日志服务器管理脚本
 
 PID_FILE=".error-logger.pid"
-LOG_FILE="logs/client-error.log"
+LOG_FILE="./client-error.log"
 
 case "$1" in
   start)

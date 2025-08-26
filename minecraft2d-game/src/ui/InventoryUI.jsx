@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { itemConfig, ItemRarity } from '../config/ItemConfig.js';
+import { inputManager } from '../input/InputManager.js'; // 新增导入
 import './InventoryUI.css';
 
 /**
@@ -182,6 +183,23 @@ export const InventoryComponent = ({
   onSlotClick, 
   onSlotRightClick 
 }) => {
+  // 当背包界面显示时，设置输入管理器的上下文
+  useEffect(() => {
+    if (isVisible) {
+      inputManager.setActiveContext('inventory');
+    } else {
+      // 当背包关闭时，恢复到游戏上下文
+      inputManager.setActiveContext('game');
+    }
+    
+    // 清理函数
+    return () => {
+      if (isVisible) {
+        inputManager.setActiveContext('game');
+      }
+    };
+  }, [isVisible]);
+  
   if (!isVisible || !inventory) return null;
   
   const handleOverlayClick = (e) => {
@@ -256,27 +274,42 @@ export const InventoryController = ({ inventory, gameEngine }) => {
   
   // 监听键盘事件
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      // 数字键选择快捷栏
-      if (e.code >= 'Digit1' && e.code <= 'Digit9') {
-        const slotIndex = parseInt(e.code.slice(-1)) - 1;
-        inventory?.setSelectedHotbarSlot(slotIndex);
-      }
-      
-      // E键打开/关闭背包
-      if (e.code === 'KeyE') {
-        e.preventDefault();
-        setIsInventoryVisible(!isInventoryVisible);
-      }
-      
-      // ESC键关闭背包
-      if (e.code === 'Escape') {
-        setIsInventoryVisible(false);
-      }
+    // 注册E键打开/关闭背包
+    const handleEKey = (e) => {
+      e.preventDefault();
+      setIsInventoryVisible(!isInventoryVisible);
     };
     
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    // 注册ESC键关闭背包
+    const handleEscapeKey = (e) => {
+      setIsInventoryVisible(false);
+    };
+    
+    // 注册数字键选择快捷栏
+    const handleDigitKey = (e) => {
+      const slotIndex = parseInt(e.code.slice(-1)) - 1;
+      inventory?.setSelectedHotbarSlot(slotIndex);
+    };
+    
+    // 注册按键处理函数，使用'game'上下文，因为这些按键在游戏上下文中被按下
+    inputManager.registerKeyHandler('KeyE', handleEKey, 'game', 0);
+    inputManager.registerKeyHandler('Escape', handleEscapeKey, 'inventory', 10);
+    
+    // 注册数字键1-9，使用'game'上下文
+    for (let i = 1; i <= 9; i++) {
+      inputManager.registerKeyHandler(`Digit${i}`, handleDigitKey, 'game', 0);
+    }
+    
+    // 清理函数
+    return () => {
+      inputManager.unregisterKeyHandler('KeyE', handleEKey, false);
+      inputManager.unregisterKeyHandler('Escape', handleEscapeKey, false);
+      
+      // 注销数字键1-9
+      for (let i = 1; i <= 9; i++) {
+        inputManager.unregisterKeyHandler(`Digit${i}`, handleDigitKey, false);
+      }
+    };
   }, [inventory, isInventoryVisible]);
   
   // 处理槽位点击

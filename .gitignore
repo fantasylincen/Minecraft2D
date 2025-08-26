@@ -116,4 +116,3 @@ worlds/
 # 性能分析文件
 *.cpuprofile
 *.heapprofile
-logs/client-error.log

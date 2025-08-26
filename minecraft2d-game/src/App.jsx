@@ -14,6 +14,7 @@ import DebugConsole from './ui/DebugConsole.jsx';
 import { GameConfig, gameConfig } from './config/GameConfig.js';
 import { ConfigPanel } from './ui/ConfigPanel.js';
 import errorLogger from './utils/ErrorLogger.js';
+import { inputManager } from './input/InputManager.js'; // 新增导入
 import './ui/UIAnimations.css';
 
 function App() {
@@ -116,6 +117,9 @@ function App() {
       setCurrentCraftingTable(craftingTable);
       setPlayerInventory(playerInventory);
       setShowCraftingTable(true);
+      
+      // 设置输入管理器上下文为制作台
+      inputManager.setActiveContext('crafting');
     };
     
     // 添加熔炉界面打开事件监听器 (新增)
@@ -124,6 +128,9 @@ function App() {
       setCurrentFurnace(furnace);
       setPlayerInventory(playerInventory);
       setShowFurnace(true);
+      
+      // 设置输入管理器上下文为熔炉
+      inputManager.setActiveContext('furnace');
     };
     
     window.addEventListener('openCraftingTable', handleOpenCraftingTable);
@@ -198,6 +205,7 @@ function App() {
   const initializeGame = async () => {
     try {
       setGameStatus('initializing');
+      
       const canvas = canvasRef.current;
       
       if (!canvas) {
@@ -740,73 +748,92 @@ function App() {
   
   // 键盘事件监听，处理H键切换控制说明、F3键切换调试信息和帧率调节键
   useEffect(() => {
-    const handleKeyPress = (event) => {
+    // 注册UI控制按键处理函数
+    const registerUIKeyHandlers = () => {
       // H键切换控制说明
-      if (event.key === 'h' || event.key === 'H') {
+      inputManager.registerKeyHandler('KeyH', (event) => {
         event.preventDefault();
         toggleControlsHelp();
-      }
+      }, 'ui', 0);
+      
       // F1键切换界面控制面板
-      else if (event.key === 'F1') {
+      inputManager.registerKeyHandler('F1', (event) => {
         event.preventDefault();
-        toggleUiControlPanel();
-      }
+        setShowUiControlPanel(!showUiControlPanel);
+      }, 'ui', 0);
+      
       // F3键切换调试信息和调试控制台
-      else if (event.key === 'F3') {
+      inputManager.registerKeyHandler('F3', (event) => {
         event.preventDefault();
         toggleDebugInfo();
-      }
+      }, 'ui', 0);
+      
       // [ 键降低帧率 (TODO #30)
-      else if (event.key === '[') {
+      inputManager.registerKeyHandler('BracketLeft', (event) => {
         event.preventDefault();
         adjustFPS(-5); // 每次降低5帧
-      }
+      }, 'ui', 0);
+      
       // ] 键提高帧率 (TODO #30)
-      else if (event.key === ']') {
+      inputManager.registerKeyHandler('BracketRight', (event) => {
         event.preventDefault();
         adjustFPS(5); // 每次提高5帧
-      }
+      }, 'ui', 0);
+      
       // T 键切换时间系统 (TODO #17)
-      else if (event.key === 't' || event.key === 'T') {
+      inputManager.registerKeyHandler('KeyT', (event) => {
         event.preventDefault();
         toggleTimeSystem();
-      }
+      }, 'ui', 0);
+      
       // W 键切换天气系统
-      else if (event.key === 'w' || event.key === 'W') {
+      inputManager.registerKeyHandler('KeyW', (event) => {
         event.preventDefault();
         toggleWeatherSystem();
-      }
+      }, 'ui', 0);
+      
       // S 键切换季节系统
-      else if (event.key === 's' || event.key === 'S') {
+      inputManager.registerKeyHandler('KeyS', (event) => {
         event.preventDefault();
         toggleSeasonSystem();
-      }
+      }, 'ui', 0);
+      
       // , 键降低时间速度 (TODO #17)
-      else if (event.key === ',') {
+      inputManager.registerKeyHandler('Comma', (event) => {
         event.preventDefault();
         adjustTimeSpeed(-0.2);
-      }
+      }, 'ui', 0);
+      
       // . 键提高时间速度 (TODO #17)
-      else if (event.key === '.') {
+      inputManager.registerKeyHandler('Period', (event) => {
         event.preventDefault();
         adjustTimeSpeed(0.2);
-      }
+      }, 'ui', 0);
+      
       // < 键向前调节时间 (TODO #17)
-      else if (event.key === '<') {
-        event.preventDefault();
-        adjustTime(-0.05); // 向前1.2小时
-      }
+      inputManager.registerKeyHandler('ShiftLeft', (event) => {
+        // 需要检查是否同时按下了逗号键
+        if (inputManager.isKeyPressed('Comma')) {
+          event.preventDefault();
+          adjustTime(-0.05); // 向前1.2小时
+        }
+      }, 'ui', 0);
+      
       // > 键向后调节时间 (TODO #17)
-      else if (event.key === '>') {
-        event.preventDefault();
-        adjustTime(0.05); // 向后1.2小时
-      }
+      inputManager.registerKeyHandler('ShiftRight', (event) => {
+        // 需要检查是否同时按下了句号键
+        if (inputManager.isKeyPressed('Period')) {
+          event.preventDefault();
+          adjustTime(0.05); // 向后1.2小时
+        }
+      }, 'ui', 0);
     };
     
-    document.addEventListener('keydown', handleKeyPress);
+    registerUIKeyHandlers();
     
+    // 清理函数
     return () => {
-      document.removeEventListener('keydown', handleKeyPress);
+      // 这里可以添加清理逻辑，但目前inputManager没有提供注销所有处理器的方法
     };
   }, [showControlsHelp, debugInfo, showUiControlPanel]);
   
@@ -1022,6 +1049,9 @@ function App() {
     if (currentCraftingTable && currentCraftingTable.close) {
       currentCraftingTable.close();
     }
+    
+    // 恢复输入管理器上下文为游戏
+    inputManager.setActiveContext('game');
   };
 
   // 关闭熔炉界面 (新增)
@@ -1034,6 +1064,9 @@ function App() {
     if (currentFurnace && currentFurnace.close) {
       currentFurnace.close();
     }
+    
+    // 恢复输入管理器上下文为游戏
+    inputManager.setActiveContext('game');
   };
 
   // 处理制作操作
@@ -1085,6 +1118,12 @@ function App() {
             gameEngine={gameEngineRef.current}
           />
         )}
+        
+        {/* 物品栏界面 - 确保始终显示 */}
+        <InventoryController 
+          inventory={gameEngineRef.current?.systems?.player?.inventory}
+          gameEngine={gameEngineRef.current}
+        />
         
         {/* 血条显示 - 物品栏上方 */}
         {uiVisibility.healthBar && (

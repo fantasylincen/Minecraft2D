@@ -3,6 +3,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { inputManager } from '../input/InputManager.js'; // 新增导入
 import '../App.css';
 import './InventoryUI.css';
 
@@ -45,6 +46,26 @@ const CraftingTableUI = ({
       setCraftingGrid(grid);
     }
   }, [craftingTable]);
+
+  // 当制作台界面显示时，设置输入管理器的上下文
+  useEffect(() => {
+    // 设置输入管理器上下文为制作台
+    inputManager.setActiveContext('crafting');
+    
+    // 注册ESC键关闭制作台
+    const handleEscapeKey = (event) => {
+      onClose?.();
+    };
+    
+    inputManager.registerKeyHandler('Escape', handleEscapeKey, 'crafting', 10);
+    
+    // 清理函数
+    return () => {
+      // 恢复输入管理器上下文为游戏
+      inputManager.setActiveContext('game');
+      inputManager.unregisterKeyHandler('Escape', handleEscapeKey, false);
+    };
+  }, [onClose]);
 
   // 处理槽位点击
   const handleSlotClick = useCallback((item, source, index) => {
