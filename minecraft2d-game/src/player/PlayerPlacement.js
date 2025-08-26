@@ -75,23 +75,36 @@ export class PlayerPlacement {
   }
 
   /**
-   * 获取放置位置 (新增)
+   * 获取放置位置 (修改 - 使用射线相交的第一个方块作为基准点)
    * @returns {Object|null} 放置位置坐标
    */
   getPlacementPosition() {
     if (!this.player.terrainGenerator) return null;
     
-    // 使用玩家的朝向方向计算放置位置
+    // 获取视线方向最近的方块（射线相交的第一个方块）
+    const targetBlock = this.player.getTargetBlock();
+    
+    // 如果没有找到目标方块，不可放置
+    if (!targetBlock) {
+      return null;
+    }
+    
+    // 使用玩家的朝向方向计算基准点位置
     const directionX = this.player.facing.directionX;
     const directionY = this.player.facing.directionY;
     
-    // 计算玩家中心位置
-    const playerCenterX = this.player.position.x;
-    const playerCenterY = this.player.position.y;
+    // 计算目标方块的世界坐标中心
+    const blockSize = this.player.worldConfig.BLOCK_SIZE;
+    const targetCenterX = targetBlock.x * blockSize + blockSize / 2;
+    const targetCenterY = targetBlock.y * blockSize + blockSize / 2;
     
-    // 计算放置位置（玩家前方一格）
-    const placementX = Math.floor((playerCenterX + directionX * this.player.worldConfig.BLOCK_SIZE) / this.player.worldConfig.BLOCK_SIZE);
-    const placementY = Math.floor((playerCenterY + directionY * this.player.worldConfig.BLOCK_SIZE) / this.player.worldConfig.BLOCK_SIZE);
+    // 从目标方块中心往射线反方向后退1个像素作为基准点
+    const backwardX = targetCenterX - directionX;
+    const backwardY = targetCenterY - directionY;
+    
+    // 将基准点转换为方块坐标
+    const placementX = Math.floor(backwardX / blockSize);
+    const placementY = Math.floor(backwardY / blockSize);
     
     return { x: placementX, y: placementY };
   }
