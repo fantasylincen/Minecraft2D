@@ -203,20 +203,15 @@ export class GameEngine {
     this.canvas.addEventListener('mousedown', (e) => {
       // 左键点击触发光线追踪
       if (e.button === 0) { // 0表示左键
-        if (this.systems.player) {
-          // 设置放置控制状态
-          this.systems.player.controls.place = true;
-        }
+        // 移除放置方块的逻辑，改为使用V键放置
+        // 光线追踪逻辑可以保留用于其他用途
       }
     });
     
     this.canvas.addEventListener('mouseup', (e) => {
       // 左键释放
       if (e.button === 0) { // 0表示左键
-        if (this.systems.player) {
-          // 重置放置控制状态
-          this.systems.player.controls.place = false;
-        }
+        // 移除放置方块的逻辑
       }
     });
     
@@ -238,6 +233,22 @@ export class GameEngine {
         this.systems.player.toggleFlyMode();
       }
     }, 'game', 0);
+    
+    // V键放置方块
+    inputManager.registerKeyHandler('KeyV', (event) => {
+      if (this.systems.player) {
+        // 设置放置控制状态
+        this.systems.player.controls.place = true;
+      }
+    }, 'game', 0);
+    
+    // V键释放时重置放置状态
+    inputManager.registerKeyHandler('KeyV', (event) => {
+      if (this.systems.player) {
+        // 重置放置控制状态
+        this.systems.player.controls.place = false;
+      }
+    }, 'game', 0, true); // 第五个参数true表示这是释放处理函数
     
     // +键提升飞行速度
     inputManager.registerKeyHandler('Equal', (event) => {

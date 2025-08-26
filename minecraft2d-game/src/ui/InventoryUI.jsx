@@ -277,7 +277,7 @@ export const InventoryController = ({ inventory, gameEngine }) => {
     // 注册E键打开/关闭背包
     const handleEKey = (e) => {
       e.preventDefault();
-      setIsInventoryVisible(!isInventoryVisible);
+      setIsInventoryVisible(prev => !prev);
     };
     
     // 注册ESC键关闭背包
@@ -310,7 +310,7 @@ export const InventoryController = ({ inventory, gameEngine }) => {
         inputManager.unregisterKeyHandler(`Digit${i}`, handleDigitKey, false);
       }
     };
-  }, [inventory, isInventoryVisible]);
+  }, [inventory]);
   
   // 处理槽位点击
   const handleSlotClick = (e, slot, index, type) => {
