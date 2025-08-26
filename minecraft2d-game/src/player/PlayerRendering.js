@@ -4,6 +4,7 @@
  */
 
 import { ItemType } from '../config/ItemConfig.js';
+import { blockConfig } from '../config/BlockConfig.js';
 
 export class PlayerRendering {
   constructor(player) {
@@ -81,7 +82,7 @@ export class PlayerRendering {
     }
     
     // 根据配置渲染玩家视线射线
-    this.renderPlayerRay(ctx, adjustedScreenPos);
+    this.renderPlayerViewRay(ctx, adjustedScreenPos, camera);
     
     // 渲染视线射线相交的第一个方块高亮
     this.renderTargetedBlockHighlight(ctx, camera);
@@ -121,7 +122,7 @@ export class PlayerRendering {
     
     // 绘制基准点（红色小圆点）
     ctx.fillStyle = '#FF0000'; // 红色
-    const dotRadius = (2 + 1) / 2; // 直径比射线略宽1像素
+    const dotRadius = (2 + 1) / 2; // 直径比 略宽1像素
     ctx.beginPath();
     ctx.arc(screenPos.x, screenPos.y, dotRadius, 0, Math.PI * 2);
     ctx.fill();
@@ -134,7 +135,7 @@ export class PlayerRendering {
    * 渲染玩家视线射线
    * 根据配置控制是否显示以及射线的样式
    */
-  renderPlayerRay(ctx, screenPos) {
+  renderPlayerViewRay(ctx, screenPos, camera) {
     try {
       // 检查是否需要渲染视线射线
       // 使用更安全的方式访问gameConfig
@@ -182,12 +183,37 @@ export class PlayerRendering {
       ctx.lineWidth = rayWidth;
       ctx.lineCap = 'round';
       
-      // 计算射线终点（指定方块长度）
-      // 注意：需要考虑Canvas坐标系Y轴向下而世界坐标系Y轴向上的差异
-      const blockSize = (this.player && this.player.worldConfig && this.player.worldConfig.BLOCK_SIZE) || 16;
-      const worldRayLength = rayLength * blockSize;
-      const endX = screenPos.x + (this.player.facing ? this.player.facing.directionX : 1) * worldRayLength;
-      const endY = screenPos.y - (this.player.facing ? this.player.facing.directionY : 0) * worldRayLength; // Y轴翻转修复
+      // 获取目标方块（用于障碍物检测）
+      const targetBlock = this.player.getTargetBlock();
+      
+      // 计算射线终点
+      let endX, endY;
+      if (targetBlock) {
+        // 如果有目标方块，射线延伸到目标方块位置
+        const blockSize = this.player.worldConfig.BLOCK_SIZE;
+        const targetWorldX = targetBlock.x * blockSize + blockSize / 2;
+        const targetWorldY = targetBlock.y * blockSize + blockSize / 2;
+        const targetScreenPos = camera.worldToScreen(targetWorldX, targetWorldY);
+        endX = targetScreenPos.x;
+        endY = targetScreenPos.y;
+      } else {
+        // 如果没有目标方块，则绘制一条固定长度的光线
+        const directionX = this.player.facing.directionX;
+        const directionY = this.player.facing.directionY;
+        const maxDistance = rayLength * this.player.worldConfig.BLOCK_SIZE;
+        
+        // 计算实际的光线终点（考虑障碍物）
+        const endPoint = this.calculateRayEndPoint(
+          this.player.position.x,
+          this.player.position.y + 2, // 眼睛稍微高一点
+          directionX,
+          directionY,
+          maxDistance
+        );
+        const endPointScreen = camera.worldToScreen(endPoint.x, endPoint.y);
+        endX = endPointScreen.x;
+        endY = endPointScreen.y;
+      }
       
       // 绘制射线
       ctx.beginPath();
@@ -213,6 +239,60 @@ export class PlayerRendering {
         // 忽略恢复错误
       }
     }
+  }
+  
+  /**
+   * 计算射线的终点（考虑障碍物）
+   * @param {number} startX 起点X坐标
+   * @param {number} startY 起点Y坐标
+   * @param {number} directionX 方向向量X
+   * @param {number} directionY 方向向量Y
+   * @param {number} maxDistance 最大距离
+   * @returns {Object} 终点坐标
+   */
+  calculateRayEndPoint(startX, startY, directionX, directionY, maxDistance) {
+    if (!this.player.terrainGenerator) {
+      // 如果没有地形生成器，返回最大距离的终点
+      return {
+        x: startX + directionX * maxDistance,
+        y: startY + directionY * maxDistance
+      };
+    }
+    
+    // 射线步进参数
+    const stepSize = 0.5; // 步进大小
+    const steps = maxDistance / stepSize;
+    
+    // 沿视线方向步进
+    let currentX = startX;
+    let currentY = startY;
+    
+    for (let i = 0; i < steps; i++) {
+      currentX += directionX * stepSize;
+      currentY += directionY * stepSize;
+      
+      // 转换为方块坐标
+      const blockX = Math.floor(currentX / this.player.worldConfig.BLOCK_SIZE);
+      const blockY = Math.floor(currentY / this.player.worldConfig.BLOCK_SIZE);
+      
+      // 获取方块
+      const blockId = this.player.terrainGenerator.getBlock(blockX, blockY);
+      
+      // 检查是否为固体方块（不是空气且不是流体）
+      if (blockId !== blockConfig.getBlock('air').id && !blockConfig.isFluid(blockId)) {
+        // 遇到固体方块，将终点往回退2像素
+        const retreatDistance = 2; // 往回退的距离（像素）
+        const retreatedX = currentX - directionX * retreatDistance;
+        const retreatedY = currentY - directionY * retreatDistance;
+        return { x: retreatedX, y: retreatedY };
+      }
+    }
+    
+    // 没有遇到障碍物，返回最大距离的终点
+    return {
+      x: startX + directionX * maxDistance,
+      y: startY + directionY * maxDistance
+    };
   }
 
   /**
