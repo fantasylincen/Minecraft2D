@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>摄像机功能测试</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #4a90e2;
+            text-align: center;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #444;
+            border-radius: 5px;
+            background: #333;
+        }
+        .log {
+            background: #1e1e1e;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .button {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: background 0.3s;
+        }
+        .button:hover {
+            background: #357abd;
+        }
+        .success {
+            color: #4caf50;
+        }
+        .error {
+            color: #f44336;
+        }
+        .info {
+            color: #2196f3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📷 摄像机功能测试</h1>
+        
+        <div class="test-section">
+            <h2>测试说明</h2>
+            <p>本测试用于验证摄像机缩放功能的实现：</p>
+            <ul>
+                <li>摄像机固定缩放范围（最小20%，最大200%）</li>
+                <li>Camera类的初始化和功能</li>
+                <li>鼠标滚轮缩放功能</li>
+                <li>缩放范围限制</li>
+            </ul>
+            <p><strong>注意：</strong>最小和最大缩放比例是固定的，不需要在配置界面中设置。</p>
+        </div>
+        
+        <div class="test-section">
+            <button id="runTestBtn" class="button">▶️ 运行测试</button>
+            <button id="clearLogBtn" class="button">🗑️ 清空日志</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>测试日志</h2>
+            <div id="log" class="log"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>操作链接</h2>
+            <a href="http://localhost:5174/Minecraft2D/" class="button">🎮 打开游戏</a>
+        </div>
+    </div>
+
+    <script>
+        const logElement = document.getElementById('log');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const typeClass = type === 'success' ? 'success' : 
+                             type === 'error' ? 'error' : 'info';
+            logElement.innerHTML += `<div class="${typeClass}">[${timestamp}] ${message}</div>`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        function clearLog() {
+            logElement.innerHTML = '';
+        }
+        
+        document.getElementById('clearLogBtn').addEventListener('click', clearLog);
+        
+        document.getElementById('runTestBtn').addEventListener('click', async () => {
+            clearLog();
+            log('🚀 开始运行摄像机功能测试...', 'info');
+            
+            try {
+                // 测试Camera类
+                log('📹 测试Camera类...', 'info');
+                try {
+                    const { Camera } = await import('./src/camera/Camera.js');
+                    log('✅ 成功导入Camera模块', 'success');
+                    
+                    // 创建一个模拟的canvas元素
+                    const mockCanvas = {
+                        width: 800,
+                        height: 600,
+                        addEventListener: () => {}
+                    };
+                    
+                    // 创建一个模拟的worldConfig
+                    const mockWorldConfig = {
+                        BLOCK_SIZE: 16,
+                        CHUNK_SIZE: 16
+                    };
+                    
+                    // 创建Camera实例
+                    const camera = new Camera(mockCanvas, mockWorldConfig);
+                    log('✅ Camera实例创建成功', 'success');
+                    
+                    // 测试固定缩放范围
+                    log('🔍 测试固定缩放范围...', 'info');
+                    log(`🔍 最小缩放(固定): ${camera.minZoom} (${camera.minZoom * 100}%)`, 'info');
+                    log(`🔍 最大缩放(固定): ${camera.maxZoom} (${camera.maxZoom * 100}%)`, 'info');
+                    
+                    if (camera.minZoom === 0.2) {
+                        log('✅ 最小缩放值正确(0.2)', 'success');
+                    } else {
+                        log(`❌ 最小缩放值错误，期望0.2，实际${camera.minZoom}`, 'error');
+                    }
+                    
+                    if (camera.maxZoom === 2.0) {
+                        log('✅ 最大缩放值正确(2.0)', 'success');
+                    } else {
+                        log(`❌ 最大缩放值错误，期望2.0，实际${camera.maxZoom}`, 'error');
+                    }
+                    
+                    // 测试初始属性
+                    log(`🔍 初始缩放: ${camera.zoom}`, 'info');
+                    
+                    // 测试缩放功能
+                    log('\n🔍 测试缩放功能...', 'info');
+                    camera.setZoom(1.5);
+                    log(`缩放设置为1.5: ${camera.zoom}`, 'info');
+                    
+                    camera.zoomBy(1.2);
+                    log(`缩放增加20%: ${camera.zoom}`, 'info');
+                    
+                    camera.zoomBy(0.8);
+                    log(`缩放减少20%: ${camera.zoom}`, 'info');
+                    
+                    // 测试缩放限制
+                    log('\n🔍 测试缩放限制...', 'info');
+                    camera.setZoom(0.1); // 应该被限制
+                    log(`设置过小缩放(0.1): ${camera.zoom}`, 'info');
+                    
+                    camera.setZoom(5.0); // 应该被限制
+                    log(`设置过大缩放(5.0): ${camera.zoom}`, 'info');
+                    
+                    log('✅ Camera类测试完成', 'success');
+                } catch (error) {
+                    log(`❌ Camera类测试失败: ${error.message}`, 'error');
+                    console.error('Camera类测试错误:', error);
+                }
+                
+                log('\n🎉 摄像机功能测试完成', 'success');
+                
+            } catch (error) {
+                log(`❌ 测试失败: ${error.message}`, 'error');
+                console.error('测试错误:', error);
+            }
+        });
+    </script>
+</body>
+</html>

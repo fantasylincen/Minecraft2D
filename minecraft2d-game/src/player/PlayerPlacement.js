@@ -75,36 +75,46 @@ export class PlayerPlacement {
   }
 
   /**
-   * 获取放置位置 (修改 - 使用射线相交的第一个方块作为基准点，只考虑有物体的区块)
+   * 获取放置位置 (修改 - 使用射线终点所在的区块作为预放置位置)
    * @returns {Object|null} 放置位置坐标
    */
   getPlacementPosition() {
     if (!this.player.terrainGenerator) return null;
     
-    // 获取视线方向最近的方块（射线相交的第一个有物体的区块）
-    const targetBlock = this.player.getTargetBlock();
-    
-    // 如果没有找到目标方块，不可放置
-    if (!targetBlock) {
-      return null;
-    }
-    
-    // 使用玩家的朝向方向计算基准点位置
+    // 使用玩家的朝向方向计算视线方向
     const directionX = this.player.facing.directionX;
     const directionY = this.player.facing.directionY;
     
-    // 计算目标方块的世界坐标中心
+    // 计算射线起点（玩家眼睛位置）
+    const eyeX = this.player.position.x;
+    const eyeY = this.player.position.y + 2; // 眼睛稍微高一点
+    
+    // 射线最大距离（与挖掘距离保持一致）
+    const maxDistance = 5 * this.player.worldConfig.BLOCK_SIZE;
+    
+    // 计算射线终点
+    const endPoint = this.player.renderingModule.calculateRayEndPoint(
+      eyeX,
+      eyeY,
+      directionX,
+      directionY,
+      maxDistance
+    );
+    
+    // 计算射线长度
+    const rayLength = Math.sqrt(
+      Math.pow(endPoint.x - eyeX, 2) + Math.pow(endPoint.y - eyeY, 2)
+    );
+    
+    // 如果射线长度大于最大长度减5像素，则不可放置
+    if (rayLength > maxDistance - 5) {
+      return null;
+    }
+    
+    // 使用射线终点所在的区块作为放置位置
     const blockSize = this.player.worldConfig.BLOCK_SIZE;
-    const targetCenterX = targetBlock.x * blockSize + blockSize / 2;
-    const targetCenterY = targetBlock.y * blockSize + blockSize / 2;
-    
-    // 从目标方块中心往射线反方向后退1个像素作为基准点
-    const backwardX = targetCenterX - directionX;
-    const backwardY = targetCenterY - directionY;
-    
-    // 将基准点转换为方块坐标
-    const placementX = Math.floor(backwardX / blockSize);
-    const placementY = Math.floor(backwardY / blockSize);
+    const placementX = Math.floor(endPoint.x / blockSize);
+    const placementY = Math.floor(endPoint.y / blockSize);
     
     return { x: placementX, y: placementY };
   }
@@ -212,23 +222,36 @@ export class PlayerPlacement {
   }
 
   /**
-   * 获取放置预览位置 (新增 - 方块放置预览 - 基础实现)
+   * 获取放置预览位置 (修改 - 使用射线终点所在的区块作为预放置位置)
    * @returns {Object|null} 预览位置坐标
    */
   getPlacementPreviewPosition() {
     if (!this.player.terrainGenerator) return null;
     
-    // 使用玩家的朝向方向计算预览位置
+    // 使用玩家的朝向方向计算视线方向
     const directionX = this.player.facing.directionX;
     const directionY = this.player.facing.directionY;
     
-    // 计算玩家中心位置
-    const playerCenterX = this.player.position.x;
-    const playerCenterY = this.player.position.y;
+    // 计算射线起点（玩家眼睛位置）
+    const eyeX = this.player.position.x;
+    const eyeY = this.player.position.y + 2; // 眼睛稍微高一点
     
-    // 计算预览位置（玩家前方一格）
-    const previewX = Math.floor((playerCenterX + directionX * this.player.worldConfig.BLOCK_SIZE) / this.player.worldConfig.BLOCK_SIZE);
-    const previewY = Math.floor((playerCenterY + directionY * this.player.worldConfig.BLOCK_SIZE) / this.player.worldConfig.BLOCK_SIZE);
+    // 射线最大距离（与挖掘距离保持一致）
+    const maxDistance = 5 * this.player.worldConfig.BLOCK_SIZE;
+    
+    // 计算射线终点
+    const endPoint = this.player.renderingModule.calculateRayEndPoint(
+      eyeX,
+      eyeY,
+      directionX,
+      directionY,
+      maxDistance
+    );
+    
+    // 使用射线终点所在的区块作为预放置位置
+    const blockSize = this.player.worldConfig.BLOCK_SIZE;
+    const previewX = Math.floor(endPoint.x / blockSize);
+    const previewY = Math.floor(endPoint.y / blockSize);
     
     return { x: previewX, y: previewY };
   }

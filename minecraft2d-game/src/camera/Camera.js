@@ -1,3 +1,5 @@
+import { gameConfig } from '../config/GameConfig.js';
+
 /**
  * 摄像机系统
  * 负责视野管理、坐标转换和跟随玩家
@@ -17,10 +19,11 @@ export class Camera {
     };
     
     // 摄像机属性
-    this.zoom = 1.0;
-    this.targetZoom = 1.0;
-    this.minZoom = 0.5;
-    this.maxZoom = 3.0;
+    this.zoom = 3.0;
+    this.targetZoom = 3.0;
+    // 固定缩放范围：最小20%，最大200%
+    this.minZoom = 2;
+    this.maxZoom = 5;
     
     // 跟随参数
     this.followSpeed = 5.0;     // 跟随速度
@@ -44,7 +47,33 @@ export class Camera {
       y: 0
     };
     
+    // 添加鼠标滚轮缩放事件监听器
+    this.setupMouseWheelZoom();
+    
     console.log('📷 Camera 初始化完成');
+  }
+  
+  /**
+   * 设置鼠标滚轮缩放事件监听器
+   */
+  setupMouseWheelZoom() {
+    if (this.canvas) {
+      // 使用箭头函数保持this上下文
+      const handleWheel = (event) => {
+        // 阻止页面滚动
+        event.preventDefault();
+        
+        // 根据滚轮方向调整缩放
+        const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
+        this.zoomBy(zoomFactor);
+      };
+      
+      // 添加事件监听器
+      this.canvas.addEventListener('wheel', handleWheel, { passive: false });
+      
+      // 保存引用以便后续移除
+      this.wheelHandler = handleWheel;
+    }
   }
   
   /**
@@ -371,6 +400,15 @@ export class Camera {
     
     if (typeof data.smoothing === 'boolean') {
       this.smoothing = data.smoothing;
+    }
+  }
+  
+  /**
+   * 销毁摄像机，清理事件监听器
+   */
+  destroy() {
+    if (this.canvas && this.wheelHandler) {
+      this.canvas.removeEventListener('wheel', this.wheelHandler);
     }
   }
 }

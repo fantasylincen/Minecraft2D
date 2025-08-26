@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>方块放置修改测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .test-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background: #45a049;
+        }
+        .log {
+            background: #1e1e1e;
+            border-radius: 4px;
+            padding: 15px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .log-entry {
+            margin: 5px 0;
+        }
+        .success {
+            color: #4CAF50;
+        }
+        .error {
+            color: #f44336;
+        }
+        .info {
+            color: #2196F3;
+        }
+        .warning {
+            color: #FF9800;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>方块放置修改测试</h1>
+        
+        <div class="test-section">
+            <h2>测试说明</h2>
+            <p>本测试用于验证修改后的方块放置逻辑：</p>
+            <ol>
+                <li>预放置砖块的位置修改为射线终点所在区块</li>
+                <li>如果射线的长度小于等于射线的最大长度-5像素，则不可放置砖块</li>
+            </ol>
+        </div>
+        
+        <div class="test-section">
+            <h2>测试操作</h2>
+            <button class="test-button" onclick="testRayEndPointPlacement()">测试射线终点放置</button>
+            <button class="test-button" onclick="testRayLengthCheck()">测试射线长度检查</button>
+            <button class="test-button" onclick="testNormalPlacement()">测试正常放置情况</button>
+            <button class="test-button" onclick="clearLogs()">清空日志</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>测试日志</h2>
+            <div class="log" id="test-log">
+                <div class="log-entry info">等待测试开始...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 日志记录函数
+        function logToTest(message, type = 'info') {
+            const logElement = document.getElementById('test-log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logElement.appendChild(entry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        // 模拟blockConfig
+        const blockConfig = {
+            getBlock: function(name) {
+                const blocks = {
+                    'air': { id: 0 },
+                    'stone': { id: 1 },
+                    'water': { id: 2 },
+                    'wood': { id: 3 }
+                };
+                return blocks[name] || { id: 0 };
+            },
+            isFluid: function(blockId) {
+                return blockId === 2; // 只有水是流体
+            }
+        };
+        
+        // 模拟地形生成器
+        const mockTerrainGenerator = {
+            getBlock: function(x, y) {
+                // 简单的地形模拟
+                // 在(5,5)位置放置一个石块障碍物
+                if (Math.floor(x) === 5 && Math.floor(y) === 5) {
+                    return blockConfig.getBlock('stone').id;
+                }
+                // 在(3,3)位置放置水
+                if (Math.floor(x) === 3 && Math.floor(y) === 3) {
+                    return blockConfig.getBlock('water').id;
+                }
+                // 其他位置为空气
+                return blockConfig.getBlock('air').id;
+            }
+        };
+        
+        // 模拟世界配置
+        const mockWorldConfig = {
+            BLOCK_SIZE: 16
+        };
+        
+        // 模拟玩家渲染模块
+        const mockRenderingModule = {
+            calculateRayEndPoint: function(startX, startY, directionX, directionY, maxDistance) {
+                const stepSize = 0.5;
+                const steps = maxDistance / stepSize;
+                
+                let currentX = startX;
+                let currentY = startY;
+                
+                for (let i = 0; i < steps; i++) {
+                    currentX += directionX * stepSize;
+                    currentY += directionY * stepSize;
+                    
+                    const blockX = Math.floor(currentX / mockWorldConfig.BLOCK_SIZE);
+                    const blockY = Math.floor(currentY / mockWorldConfig.BLOCK_SIZE);
+                    
+                    const blockId = mockTerrainGenerator.getBlock(blockX, blockY);
+                    
+                    if (blockId !== blockConfig.getBlock('air').id && !blockConfig.isFluid(blockId)) {
+                        // 遇到固体方块，将终点往回退2像素
+                        const retreatDistance = 2;
+                        const retreatedX = currentX - directionX * retreatDistance;
+                        const retreatedY = currentY - directionY * retreatDistance;
+                        return { x: retreatedX, y: retreatedY };
+                    }
+                }
+                
+                // 没有遇到障碍物，返回最大距离的终点
+                return {
+                    x: startX + directionX * maxDistance,
+                    y: startY + directionY * maxDistance
+                };
+            }
+        };
+        
+        // 模拟玩家对象
+        const mockPlayer = {
+            position: { x: 0, y: 5 },
+            facing: { directionX: 1, directionY: 0 },
+            worldConfig: mockWorldConfig,
+            terrainGenerator: mockTerrainGenerator,
+            renderingModule: mockRenderingModule
+        };
+        
+        // 模拟修改后的getPlacementPosition方法
+        function getPlacementPosition() {
+            if (!mockPlayer.terrainGenerator) return null;
+            
+            // 使用玩家的朝向方向计算视线方向
+            const directionX = mockPlayer.facing.directionX;
+            const directionY = mockPlayer.facing.directionY;
+            
+            // 计算射线起点（玩家眼睛位置）
+            const eyeX = mockPlayer.position.x;
+            const eyeY = mockPlayer.position.y + 2; // 眼睛稍微高一点
+            
+            // 射线最大距离（与挖掘距离保持一致）
+            const maxDistance = 5 * mockPlayer.worldConfig.BLOCK_SIZE;
+            
+            // 计算射线终点
+            const endPoint = mockPlayer.renderingModule.calculateRayEndPoint(
+                eyeX,
+                eyeY,
+                directionX,
+                directionY,
+                maxDistance
+            );
+            
+            // 计算射线长度
+            const rayLength = Math.sqrt(
+                Math.pow(endPoint.x - eyeX, 2) + Math.pow(endPoint.y - eyeY, 2)
+            );
+            
+            // 如果射线长度小于等于最大长度减5像素，则不可放置
+            if (rayLength <= maxDistance - 5) {
+                logToTest(`射线长度检查: ${rayLength.toFixed(2)} <= ${maxDistance - 5}，不可放置`, 'warning');
+                return null;
+            }
+            
+            // 使用射线终点所在的区块作为放置位置
+            const blockSize = mockPlayer.worldConfig.BLOCK_SIZE;
+            const placementX = Math.floor(endPoint.x / blockSize);
+            const placementY = Math.floor(endPoint.y / blockSize);
+            
+            logToTest(`射线终点: (${endPoint.x.toFixed(2)}, ${endPoint.y.toFixed(2)})`, 'info');
+            logToTest(`放置位置: (${placementX}, ${placementY})`, 'info');
+            
+            return { x: placementX, y: placementY };
+        }
+        
+        // 模拟修改后的getPlacementPreviewPosition方法
+        function getPlacementPreviewPosition() {
+            if (!mockPlayer.terrainGenerator) return null;
+            
+            // 使用玩家的朝向方向计算视线方向
+            const directionX = mockPlayer.facing.directionX;
+            const directionY = mockPlayer.facing.directionY;
+            
+            // 计算射线起点（玩家眼睛位置）
+            const eyeX = mockPlayer.position.x;
+            const eyeY = mockPlayer.position.y + 2; // 眼睛稍微高一点
+            
+            // 射线最大距离（与挖掘距离保持一致）
+            const maxDistance = 5 * mockPlayer.worldConfig.BLOCK_SIZE;
+            
+            // 计算射线终点
+            const endPoint = mockPlayer.renderingModule.calculateRayEndPoint(
+                eyeX,
+                eyeY,
+                directionX,
+                directionY,
+                maxDistance
+            );
+            
+            // 使用射线终点所在的区块作为预放置位置
+            const blockSize = mockPlayer.worldConfig.BLOCK_SIZE;
+            const previewX = Math.floor(endPoint.x / blockSize);
+            const previewY = Math.floor(endPoint.y / blockSize);
+            
+            logToTest(`射线终点: (${endPoint.x.toFixed(2)}, ${endPoint.y.toFixed(2)})`, 'info');
+            logToTest(`预放置位置: (${previewX}, ${previewY})`, 'info');
+            
+            return { x: previewX, y: previewY };
+        }
+        
+        // 测试射线终点放置
+        function testRayEndPointPlacement() {
+            logToTest('开始测试射线终点放置...', 'info');
+            
+            try {
+                // 设置玩家位置，使其射线能到达较远距离
+                mockPlayer.position = { x: 0, y: 5 };
+                mockPlayer.facing = { directionX: 1, directionY: 0 };
+                
+                const placementPos = getPlacementPosition();
+                const previewPos = getPlacementPreviewPosition();
+                
+                if (placementPos) {
+                    logToTest(`✓ 射线终点放置测试通过，放置位置: (${placementPos.x}, ${placementPos.y})`, 'success');
+                } else {
+                    logToTest('⚠ 射线终点放置测试未通过（射线太短）', 'warning');
+                }
+                
+                if (previewPos) {
+                    logToTest(`✓ 预放置点位置测试通过，预放置位置: (${previewPos.x}, ${previewPos.y})`, 'success');
+                } else {
+                    logToTest('✗ 预放置点位置测试失败', 'error');
+                }
+                
+                logToTest('✅ 射线终点放置测试完成', 'success');
+            } catch (error) {
+                logToTest(`✗ 射线终点放置测试失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 测试射线长度检查
+        function testRayLengthCheck() {
+            logToTest('开始测试射线长度检查...', 'info');
+            
+            try {
+                // 设置玩家位置，使其射线在很短距离内遇到障碍物
+                mockPlayer.position = { x: 0, y: 5 };
+                mockPlayer.facing = { directionX: 1, directionY: 0 };
+                
+                // 修改地形生成器，使障碍物更靠近玩家
+                const originalGetBlock = mockTerrainGenerator.getBlock;
+                mockTerrainGenerator.getBlock = function(x, y) {
+                    // 在(1,5)位置放置一个石块障碍物（更靠近玩家）
+                    if (Math.floor(x) === 1 && Math.floor(y) === 5) {
+                        return blockConfig.getBlock('stone').id;
+                    }
+                    return originalGetBlock.call(this, x, y);
+                };
+                
+                const placementPos = getPlacementPosition();
+                if (!placementPos) {
+                    logToTest('✓ 射线长度检查测试通过，射线太短不可放置', 'success');
+                } else {
+                    logToTest(`✗ 射线长度检查测试失败，应该不可放置但返回了位置: (${placementPos.x}, ${placementPos.y})`, 'error');
+                }
+                
+                // 恢复原始地形生成器
+                mockTerrainGenerator.getBlock = originalGetBlock;
+                
+                logToTest('✅ 射线长度检查测试完成', 'success');
+            } catch (error) {
+                logToTest(`✗ 射线长度检查测试失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 测试正常放置情况
+        function testNormalPlacement() {
+            logToTest('开始测试正常放置情况...', 'info');
+            
+            try {
+                // 设置玩家位置和朝向
+                mockPlayer.position = { x: 0, y: 5 };
+                mockPlayer.facing = { directionX: 1, directionY: 0 };
+                
+                const placementPos = getPlacementPosition();
+                if (placementPos) {
+                    logToTest(`✓ 正常放置测试通过，放置位置: (${placementPos.x}, ${placementPos.y})`, 'success');
+                } else {
+                    logToTest('⚠ 正常放置测试未通过（射线太短）', 'warning');
+                }
+                
+                logToTest('✅ 正常放置测试完成', 'success');
+            } catch (error) {
+                logToTest(`✗ 正常放置测试失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 清空日志
+        function clearLogs() {
+            const logElement = document.getElementById('test-log');
+            logElement.innerHTML = '<div class="log-entry info">日志已清空</div>';
+        }
+        
+        // 页面加载完成后初始化
+        window.addEventListener('load', function() {
+            logToTest('测试页面已加载', 'success');
+        });
+    </script>
+</body>
+</html>

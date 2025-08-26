@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>玩家大小随摄像机缩放测试</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #fafafa;
+        }
+        .instructions {
+            background: #e8f4fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .expected {
+            color: #2e7d32;
+            font-weight: bold;
+        }
+        .note {
+            color: #e65100;
+            font-style: italic;
+        }
+        .link-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 10px 5px;
+            transition: background 0.3s;
+        }
+        .link-button:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 玩家大小随摄像机缩放测试</h1>
+        
+        <div class="instructions">
+            <h2>测试说明</h2>
+            <p>本测试用于验证玩家大小是否随摄像机缩放而正确变化：</p>
+            <ul>
+                <li>摄像机缩放时，玩家的大小应相应变化</li>
+                <li>玩家的眼睛、手持物品等细节也应按比例缩放</li>
+                <li>所有与玩家相关的渲染元素都应保持正确的比例关系</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h3>测试步骤</h3>
+            <div class="step">
+                <strong>步骤 1:</strong> 打开游戏
+                <p class="expected">预期结果：游戏正常启动</p>
+            </div>
+            <div class="step">
+                <strong>步骤 2:</strong> 使用鼠标滚轮放大视图
+                <p class="expected">预期结果：玩家变大，眼睛和手持物品也相应变大</p>
+            </div>
+            <div class="step">
+                <strong>步骤 3:</strong> 使用鼠标滚轮缩小视图
+                <p class="expected">预期结果：玩家变小，眼睛和手持物品也相应变小</p>
+            </div>
+            <div class="step">
+                <strong>步骤 4:</strong> 测试不同缩放级别
+                <p class="expected">预期结果：在20%-200%的缩放范围内，玩家大小应平滑变化</p>
+            </div>
+            <div class="step">
+                <strong>步骤 5:</strong> 检查细节元素
+                <p class="expected">预期结果：玩家的眼睛、手持物品、调试信息等都应正确缩放</p>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>操作链接</h3>
+            <a href="http://localhost:5174/Minecraft2D/" class="link-button">🎮 打开游戏</a>
+        </div>
+        
+        <div class="test-section">
+            <h3>注意事项</h3>
+            <p class="note">1. 确保开发服务器正在运行 (http://localhost:5174)</p>
+            <p class="note">2. 如果遇到问题，请检查浏览器控制台的错误信息</p>
+            <p class="note">3. 测试时可以尝试不同的缩放级别（20%-200%）</p>
+            <p class="note">4. 注意观察玩家眼睛、手持物品等细节是否正确缩放</p>
+        </div>
+    </div>
+</body>
+</html>
