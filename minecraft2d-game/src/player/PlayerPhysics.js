@@ -65,13 +65,22 @@ export class PlayerPhysics {
    * 更新正常模式物理
    */
   updateNormalPhysics(deltaTime) {
+    // 检查是否启用潜行模式
+    const isSneaking = this.player.controls.sneakLeft || this.player.controls.sneakRight;
+    this.player.sneakMode.enabled = isSneaking;
+    
+    // 根据潜行模式调整移动速度
+    const moveSpeed = this.player.sneakMode.enabled ? 
+      this.player.physics.speed * this.player.sneakMode.speedMultiplier : 
+      this.player.physics.speed;
+    
     // 水平移动 - 简化逗辑
-    if (this.player.controls.left) {
+    if (this.player.controls.left || this.player.controls.sneakLeft) {
       this.player.physics.velocity.x = this.player.inWater.isSwimming ? 
-        -this.player.inWater.swimSpeed : -this.player.physics.speed;
-    } else if (this.player.controls.right) {
+        -this.player.inWater.swimSpeed : -moveSpeed;
+    } else if (this.player.controls.right || this.player.controls.sneakRight) {
       this.player.physics.velocity.x = this.player.inWater.isSwimming ? 
-        this.player.inWater.swimSpeed : this.player.physics.speed;
+        this.player.inWater.swimSpeed : moveSpeed;
     } else {
       // 应用摩擦力（水中摩擦力不同）
       const friction = this.player.inWater.isSwimming ? 

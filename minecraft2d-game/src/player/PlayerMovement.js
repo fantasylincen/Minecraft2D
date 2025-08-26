@@ -63,6 +63,16 @@ export class PlayerMovement {
       }
     }, 'game', 0);
     
+    // Z键向左潜行 (新增)
+    inputManager.registerKeyHandler('KeyZ', (event) => {
+      this.player.controls.sneakLeft = true;
+    }, 'game', 0);
+    
+    // C键向右潜行 (新增)
+    inputManager.registerKeyHandler('KeyC', (event) => {
+      this.player.controls.sneakRight = true;
+    }, 'game', 0);
+    
     // 注册按键释放处理
     this.registerKeyReleaseHandlers();
   }
@@ -116,6 +126,16 @@ export class PlayerMovement {
     // 空格键释放
     inputManager.registerKeyHandler('Space', (event) => {
       this.player.controls.jump = false;
+    }, 'game', 0, true);
+    
+    // Z键释放 (新增)
+    inputManager.registerKeyHandler('KeyZ', (event) => {
+      this.player.controls.sneakLeft = false;
+    }, 'game', 0, true);
+    
+    // C键释放 (新增)
+    inputManager.registerKeyHandler('KeyC', (event) => {
+      this.player.controls.sneakRight = false;
     }, 'game', 0, true);
   }
 

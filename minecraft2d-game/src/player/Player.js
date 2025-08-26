@@ -77,6 +77,12 @@ export class Player {
       speedStep: 0.5       // 每次调节的步长 (50%)
     };
     
+    // 潜行模式 (新增)
+    this.sneakMode = {
+      enabled: false,       // 是否启用潜行模式
+      speedMultiplier: 0.3  // 潜行时的速度倍率 (30%)
+    };
+    
     // 玩家尺寸
     this.size = {
       width: 12,
@@ -143,7 +149,9 @@ export class Player {
       mine: false,          // 挖掘按键状态
       prevMine: false,       // 上一帧挖掘按键状态
       place: false,         // 放置方块按键状态 (新增)
-      prevPlace: false      // 上一帧放置按键状态 (新增)
+      prevPlace: false,     // 上一帧放置按键状态 (新增)
+      sneakLeft: false,     // 向左潜行按键 (新增)
+      sneakRight: false     // 向右潜行按键 (新增)
     };
     
     // 挖掘系统 (TODO #25)

@@ -1394,6 +1394,8 @@ function App() {
               <li><strong>F键:</strong> 切换飞行模式</li>
               <li><strong>W/S:</strong> 上下飞行 (飞行模式)</li>
               <li><strong>+/-键:</strong> 调节飞行速度</li>
+              <li><strong>Z键:</strong> 向左潜行</li>
+              <li><strong>C键:</strong> 向右潜行</li>
               <li><strong>ESC:</strong> 暂停/继续</li>
               <li><strong>F3:</strong> 切换调试信息</li>
               <li><strong>F2:</strong> 打开/关闭配置面板</li>
@@ -1409,6 +1411,11 @@ function App() {
               <strong style={{ color: '#87CEEB' }}>飞行模式:</strong>
               <br />在飞行模式下，玩家变为天空蓝色，可以全方向快速飞行，不受重力和地形碰撞影响。
               <br /><strong>速度调节:</strong> 使用+/-键可在100%-1000%之间调节飞行速度。
+            </div>
+            <div style={{ marginTop: '10px', padding: '8px', background: 'rgba(135, 206, 235, 0.2)', borderRadius: '4px', border: '1px solid #87CEEB' }}>
+              <strong style={{ color: '#87CEEB' }}>潜行模式:</strong>
+              <br />在潜行模式下，玩家移动速度降低到30%，身体变小，可以更隐蔽地移动。
+              <br /><strong>控制:</strong> 使用Z键向左潜行，C键向右潜行。
             </div>
           </div>
         )}

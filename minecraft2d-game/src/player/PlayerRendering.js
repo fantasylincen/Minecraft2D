@@ -22,9 +22,10 @@ export class PlayerRendering {
     // 计算屏幕坐标
     const screenPos = camera.worldToScreen(this.player.position.x, this.player.position.y);
     
-    // 计算缩放后的玩家尺寸
-    const scaledWidth = this.player.size.width * camera.zoom;
-    const scaledHeight = this.player.size.height * camera.zoom;
+    // 根据潜行模式调整玩家尺寸
+    const sizeMultiplier = this.player.sneakMode.enabled ? this.player.sneakMode.speedMultiplier : 1.0;
+    const scaledWidth = this.player.size.width * sizeMultiplier * camera.zoom;
+    const scaledHeight = this.player.size.height * sizeMultiplier * camera.zoom;
     
     // 保存原始的变换状态
     ctx.save();
@@ -40,21 +41,21 @@ export class PlayerRendering {
     
     // 渲染玩家眼睛
     ctx.fillStyle = this.player.appearance.eyeColor;
-    const eyeSize = 2 * camera.zoom;
-    const eyeOffsetY = 6 * camera.zoom;
+    const eyeSize = 2 * sizeMultiplier * camera.zoom;
+    const eyeOffsetY = 6 * sizeMultiplier * camera.zoom;
     
     // 应用动画效果到眼睛位置
     let eyeScreenPos = { ...screenPos };
     if (this.player.animationController) {
-      const bodyOffsetX = (this.player.animationController.getAnimationValue('bodyOffsetX') || 0) * camera.zoom;
-      const bodyOffsetY = (this.player.animationController.getAnimationValue('bodyOffsetY') || 0) * camera.zoom;
+      const bodyOffsetX = (this.player.animationController.getAnimationValue('bodyOffsetX') || 0) * sizeMultiplier * camera.zoom;
+      const bodyOffsetY = (this.player.animationController.getAnimationValue('bodyOffsetY') || 0) * sizeMultiplier * camera.zoom;
       eyeScreenPos.x += bodyOffsetX;
       eyeScreenPos.y += bodyOffsetY;
     }
     
     // 左眼
     ctx.fillRect(
-      eyeScreenPos.x - 3 * camera.zoom,
+      eyeScreenPos.x - 3 * sizeMultiplier * camera.zoom,
       eyeScreenPos.y + eyeOffsetY,
       eyeSize,
       eyeSize
@@ -62,29 +63,29 @@ export class PlayerRendering {
     
     // 右眼
     ctx.fillRect(
-      eyeScreenPos.x + 1 * camera.zoom,
+      eyeScreenPos.x + 1 * sizeMultiplier * camera.zoom,
       eyeScreenPos.y + eyeOffsetY,
       eyeSize,
       eyeSize
     );
     
     // 渲染玩家手中持有的物品
-    this.renderHeldItem(ctx, screenPos, camera.zoom);
+    this.renderHeldItem(ctx, screenPos, camera.zoom, sizeMultiplier);
     
     // 调试模式下渲染朝向激光线条 (新增)
     if (this.player.showDebugInfo) {
-      this.renderFacingLaser(ctx, screenPos, camera.zoom);
+      this.renderFacingLaser(ctx, screenPos, camera.zoom, sizeMultiplier);
     }
     
     // 根据配置渲染玩家视线射线
-    this.renderPlayerViewRay(ctx, screenPos, camera);
+    this.renderPlayerViewRay(ctx, screenPos, camera, sizeMultiplier);
     
     // 渲染视线射线相交的第一个方块高亮
     this.renderTargetedBlockHighlight(ctx, camera);
     
     // 调试信息（可选）
     if (this.player.showDebugInfo) {
-      this.renderDebugInfo(ctx, screenPos, camera.zoom);
+      this.renderDebugInfo(ctx, screenPos, camera.zoom, sizeMultiplier);
     }
     
     // 恢复原始的变换状态
@@ -95,17 +96,17 @@ export class PlayerRendering {
    * 渲染玩家朝向激光线条 (新增)
    * 调试模式下: 用一个从玩家身体中心发射一根宽度为2的亮蓝色激光线条指向玩家的朝向, 射线的长度为2个玩家的身高
    */
-  renderFacingLaser(ctx, screenPos, zoom = 1) {
+  renderFacingLaser(ctx, screenPos, zoom = 1, sizeMultiplier = 1.0) {
     // 保存原始的变换状态
     ctx.save();
     
-    // 根据缩放调整激光线条样式
+    // 根据缩放和尺寸调整激光线条样式
     ctx.strokeStyle = '#00FFFF'; // 亮蓝色
-    ctx.lineWidth = 2 * zoom;
+    ctx.lineWidth = 2 * zoom * sizeMultiplier;
     ctx.lineCap = 'round';
     
-    // 计算激光线条的终点（根据缩放调整）
-    const laserLength = this.player.size.height * 2 * zoom; // 2个玩家的身高
+    // 计算激光线条的终点（根据缩放和尺寸调整）
+    const laserLength = this.player.size.height * 2 * zoom * sizeMultiplier; // 2个玩家的身高
     const endX = screenPos.x + this.player.facing.directionX * laserLength;
     const endY = screenPos.y - this.player.facing.directionY * laserLength; // Y轴翻转修复
     
@@ -115,9 +116,9 @@ export class PlayerRendering {
     ctx.lineTo(endX, endY);
     ctx.stroke();
     
-    // 绘制基准点（红色小圆点），根据缩放调整大小
+    // 绘制基准点（红色小圆点），根据缩放和尺寸调整大小
     ctx.fillStyle = '#FF0000'; // 红色
-    const dotRadius = (2 * zoom + 1) / 2; // 直径比 略宽1像素
+    const dotRadius = (2 * zoom * sizeMultiplier + 1) / 2; // 直径比 略宽1像素
     ctx.beginPath();
     ctx.arc(screenPos.x, screenPos.y, dotRadius, 0, Math.PI * 2);
     ctx.fill();
@@ -130,7 +131,7 @@ export class PlayerRendering {
    * 渲染玩家视线射线
    * 根据配置控制是否显示以及射线的样式
    */
-  renderPlayerViewRay(ctx, screenPos, camera) {
+  renderPlayerViewRay(ctx, screenPos, camera, sizeMultiplier = 1.0) {
     try {
       // 检查是否需要渲染视线射线
       // 使用更安全的方式访问gameConfig
@@ -173,9 +174,9 @@ export class PlayerRendering {
       // 保存原始的变换状态
       ctx.save();
       
-      // 设置射线样式
+      // 设置射线样式，根据尺寸调整宽度
       ctx.strokeStyle = rayColor;
-      ctx.lineWidth = rayWidth;
+      ctx.lineWidth = rayWidth * sizeMultiplier;
       ctx.lineCap = 'round';
       
       // 获取目标方块（用于障碍物检测）
@@ -200,7 +201,7 @@ export class PlayerRendering {
         // 计算实际的光线终点（考虑障碍物）
         const endPoint = this.calculateRayEndPoint(
           this.player.position.x,
-          this.player.position.y + 2, // 眼睛稍微高一点
+          this.player.position.y + 2 * sizeMultiplier, // 眼睛稍微高一点，根据尺寸调整
           directionX,
           directionY,
           maxDistance
@@ -216,9 +217,9 @@ export class PlayerRendering {
       ctx.lineTo(endX, endY);
       ctx.stroke();
       
-      // 绘制基准点（红色小圆点）
+      // 绘制基准点（红色小圆点），根据尺寸调整大小
       ctx.fillStyle = '#FF0000'; // 红色
-      const dotRadius = (rayWidth + 1) / 2; // 直径比射线略宽1像素
+      const dotRadius = (rayWidth * sizeMultiplier + 1) / 2; // 直径比射线略宽1像素
       ctx.beginPath();
       ctx.arc(screenPos.x, screenPos.y, dotRadius, 0, Math.PI * 2);
       ctx.fill();
@@ -293,7 +294,7 @@ export class PlayerRendering {
   /**
    * 渲染玩家手中持有的物品
    */
-  renderHeldItem(ctx, screenPos, zoom = 1) {
+  renderHeldItem(ctx, screenPos, zoom = 1, sizeMultiplier = 1.0) {
     const heldItem = this.player.getHeldItem();
     if (!heldItem || heldItem.isEmpty()) {
       return; // 没有手持物品，不渲染
@@ -313,8 +314,8 @@ export class PlayerRendering {
     // 保存原始的变换状态
     ctx.save();
     
-    // 根据缩放调整字体大小
-    const fontSize = 10 * zoom;
+    // 根据缩放和尺寸调整字体大小
+    const fontSize = 10 * zoom * sizeMultiplier;
     ctx.font = `${fontSize}px Arial`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -323,13 +324,13 @@ export class PlayerRendering {
     const rarityColor = this.getItemRarityColor(itemDef.rarity);
     ctx.fillStyle = rarityColor;
     
-    // 应用手臂动画并根据缩放调整位置
-    let handX = screenPos.x + 10 * zoom; // 右手位置
-    let handY = screenPos.y - 5 * zoom;  // 手的高度
+    // 应用手臂动画并根据缩放和尺寸调整位置
+    let handX = screenPos.x + 10 * zoom * sizeMultiplier; // 右手位置
+    let handY = screenPos.y - 5 * zoom * sizeMultiplier;  // 手的高度
     
     if (this.player.animationController) {
-      const handOffsetX = (this.player.animationController.getAnimationValue('handOffsetX') || 0) * zoom;
-      const handOffsetY = (this.player.animationController.getAnimationValue('handOffsetY') || 0) * zoom;
+      const handOffsetX = (this.player.animationController.getAnimationValue('handOffsetX') || 0) * zoom * sizeMultiplier;
+      const handOffsetY = (this.player.animationController.getAnimationValue('handOffsetY') || 0) * zoom * sizeMultiplier;
       handX += handOffsetX;
       handY += handOffsetY;
     }
@@ -341,11 +342,11 @@ export class PlayerRendering {
       const maxDurability = itemDef.durability || itemDef.material?.durability || 100;
       const durabilityRatio = heldItem.durability / maxDurability;
       
-      // 根据缩放调整耐久度条大小和位置
-      const barWidth = 10 * zoom;
-      const barHeight = 1.5 * zoom;
+      // 根据缩放和尺寸调整耐久度条大小和位置
+      const barWidth = 10 * zoom * sizeMultiplier;
+      const barHeight = 1.5 * zoom * sizeMultiplier;
       const barX = handX - barWidth / 2;
-      const barY = handY + 8 * zoom;
+      const barY = handY + 8 * zoom * sizeMultiplier;
       
       ctx.fillStyle = '#333333';
       ctx.fillRect(barX, barY, barWidth, barHeight);
@@ -417,10 +418,10 @@ export class PlayerRendering {
   /**
    * 渲染调试信息
    */
-  renderDebugInfo(ctx, screenPos, zoom = 1) {
+  renderDebugInfo(ctx, screenPos, zoom = 1, sizeMultiplier = 1.0) {
     ctx.fillStyle = '#000';
-    // 根据缩放调整字体大小
-    const fontSize = 12 * zoom;
+    // 根据缩放和尺寸调整字体大小
+    const fontSize = 12 * zoom * sizeMultiplier;
     ctx.font = `${fontSize}px Arial`;
     
     const debugText = [
@@ -429,14 +430,15 @@ export class PlayerRendering {
       `Ground: ${this.player.physics.onGround}`,
       `Jump: ${this.player.physics.canJump}`,
       `Flying: ${this.player.flyMode.enabled}`,
+      `Sneaking: ${this.player.sneakMode.enabled}`, // 添加潜行模式状态
       `In Water: ${this.player.inWater.isSwimming}`,
       this.player.flyMode.enabled ? `Speed: ${this.player.getFlySpeedPercentage()}%` : ''
     ].filter(text => text !== ''); // 过滤空字符串
     
-    // 根据缩放调整文本位置
-    const lineHeight = 14 * zoom;
-    const xOffset = 20 * zoom;
-    const yOffset = 30 * zoom;
+    // 根据缩放和尺寸调整文本位置
+    const lineHeight = 14 * zoom * sizeMultiplier;
+    const xOffset = 20 * zoom * sizeMultiplier;
+    const yOffset = 30 * zoom * sizeMultiplier;
     
     debugText.forEach((text, index) => {
       ctx.fillText(text, screenPos.x + xOffset, screenPos.y - yOffset + index * lineHeight);
