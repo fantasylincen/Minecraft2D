@@ -9,6 +9,7 @@ import { itemConfig, ItemType } from '../config/ItemConfig.js';
 import { ContainerManager } from '../blocks/ContainerManager.js';
 import { PlayerAudioController } from '../audio/PlayerAudioController.js';
 import { inputManager } from '../input/InputManager.js'; // 新增导入
+import { gameConfig } from '../config/GameConfig.js'; // 新增导入
 
 export class Player {
   constructor(worldConfig) {
@@ -35,10 +36,10 @@ export class Player {
     // 玩家物理属性
     this.physics = {
       velocity: { x: 0, y: 0 },
-      speed: 150,           // 移动速度 (像素/秒)
+      speed: 70,           // 移动速度 (像素/秒)
       jumpForce: 300,       // 跳跃力度
-      gravity: 800,         // 重力加速度
-      friction: 0.8,        // 摩擦力
+      gravity: 700,         // 重力加速度
+      friction: 0.9,        // 摩擦力
       terminalVelocity: 500, // 最大下落速度
       onGround: false,      // 是否在地面上
       canJump: false        // 是否可以跳跃
@@ -1090,97 +1091,43 @@ export class Player {
   
   /**
    * 渲染玩家
+   * @param {CanvasRenderingContext2D} ctx - 渲染上下文
+   * @param {Object} camera - 摄像机对象
    */
   render(ctx, camera) {
+    if (!ctx || !camera) return;
+    
+    // 计算屏幕坐标
     const screenPos = camera.worldToScreen(this.position.x, this.position.y);
     
-    // 应用动画偏移
-    let animatedScreenPos = { ...screenPos };
-    let animatedSize = { ...this.size };
+    // 保存原始的变换状态
+    ctx.save();
     
-    if (this.animationController) {
-      // 获取动画偏移值
-      const bodyOffsetX = this.animationController.getAnimationValue('bodyOffsetX') || 0;
-      const bodyOffsetY = this.animationController.getAnimationValue('bodyOffsetY') || 0;
-      const bodyScale = this.animationController.getAnimationValue('bodyScale') || 1;
-      
-      animatedScreenPos.x += bodyOffsetX;
-      animatedScreenPos.y += bodyOffsetY;
-      animatedSize.width *= bodyScale;
-      animatedSize.height *= bodyScale;
-      
-      // 获取闪烁效果
-      const flashAlpha = this.animationController.getAnimationValue('flashAlpha');
-      if (flashAlpha > 0) {
-        ctx.fillStyle = `rgba(255, 0, 0, ${flashAlpha})`;
-        ctx.fillRect(
-          animatedScreenPos.x - animatedSize.width / 2,
-          animatedScreenPos.y - animatedSize.height / 2,
-          animatedSize.width,
-          animatedSize.height
-        );
-      }
-    }
+    // 应用摄像机缩放
+    ctx.scale(camera.zoom, camera.zoom);
     
-    // 玩家主体颜色根据飞行模式和水中状态改变
-    let playerColor = this.appearance.color;
-    if (this.flyMode.enabled) {
-      playerColor = '#87CEEB'; // 飞行时变为天空蓝
-    } else if (this.inWater.isSwimming) {
-      playerColor = '#1E90FF'; // 在水中变为水蓝色
-    }
+    // 调整屏幕坐标以考虑缩放
+    const adjustedScreenPos = {
+      x: (screenPos.x - camera.canvas.width / 2) / camera.zoom + camera.canvas.width / 2,
+      y: (screenPos.y - camera.canvas.height / 2) / camera.zoom + camera.canvas.height / 2
+    };
     
-    ctx.fillStyle = playerColor;
+    // 渲染玩家身体
+    ctx.fillStyle = this.appearance.color;
     ctx.fillRect(
-      animatedScreenPos.x - animatedSize.width / 2,
-      animatedScreenPos.y - animatedSize.height / 2,
-      animatedSize.width,
-      animatedSize.height
+      adjustedScreenPos.x - this.size.width / 2,
+      adjustedScreenPos.y - this.size.height / 2,
+      this.size.width,
+      this.size.height
     );
     
-    // 飞行模式特效
-    if (this.flyMode.enabled) {
-      // 绘制飞行光晕，大小根据速度调节
-      const glowSize = 2 + (this.flyMode.speedMultiplier - 1) * 0.5; // 速度越快光晕越大
-      const alpha = Math.min(0.3 + (this.flyMode.speedMultiplier - 1) * 0.05, 0.6); // 速度越快光晕越亮
-      
-      ctx.fillStyle = `rgba(135, 206, 235, ${alpha})`;
-      ctx.fillRect(
-        screenPos.x - this.size.width / 2 - glowSize,
-        screenPos.y - this.size.height / 2 - glowSize,
-        this.size.width + glowSize * 2,
-        this.size.height + glowSize * 2
-      );
-      
-      // 显示速度百分比
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = '12px Arial';
-      ctx.textAlign = 'center';
-      const speedText = `${this.getFlySpeedPercentage()}%`;
-      ctx.fillText(speedText, screenPos.x, screenPos.y - this.size.height / 2 - 15);
-    }
-    // 水中特效
-    else if (this.inWater.isSwimming) {
-      // 绘制水泡效果
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-      // 随机生成一些小水泡
-      for (let i = 0; i < 3; i++) {
-        const bubbleX = screenPos.x + (Math.random() - 0.5) * this.size.width;
-        const bubbleY = screenPos.y + (Math.random() - 0.5) * this.size.height;
-        const bubbleSize = 1 + Math.random() * 2;
-        ctx.beginPath();
-        ctx.arc(bubbleX, bubbleY, bubbleSize, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-    
-    // 玩家眼睛
+    // 渲染玩家眼睛
     ctx.fillStyle = this.appearance.eyeColor;
     const eyeSize = 2;
     const eyeOffsetY = 6;
     
     // 应用动画效果到眼睛位置
-    let eyeScreenPos = { ...screenPos };
+    let eyeScreenPos = { ...adjustedScreenPos };
     if (this.animationController) {
       const bodyOffsetX = this.animationController.getAnimationValue('bodyOffsetX') || 0;
       const bodyOffsetY = this.animationController.getAnimationValue('bodyOffsetY') || 0;
@@ -1205,17 +1152,26 @@ export class Player {
     );
     
     // 渲染玩家手中持有的物品
-    this.renderHeldItem(ctx, screenPos);
+    this.renderHeldItem(ctx, adjustedScreenPos);
     
     // 调试模式下渲染朝向激光线条 (新增)
     if (this.showDebugInfo) {
-      this.renderFacingLaser(ctx, screenPos);
+      this.renderFacingLaser(ctx, adjustedScreenPos);
     }
+    
+    // 根据配置渲染玩家视线射线
+    this.renderPlayerRay(ctx, adjustedScreenPos);
+    
+    // 渲染视线射线相交的第一个方块高亮
+    this.renderTargetedBlockHighlight(ctx, camera);
     
     // 调试信息（可选）
     if (this.showDebugInfo) {
-      this.renderDebugInfo(ctx, screenPos);
+      this.renderDebugInfo(ctx, adjustedScreenPos);
     }
+    
+    // 恢复原始的变换状态
+    ctx.restore();
   }
   
   /**
@@ -1234,13 +1190,67 @@ export class Player {
     // 计算激光线条的终点
     const laserLength = this.size.height * 2; // 2个玩家的身高
     const endX = screenPos.x + this.facing.directionX * laserLength;
-    const endY = screenPos.y + this.facing.directionY * laserLength;
+    const endY = screenPos.y - this.facing.directionY * laserLength; // Y轴翻转修复
     
     // 绘制激光线条
     ctx.beginPath();
     ctx.moveTo(screenPos.x, screenPos.y);
     ctx.lineTo(endX, endY);
     ctx.stroke();
+    
+    // 绘制基准点（红色小圆点）
+    ctx.fillStyle = '#FF0000'; // 红色
+    const dotRadius = (2 + 1) / 2; // 直径比射线略宽1像素
+    ctx.beginPath();
+    ctx.arc(screenPos.x, screenPos.y, dotRadius, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // 恢复原始的变换状态
+    ctx.restore();
+  }
+  
+  /**
+   * 渲染玩家视线射线
+   * 根据配置控制是否显示以及射线的样式
+   */
+  renderPlayerRay(ctx, screenPos) {
+    // 检查是否需要渲染视线射线
+    if (typeof gameConfig === 'undefined' || !gameConfig.get('developer', 'showPlayerRay')) {
+      return;
+    }
+    
+    // 获取配置参数
+    const rayLength = gameConfig.get('developer', 'playerRayLength') || 8;
+    const rayColor = gameConfig.get('developer', 'playerRayColor') || '#00FFFF';
+    const rayWidth = gameConfig.get('developer', 'playerRayWidth') || 2;
+    
+    // 保存原始的变换状态
+    ctx.save();
+    
+    // 设置射线样式
+    ctx.strokeStyle = rayColor;
+    ctx.lineWidth = rayWidth;
+    ctx.lineCap = 'round';
+    
+    // 计算射线终点（指定方块长度）
+    // 注意：需要考虑Canvas坐标系Y轴向下而世界坐标系Y轴向上的差异
+    const blockSize = this.worldConfig.BLOCK_SIZE;
+    const worldRayLength = rayLength * blockSize;
+    const endX = screenPos.x + this.facing.directionX * worldRayLength;
+    const endY = screenPos.y - this.facing.directionY * worldRayLength; // Y轴翻转修复
+    
+    // 绘制射线
+    ctx.beginPath();
+    ctx.moveTo(screenPos.x, screenPos.y);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+    
+    // 绘制基准点（红色小圆点）
+    ctx.fillStyle = '#FF0000'; // 红色
+    const dotRadius = (rayWidth + 1) / 2; // 直径比射线略宽1像素
+    ctx.beginPath();
+    ctx.arc(screenPos.x, screenPos.y, dotRadius, 0, Math.PI * 2);
+    ctx.fill();
     
     // 恢复原始的变换状态
     ctx.restore();
@@ -1827,33 +1837,40 @@ export class Player {
         const heldItem = this.getHeldItem();
         
         // 检查手中是否有方块类物品
-        if (heldItem && !heldItem.isEmpty() && heldItem.getItemDefinition().type === ItemType.BLOCK) {
-          // 获取放置位置（玩家前方一格）
-          const placementPosition = this.getPlacementPosition();
-          
-          if (placementPosition) {
-            // 检查放置位置是否合法
-            if (this.isPlacementPositionValid(placementPosition)) {
-              // 放置方块
-              const blockId = heldItem.getItemDefinition().blockId;
-              if (this.terrainGenerator.setBlock(placementPosition.x, placementPosition.y, blockId)) {
-                // 消耗物品
-                this.consumeHeldItem(1);
-                
-                // 添加放置音效 (新增 - 放置方块功能 - 交互优化)
-                this.playPlaceSound();
-                
-                // 添加放置成功提示 (新增 - 放置方块功能 - 交互优化)
-                console.log(`✅ 放置方块成功: ${heldItem.getItemDefinition().name} at (${placementPosition.x}, ${placementPosition.y})`);
-                
-                // 更新最后放置时间 (新增 - 多方块放置优化 - 基础实现)
-                this.placement.lastPlaceTime = currentTime;
+        if (heldItem && !heldItem.isEmpty()) {
+          const itemDef = heldItem.getItemDefinition();
+          if (itemDef && itemDef.type === ItemType.BLOCK) {
+            // 获取放置位置（玩家前方一格）
+            const placementPosition = this.getPlacementPosition();
+            
+            if (placementPosition) {
+              // 检查放置位置是否合法
+              if (this.isPlacementPositionValid(placementPosition)) {
+                // 放置方块
+                const blockId = itemDef.blockId;
+                if (this.terrainGenerator.setBlock(placementPosition.x, placementPosition.y, blockId)) {
+                  // 消耗物品
+                  this.consumeHeldItem(1);
+                  
+                  // 添加放置音效 (新增 - 放置方块功能 - 交互优化)
+                  this.playPlaceSound();
+                  
+                  // 添加放置成功提示 (新增 - 放置方块功能 - 交互优化)
+                  console.log(`✅ 放置方块成功: ${itemDef.name} at (${placementPosition.x}, ${placementPosition.y})`);
+                  
+                  // 更新最后放置时间 (新增 - 多方块放置优化 - 基础实现)
+                  this.placement.lastPlaceTime = currentTime;
+                }
+              } else {
+                // 添加放置失败提示 (新增 - 放置方块功能 - 交互优化)
+                console.log('❌ 放置位置不合法');
+                this.showPlaceFailureMessage();
               }
-            } else {
-              // 添加放置失败提示 (新增 - 放置方块功能 - 交互优化)
-              console.log('❌ 放置位置不合法');
-              this.showPlaceFailureMessage();
             }
+          } else {
+            // 添加放置失败提示 (新增 - 放置方块功能 - 交互优化)
+            console.log('❌ 手中物品不是方块类型');
+            this.showPlaceFailureMessage();
           }
         } else {
           // 添加放置失败提示 (新增 - 放置方块功能 - 交互优化)
@@ -1934,6 +1951,48 @@ export class Player {
   }
   
   /**
+   * 检查放置位置是否合法 (新增)
+   * @param {Object} position 放置位置
+   * @returns {boolean} 是否合法
+   */
+  isPlacementPositionValid(position) {
+    if (!this.terrainGenerator) return false;
+    
+    // 检查位置是否在世界范围内
+    if (position.y < 0 || position.y >= this.worldConfig.WORLD_HEIGHT) {
+      return false;
+    }
+    
+    // 检查目标位置是否为空气方块
+    const targetBlockId = this.terrainGenerator.getBlock(position.x, position.y);
+    if (targetBlockId !== blockConfig.getBlock('air').id) {
+      return false; // 目标位置已经有方块
+    }
+    
+    // 检查放置位置是否与玩家碰撞（更严格的检查）
+    // 计算玩家的边界框
+    const playerLeft = this.position.x - this.size.width / 2;
+    const playerRight = this.position.x + this.size.width / 2;
+    const playerBottom = this.position.y - this.size.height / 2;
+    const playerTop = this.position.y + this.size.height / 2;
+    
+    // 计算方块的边界框
+    const blockSize = this.worldConfig.BLOCK_SIZE;
+    const blockLeft = position.x * blockSize;
+    const blockRight = (position.x + 1) * blockSize;
+    const blockBottom = position.y * blockSize;
+    const blockTop = (position.y + 1) * blockSize;
+    
+    // 检查两个矩形是否相交
+    if (playerLeft < blockRight && playerRight > blockLeft && 
+        playerBottom < blockTop && playerTop > blockBottom) {
+      return false; // 放置位置与玩家身体重叠
+    }
+    
+    return true;
+  }
+  
+  /**
    * 检查预览位置是否合法 (新增 - 方块放置预览 - 基础实现)
    * @param {Object} position 预览位置
    * @returns {boolean} 是否合法
@@ -1952,23 +2011,23 @@ export class Player {
       return false; // 目标位置已经有方块
     }
     
-    // 检查预览位置是否与玩家碰撞
-    // 简化检查：确保预览位置不在玩家占据的空间内
-    const playerBlockX = Math.floor(this.position.x / this.worldConfig.BLOCK_SIZE);
-    const playerBlockY = Math.floor(this.position.y / this.worldConfig.BLOCK_SIZE);
+    // 检查预览位置是否与玩家碰撞（更严格的检查）
+    // 计算玩家的边界框
+    const playerLeft = this.position.x - this.size.width / 2;
+    const playerRight = this.position.x + this.size.width / 2;
+    const playerBottom = this.position.y - this.size.height / 2;
+    const playerTop = this.position.y + this.size.height / 2;
     
-    if (position.x === playerBlockX && position.y === playerBlockY) {
-      return false; // 不能在自己所在位置放置方块
-    }
+    // 计算方块的边界框
+    const blockSize = this.worldConfig.BLOCK_SIZE;
+    const blockLeft = position.x * blockSize;
+    const blockRight = (position.x + 1) * blockSize;
+    const blockBottom = position.y * blockSize;
+    const blockTop = (position.y + 1) * blockSize;
     
-    // 检查预览位置是否在玩家身体范围内
-    const playerLeft = Math.floor((this.position.x - this.size.width/2) / this.worldConfig.BLOCK_SIZE);
-    const playerRight = Math.floor((this.position.x + this.size.width/2) / this.worldConfig.BLOCK_SIZE);
-    const playerBottom = Math.floor((this.position.y - this.size.height/2) / this.worldConfig.BLOCK_SIZE);
-    const playerTop = Math.floor((this.position.y + this.size.height/2) / this.worldConfig.BLOCK_SIZE);
-    
-    if (position.x >= playerLeft && position.x <= playerRight && 
-        position.y >= playerBottom && position.y <= playerTop) {
+    // 检查两个矩形是否相交
+    if (playerLeft < blockRight && playerRight > blockLeft && 
+        playerBottom < blockTop && playerTop > blockBottom) {
       return false; // 预览位置与玩家身体重叠
     }
     
@@ -2052,19 +2111,51 @@ export class Player {
       screenSize
     );
     
-    // 优化预览方块的透明度变化 (新增 - 方块放置预览 - 视觉优化)
-    const pulse = Math.sin(time * 3) * 0.2 + 0.8; // 0.6-1.0的脉冲效果
-    const pulseColor = isValid ? 
-      `rgba(0, 255, 0, ${0.5 * pulse})` : 
-      `rgba(255, 0, 0, ${0.5 * pulse})`;
+    // 恢复上下文状态
+    ctx.restore();
+  }
+  
+  /**
+   * 渲染玩家视线射线相交的第一个方块高亮
+   * @param {CanvasRenderingContext2D} ctx 渲染上下文
+   * @param {Object} camera 摄像机对象
+   */
+  renderTargetedBlockHighlight(ctx, camera) {
+    // 获取视线方向最近的方块
+    const targetBlock = this.getTargetBlock();
     
-    // 渲染脉冲效果层
-    ctx.fillStyle = pulseColor;
-    ctx.fillRect(
-      -screenSize / 2 + screenSize * 0.1,
-      -screenSize / 2 + screenSize * 0.1,
-      screenSize * 0.8,
-      screenSize * 0.8
+    // 如果没有找到目标方块，直接返回
+    if (!targetBlock || !camera) return;
+    
+    // 计算方块的世界坐标和屏幕坐标
+    const blockSize = this.worldConfig.BLOCK_SIZE;
+    const worldPosX = targetBlock.x * blockSize + blockSize / 2;
+    const worldPosY = targetBlock.y * blockSize + blockSize / 2;
+    
+    // 检查是否在视野内
+    if (!camera.isInView(worldPosX, worldPosY)) {
+      return;
+    }
+    
+    const screenPos = camera.worldToScreen(worldPosX, worldPosY);
+    const screenSize = blockSize * camera.zoom;
+    
+    // 如果方块太小就不渲染
+    if (screenSize < 1) return;
+    
+    // 保存当前上下文状态
+    ctx.save();
+    
+    // 设置高亮样式
+    ctx.strokeStyle = '#FF0000'; // 红色边框
+    ctx.lineWidth = Math.max(2, screenSize * 0.1); // 边框宽度至少为2像素
+    
+    // 绘制高亮边框
+    ctx.strokeRect(
+      screenPos.x - screenSize / 2,
+      screenPos.y - screenSize / 2,
+      screenSize,
+      screenSize
     );
     
     // 恢复上下文状态
@@ -2391,11 +2482,6 @@ export class Player {
    * @param {string} foodItemId 食物物品ID
    * @returns {boolean} 是否成功消耗食物
    */
-  /**
-   * 从物品栏消耗食物
-   * @param {string} foodItemId 食物物品ID
-   * @returns {boolean} 是否成功消耗食物
-   */
   consumeFoodFromInventory(foodItemId) {
     // 检查物品栏中是否有该食物
     if (!this.inventory.hasItem(foodItemId, 1)) {
@@ -2469,3 +2555,5 @@ export class Player {
     }
   }
 }
+
+export default Player;

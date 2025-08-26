@@ -361,6 +361,42 @@ export class GameConfig {
         }
       }
     });
+    
+    // 开发者选项配置 (新增)
+    this.configs.set('developer', {
+      category: '开发者选项',
+      displayName: '开发者选项',
+      settings: {
+        showPlayerRay: {
+          value: false,
+          description: '显示玩家视线射线',
+          displayName: '显示视线射线'
+        },
+        playerRayLength: {
+          value: 8,
+          min: 1,
+          max: 70,
+          step: 1,
+          unit: '方块',
+          description: '视线射线长度（方块数）',
+          displayName: '射线长度'
+        },
+        playerRayColor: {
+          value: '#00FFFF',
+          description: '视线射线颜色',
+          displayName: '射线颜色'
+        },
+        playerRayWidth: {
+          value: 2,
+          min: 1,
+          max: 10,
+          step: 1,
+          unit: '像素',
+          description: '视线射线宽度',
+          displayName: '射线宽度'
+        }
+      }
+    });
   }
   
   /**

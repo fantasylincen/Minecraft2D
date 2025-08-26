@@ -137,7 +137,8 @@ export class ConfigPanel {
       terrain: '⛰️', 
       ore: '⛏️',
       vegetation: '🌿',
-      performance: '⚡'
+      performance: '⚡',
+      developer: '💻'
     };
     return icons[category] || '⚙️';
   }
