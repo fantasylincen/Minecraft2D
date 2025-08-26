@@ -636,7 +636,7 @@ export class Player {
     const epsilon = 0.01;
     const left = this.position.x - this.size.width / 2 + epsilon;
     const right = this.position.x + this.size.width / 2 - epsilon;
-    const top = this.position.y + this.size.height / 2 - epsilon;
+    const top = this.position.y + this.size.height / 2 + epsilon;
     const bottom = this.position.y - this.size.height / 2 + epsilon;
     
     // 转换为方块坐标
@@ -1579,7 +1579,7 @@ export class Player {
     }
     
     // 获取方块类型
-    const blockInfo = blockConfig.getBlockInfo(blockId);
+    const blockInfo = blockConfig.getBlock(blockId);
     if (!blockInfo) {
       return false;
     }
@@ -2208,11 +2208,6 @@ export class Player {
     return true;
   }
   
-  /**
-   * 从物品栏消耗食物
-   * @param {string} foodItemId 食物物品ID
-   * @returns {boolean} 是否成功消耗食物
-   */
   /**
    * 从物品栏消耗食物
    * @param {string} foodItemId 食物物品ID

@@ -1382,11 +1382,7 @@ function App() {
         
         {/* 配置面板 */}
         {configPanelRef.current && (
-          <ConfigPanel 
-            ref={configPanelRef} 
-            onClose={toggleConfigPanel}
-            className={uiAnimations.controlPanel}
-          />
+          <div id="config-panel-container"></div>
         )}
         
         {/* 调试控制台 - 使用条件渲染和动画类 */}

@@ -17,6 +17,9 @@ export class TerrainGenerator {
     // 季节系统引用
     this.seasonSystem = null;
     
+    // 容器管理器引用
+    this.containerManager = null;
+    
     // 世界数据存储
     this.chunks = new Map(); // 区块数据
     this.loadedChunks = new Set(); // 已加载的区块
@@ -56,6 +59,18 @@ export class TerrainGenerator {
     // 将季节系统传递给世界生成器
     if (this.worldGenerator) {
       this.worldGenerator.setSeasonSystem(seasonSystem);
+    }
+  }
+  
+  /**
+   * 设置容器管理器
+   * @param {Object} containerManager - 容器管理器引用
+   */
+  setContainerManager(containerManager) {
+    this.containerManager = containerManager;
+    // 将容器管理器传递给世界生成器
+    if (this.worldGenerator) {
+      this.worldGenerator.setContainerManager(containerManager);
     }
   }
   

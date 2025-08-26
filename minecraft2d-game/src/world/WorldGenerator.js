@@ -24,6 +24,9 @@ export class WorldGenerator {
     // 季节系统引用
     this.seasonSystem = null;
     
+    // 容器管理器引用
+    this.containerManager = null;
+    
     // 世界配置
     this.worldConfig = null;
     
@@ -77,6 +80,14 @@ export class WorldGenerator {
     if (this.vegetationGenerator) {
       this.vegetationGenerator.setSeasonSystem(seasonSystem);
     }
+  }
+  
+  /**
+   * 设置容器管理器
+   * @param {Object} containerManager - 容器管理器引用
+   */
+  setContainerManager(containerManager) {
+    this.containerManager = containerManager;
   }
   
   /**

@@ -3,6 +3,8 @@
  * 定义游戏中所有物品的类型、属性和行为
  */
 
+import { blockConfig } from './BlockConfig.js';
+
 /**
  * 物品类型枚举
  */
@@ -278,104 +280,126 @@ export const itemDefinitions = {
   },
   
   // 新增：制作台物品 (制作台系统 - 方块实现)
-  {
+  'crafting_table_item': {
     id: 'crafting_table_item',
     name: 'crafting_table',
     displayName: '制作台',
     type: ItemType.BLOCK,
     blockId: blockConfig.getBlock('crafting_table').id,
     maxStack: 64,
-    durability: null
+    durability: null,
+    rarity: ItemRarity.UNCOMMON,
+    description: '用于制作各种物品的制作台'
   },
   // 新增：木板物品 (合成配方系统 - 数据结构)
-  {
+  'planks_item': {
     id: 'planks_item',
     name: 'planks',
     displayName: '木板',
     type: ItemType.MATERIAL,
     maxStack: 64,
-    durability: null
+    durability: null,
+    rarity: ItemRarity.COMMON,
+    description: '基础建筑材料，由原木制成'
   },
   // 新增：木棍物品 (合成配方系统 - 数据结构)
-  {
+  'sticks_item': {
     id: 'sticks_item',
     name: 'sticks',
     displayName: '木棍',
     type: ItemType.MATERIAL,
     maxStack: 64,
-    durability: null
+    durability: null,
+    rarity: ItemRarity.COMMON,
+    description: '制作工具的基础材料'
   },
   // 新增：木镐物品 (合成配方系统 - 数据结构)
-  {
+  'wooden_pickaxe_item': {
     id: 'wooden_pickaxe_item',
     name: 'wooden_pickaxe',
     displayName: '木镐',
     type: ItemType.TOOL,
     maxStack: 1,
-    durability: 60
+    durability: 60,
+    rarity: ItemRarity.COMMON,
+    description: '基础挖掘工具，可以挖掘石头等方块'
   },
   // 新增：木剑物品 (合成配方系统 - 数据结构)
-  {
+  'wooden_sword_item': {
     id: 'wooden_sword_item',
     name: 'wooden_sword',
     displayName: '木剑',
     type: ItemType.WEAPON,
     maxStack: 1,
-    durability: 60
+    durability: 60,
+    rarity: ItemRarity.COMMON,
+    description: '基础武器，用于近战攻击'
   },
   // 新增：石镐物品 (合成配方系统 - 数据结构)
-  {
+  'stone_pickaxe_item': {
     id: 'stone_pickaxe_item',
     name: 'stone_pickaxe',
     displayName: '石镐',
     type: ItemType.TOOL,
     maxStack: 1,
-    durability: 132
+    durability: 132,
+    rarity: ItemRarity.UNCOMMON,
+    description: '中级挖掘工具，比木镐更耐用'
   },
   // 新增：石剑物品 (合成配方系统 - 数据结构)
-  {
+  'stone_sword_item': {
     id: 'stone_sword_item',
     name: 'stone_sword',
     displayName: '石剑',
     type: ItemType.WEAPON,
     maxStack: 1,
-    durability: 132
+    durability: 132,
+    rarity: ItemRarity.UNCOMMON,
+    description: '中级武器，比木剑更锋利'
   },
   // 新增：铁镐物品 (合成配方系统 - 数据结构)
-  {
+  'iron_pickaxe_item': {
     id: 'iron_pickaxe_item',
     name: 'iron_pickaxe',
     displayName: '铁镐',
     type: ItemType.TOOL,
     maxStack: 1,
-    durability: 251
+    durability: 251,
+    rarity: ItemRarity.RARE,
+    description: '高级挖掘工具，可以挖掘铁矿和金矿'
   },
   // 新增：铁剑物品 (合成配方系统 - 数据结构)
-  {
+  'iron_sword_item': {
     id: 'iron_sword_item',
     name: 'iron_sword',
     displayName: '铁剑',
     type: ItemType.WEAPON,
     maxStack: 1,
-    durability: 251
+    durability: 251,
+    rarity: ItemRarity.RARE,
+    description: '高级武器，攻击力更强'
   },
   // 新增：钻石镐物品 (合成配方系统 - 数据结构)
-  {
+  'diamond_pickaxe_item': {
     id: 'diamond_pickaxe_item',
     name: 'diamond_pickaxe',
     displayName: '钻石镐',
     type: ItemType.TOOL,
     maxStack: 1,
-    durability: 1562
+    durability: 1562,
+    rarity: ItemRarity.EPIC,
+    description: '顶级挖掘工具，可以挖掘所有方块'
   },
   // 新增：钻石剑物品 (合成配方系统 - 数据结构)
-  {
+  'diamond_sword_item': {
     id: 'diamond_sword_item',
     name: 'diamond_sword',
     displayName: '钻石剑',
     type: ItemType.WEAPON,
     maxStack: 1,
-    durability: 1562
+    durability: 1562,
+    rarity: ItemRarity.EPIC,
+    description: '顶级武器，拥有最强的攻击力'
   }
 };
 
