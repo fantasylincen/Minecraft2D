@@ -133,8 +133,14 @@ function App() {
       inputManager.setActiveContext('furnace');
     };
     
+    // 添加显示错误日志事件监听器
+    const handleShowErrorLog = () => {
+      setShowErrorLog(true);
+    };
+    
     window.addEventListener('openCraftingTable', handleOpenCraftingTable);
     window.addEventListener('openFurnace', handleOpenFurnace); // 新增
+    window.addEventListener('showErrorLog', handleShowErrorLog);
     
     // 确保Canvas元素已经准备好后再初始化游戏
     const initGame = async () => {
@@ -196,6 +202,7 @@ function App() {
       }
       window.removeEventListener('openCraftingTable', handleOpenCraftingTable);
       window.removeEventListener('openFurnace', handleOpenFurnace); // 新增
+      window.removeEventListener('showErrorLog', handleShowErrorLog);
     };
   }, []);
 
@@ -1145,12 +1152,6 @@ function App() {
               <span>FPS: {gameStats.fps}</span>
               <span>方块: {gameStats.blocksRendered}</span>
               <span>位置: ({gameStats.playerPos.x}, {gameStats.playerPos.y})</span>
-              <span style={{ color: gameStats.health <= 25 ? '#ff4757' : gameStats.health <= 50 ? '#ffa502' : '#2ed573' }}>
-                ❤️ {Math.round(gameStats.health)}/{gameStats.maxHealth}
-              </span>
-              <span style={{ color: gameStats.hunger <= 5 ? '#ff4757' : gameStats.hunger <= 10 ? '#ffa502' : '#2ed573' }}>
-                🍖 {Math.round(gameStats.hunger)}/{gameStats.maxHunger}
-              </span>
               {gameStats.isFlying && (
                 <span style={{ color: '#87CEEB', fontWeight: 'bold' }}>
                   ✈️ 飞行: {gameStats.flySpeed}%
@@ -1191,51 +1192,15 @@ function App() {
         {/* 左下角控制区域 */}
         {uiVisibility.configPanel && (
           <div className={`left-control-area ${uiAnimations.controlPanel}`}>
-            {/* 控制面板 - 移动到左下角，2排布局 */}
+            {/* 控制面板 - 简化为仅包含游戏配置按钮 */}
             <div className="control-panel">
-              {/* 第一排: 3个主要功能按钮 */}
+              {/* 简化为单排布局，仅包含游戏配置按钮 */}
               <div className="control-panel-row1">
-                <button onClick={toggleDebugInfo} className="ui-button-hover ui-button-active">
-                  {debugInfo ? '隐藏调试信息' : '显示调试信息'}
-                </button>
-                <button onClick={saveGame} className="ui-button-hover ui-button-active">保存游戏</button>
-                <button onClick={regenerateWorld} className="ui-button-hover ui-button-active">重新生成世界</button>
-              </div>
-              
-              {/* 第二排: 配置和控制说明按钮 */}
-              <div className="control-panel-row2">
                 <button 
                   onClick={toggleConfigPanel}
                   className="config-panel-btn ui-button-hover ui-button-active"
                 >
                   ⚙️ 游戏配置
-                </button>
-                
-                {/* 控制说明按钮（始终显示，但改为切换按钮） */}
-                <button 
-                  className="show-controls-btn ui-button-hover ui-button-active"
-                  onClick={toggleControlsHelp}
-                  title={showControlsHelp ? '隐藏控制说明 (H键)' : '显示控制说明 (H键)'}
-                >
-                  🎮 {showControlsHelp ? '隐藏控制' : '控制说明'}
-                </button>
-                
-                {/* 错误日志按钮 */}
-                <button 
-                  className="error-log-btn ui-button-hover ui-button-active"
-                  onClick={toggleErrorLog}
-                  title="查看客户端错误日志"
-                >
-                  📝 错误日志
-                </button>
-                
-                {/* 界面元素控制按钮 */}
-                <button 
-                  className="ui-control-btn ui-button-hover ui-button-active"
-                  onClick={toggleUiControlPanel}
-                  title="界面元素控制面板"
-                >
-                  🎛️ 界面控制
                 </button>
               </div>
             </div>

@@ -206,6 +206,21 @@ export class ConfigPanel {
           if (category === 'developer') {
             specialContent = `
               <div class="config-setting-group">
+                <h4>🎮 游戏控制</h4>
+                <div class="config-setting-item">
+                  <button id="save-game-btn" class="config-btn config-btn-primary">💾 保存游戏</button>
+                </div>
+                <div class="config-setting-item">
+                  <button id="regenerate-world-btn" class="config-btn config-btn-warning">🌍 重新生成世界</button>
+                </div>
+                <div class="config-setting-item">
+                  <button id="toggle-debug-info-btn" class="config-btn config-btn-secondary">🔍 切换调试信息</button>
+                </div>
+                <div class="config-setting-item">
+                  <button id="show-error-log-btn" class="config-btn config-btn-secondary">📝 显示错误日志</button>
+                </div>
+              </div>
+              <div class="config-setting-group">
                 <h4>📦 给玩家添加方块</h4>
                 <div class="config-setting-item">
                   <label>方块类型:</label>
@@ -527,6 +542,18 @@ export class ConfigPanel {
     } else if (target.id === 'add-block-btn') {
       // 处理添加方块到玩家物品栏按钮
       this.handleAddBlockToPlayer();
+    } else if (target.id === 'save-game-btn') {
+      // 处理保存游戏按钮
+      this.handleSaveGame();
+    } else if (target.id === 'regenerate-world-btn') {
+      // 处理重新生成世界按钮
+      this.handleRegenerateWorld();
+    } else if (target.id === 'toggle-debug-info-btn') {
+      // 处理切换调试信息按钮
+      this.handleToggleDebugInfo();
+    } else if (target.id === 'show-error-log-btn') {
+      // 处理显示错误日志按钮
+      this.handleShowErrorLog();
     }
   }
 
@@ -580,6 +607,125 @@ export class ConfigPanel {
     } catch (error) {
       console.error('❌ 添加方块到玩家物品栏失败:', error);
       this.showNotification(`❌ 添加失败: ${error.message}`, 'error');
+    }
+  }
+  
+  /**
+   * 处理保存游戏
+   */
+  handleSaveGame() {
+    try {
+      // 获取游戏引擎实例
+      const gameEngine = window.gameEngine || this.gameEngine;
+      
+      if (!gameEngine) {
+        console.error('❌ 游戏引擎不可用');
+        this.showNotification('❌ 游戏引擎不可用', 'error');
+        return;
+      }
+      
+      // 调用保存游戏函数
+      const { storageManager, player, terrainGenerator, camera, renderer } = gameEngine.systems;
+      if (storageManager) {
+        // 保存游戏数据
+        const gameState = {
+          player: player.exportData(),
+          world: {
+            seed: terrainGenerator.seed,
+            terrainParams: terrainGenerator.terrainParams
+          },
+          camera: camera.exportData(),
+          settings: {
+            showDebugInfo: renderer.settings.showDebugInfo,
+            showGrid: renderer.settings.showGrid,
+            enableParticles: renderer.settings.enableParticles
+          }
+        };
+        
+        storageManager.saveGameState(gameState);
+        this.showNotification('✅ 游戏已保存！', 'success');
+        console.log('💾 游戏已保存');
+      } else {
+        this.showNotification('❌ 存储管理器不可用', 'error');
+      }
+    } catch (error) {
+      console.error('❌ 保存游戏失败:', error);
+      this.showNotification(`❌ 保存失败: ${error.message}`, 'error');
+    }
+  }
+
+  /**
+   * 处理重新生成世界
+   */
+  handleRegenerateWorld() {
+    try {
+      // 获取游戏引擎实例
+      const gameEngine = window.gameEngine || this.gameEngine;
+      
+      if (!gameEngine) {
+        console.error('❌ 游戏引擎不可用');
+        this.showNotification('❌ 游戏引擎不可用', 'error');
+        return;
+      }
+      
+      const { terrainGenerator, player } = gameEngine.systems;
+      if (terrainGenerator && player) {
+        // 重新生成世界
+        terrainGenerator.regenerate();
+        player.respawn();
+        this.showNotification('✅ 世界已重新生成', 'success');
+        console.log('🌍 世界已重新生成');
+      } else {
+        this.showNotification('❌ 世界生成器或玩家不可用', 'error');
+      }
+    } catch (error) {
+      console.error('❌ 重新生成世界失败:', error);
+      this.showNotification(`❌ 重新生成失败: ${error.message}`, 'error');
+    }
+  }
+
+  /**
+   * 处理切换调试信息
+   */
+  handleToggleDebugInfo() {
+    try {
+      // 获取游戏引擎实例
+      const gameEngine = window.gameEngine || this.gameEngine;
+      
+      if (!gameEngine) {
+        console.error('❌ 游戏引擎不可用');
+        this.showNotification('❌ 游戏引擎不可用', 'error');
+        return;
+      }
+      
+      const renderer = gameEngine.systems.renderer;
+      if (renderer) {
+        // 切换调试信息显示
+        renderer.toggleDebugInfo();
+        this.showNotification('✅ 调试信息已切换', 'success');
+        console.log('🔍 调试信息已切换');
+      } else {
+        this.showNotification('❌ 渲染器不可用', 'error');
+      }
+    } catch (error) {
+      console.error('❌ 切换调试信息失败:', error);
+      this.showNotification(`❌ 切换失败: ${error.message}`, 'error');
+    }
+  }
+
+  /**
+   * 处理显示错误日志
+   */
+  handleShowErrorLog() {
+    try {
+      // 触发显示错误日志事件
+      const event = new CustomEvent('showErrorLog');
+      window.dispatchEvent(event);
+      this.showNotification('✅ 错误日志面板已打开', 'success');
+      console.log('📝 错误日志面板已打开');
+    } catch (error) {
+      console.error('❌ 显示错误日志失败:', error);
+      this.showNotification(`❌ 显示失败: ${error.message}`, 'error');
     }
   }
   

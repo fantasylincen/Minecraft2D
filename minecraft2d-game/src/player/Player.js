@@ -52,8 +52,8 @@ export class Player {
       speed: 70,           // 移动速度 (像素/秒)
       jumpForce: 300,       // 跳跃力度
       gravity: 700,         // 重力加速度
-      friction: 0.9,        // 摩擦力
-      terminalVelocity: 500, // 最大下落速度
+      friction: 0.1,        // 摩擦力
+      terminalVelocity: 600, // 最大下落速度
       onGround: false,      // 是否在地面上
       canJump: false        // 是否可以跳跃
     };

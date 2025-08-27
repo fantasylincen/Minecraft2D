@@ -248,6 +248,16 @@ export class PlayerPlacement {
       maxDistance
     );
     
+    // 计算射线长度
+    const rayLength = Math.sqrt(
+      Math.pow(endPoint.x - eyeX, 2) + Math.pow(endPoint.y - eyeY, 2)
+    );
+    
+    // 如果射线长度大于等于最大长度-1像素，则不显示预览框
+    if (rayLength >= maxDistance - 1) {
+      return null;
+    }
+    
     // 使用射线终点所在的区块作为预放置位置
     const blockSize = this.player.worldConfig.BLOCK_SIZE;
     const previewX = Math.floor(endPoint.x / blockSize);

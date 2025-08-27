@@ -146,7 +146,7 @@ export class PlayerRendering {
         showPlayerRay = window.gameConfig.get('developer', 'showPlayerRay') || false;
       }
       
-      // 如果配置未启用，则不渲染
+      // 如果配置未启用，则不渲染（默认隐藏）
       if (!showPlayerRay) {
         return;
       }
@@ -184,6 +184,8 @@ export class PlayerRendering {
       
       // 计算射线终点
       let endX, endY;
+      let shouldHideEndpoint = false; // 标记是否应该隐藏终点红点
+      
       if (targetBlock) {
         // 如果有目标方块，射线延伸到目标方块位置
         const blockSize = this.player.worldConfig.BLOCK_SIZE;
@@ -207,6 +209,19 @@ export class PlayerRendering {
           directionY,
           maxDistance
         );
+        
+        // 计算射线长度
+        const eyeX = this.player.position.x;
+        const eyeY = this.player.position.y + 2; // 眼睛稍微高一点
+        const rayLengthActual = Math.sqrt(
+          Math.pow(endPoint.x - eyeX, 2) + Math.pow(endPoint.y - eyeY, 2)
+        );
+        
+        // 如果射线长度大于等于最大长度-1像素，则标记隐藏终点红点
+        if (rayLengthActual >= maxDistance - 1) {
+          shouldHideEndpoint = true;
+        }
+        
         const endPointScreen = camera.worldToScreen(endPoint.x, endPoint.y);
         endX = endPointScreen.x;
         endY = endPointScreen.y;
@@ -224,6 +239,13 @@ export class PlayerRendering {
       ctx.beginPath();
       ctx.arc(screenPos.x, screenPos.y, dotRadius, 0, Math.PI * 2);
       ctx.fill();
+      
+      // 在视线终点绘制红点标注（除非标记为隐藏）
+      if (!shouldHideEndpoint) {
+        ctx.beginPath();
+        ctx.arc(endX, endY, dotRadius, 0, Math.PI * 2);
+        ctx.fill();
+      }
       
       // 恢复原始的变换状态
       ctx.restore();
@@ -469,7 +491,7 @@ export class PlayerRendering {
     // 检查预览位置是否合法
     const isValid = this.player.isPlacementPreviewValid(previewPosition);
     
-    // 计算屏幕坐标
+    // 计算屏幕坐标 - 使用区块的左上角坐标确保与红点所在区块完全重叠
     const blockSize = this.player.worldConfig.BLOCK_SIZE;
     const worldPosX = previewPosition.x * blockSize + blockSize / 2;
     const worldPosY = previewPosition.y * blockSize + blockSize / 2;
